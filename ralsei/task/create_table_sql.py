@@ -1,8 +1,12 @@
+from typing import Optional
+
 import jinja2
 import psycopg
+
 from ralsei.templates import Table
 import ralsei.params as params
 from ralsei.preprocess import format_sql
+import ralsei.templates
 from .task import Task
 
 DROP_TABLE = "DROP TABLE {{ table }}"
@@ -10,8 +14,13 @@ DROP_TABLE = "DROP TABLE {{ table }}"
 
 class CreateTableSql(Task):
     def __init__(
-        self, env: jinja2.Environment, sql: str, table: Table, extra: dict = {}
+        self,
+        sql: str,
+        table: Table,
+        env: Optional[jinja2.Environment] = None,
+        extra: dict = {},
     ) -> None:
+        env = env or ralsei.templates.default_env()
         jinja_params = params.merge_dicts_no_overwrite({"table": table}, extra)
 
         self.sql = format_sql(env.from_string(sql).render(jinja_params))
