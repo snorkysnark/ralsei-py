@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from jinja2.environment import Environment
+
+_default_env = Environment()
+
 
 def assert_valid_identifier(ident: str):
     if '"' in ident:
@@ -22,3 +26,7 @@ class Table:
             return f'"{self.schema}"."{self.name}"'
         else:
             return f'"{self.name}"'
+
+
+def default_env() -> Environment:
+    return _default_env
