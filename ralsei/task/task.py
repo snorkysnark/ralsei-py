@@ -20,7 +20,7 @@ class Task(ABC):
         such as `{ "create table": "CREATE TABLE table(...)" }`"""
         return {}
 
-    def describe(self, console: Optional[Console]) -> None:
+    def describe(self, console: Optional[Console] = None) -> None:
         console = console or Console()
 
         for label, script in self.get_sql_scripts().items():
