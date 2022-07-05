@@ -6,7 +6,7 @@ from jinja2.environment import Environment
 _default_env = Environment()
 
 
-def assert_valid_identifier(ident: str):
+def _assert_valid_identifier(ident: str):
     if '"' in ident:
         raise ValueError('" symbol not allowed in identifiers')
 
@@ -17,11 +17,13 @@ class Table:
     schema: Optional[str] = None
 
     def __post_init__(self):
-        assert_valid_identifier(self.name)
+        """Check that 'name' and 'schema' are valid postgres identifiers"""
+        _assert_valid_identifier(self.name)
         if self.schema:
-            assert_valid_identifier(self.schema)
+            _assert_valid_identifier(self.schema)
 
     def __str__(self) -> str:
+        """Convert to SQL string, for use in jinja templates"""
         if self.schema:
             return f'"{self.schema}"."{self.name}"'
         else:
