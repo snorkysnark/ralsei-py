@@ -13,6 +13,17 @@ DROP_TABLE = "DROP TABLE {{ table }}"
 
 
 class CreateTableSql(Task):
+    """Run a `CREATE TABLE` sql script
+    ---
+    Args:
+    - sql (str): Jinja sql template for creating the table
+    Receives the following parameters:
+        - `table (Table)`
+        - `**extra`
+    - table (Table): Name and schema of the table being created
+    - env (jinja2.Environment, optional): Environment for rendering the templates
+    - extra (dict, optional): Extra parameters given the the `sql` template"""
+
     def __init__(
         self,
         sql: str,
