@@ -5,8 +5,6 @@ import psycopg
 
 from ralsei.templates import Table
 import ralsei.params as params
-from ralsei.preprocess import format_sql
-import ralsei.templates
 from .task import Task
 
 DROP_TABLE = "DROP TABLE {{ table }}"
@@ -31,17 +29,17 @@ class CreateTableSql(Task):
         env: Optional[jinja2.Environment] = None,
         extra: dict = {},
     ) -> None:
-        env = env or ralsei.templates.default_env()
+        super().__init__(env)
         jinja_params = params.merge_dicts_no_overwrite({"table": table}, extra)
 
-        self.sql = format_sql(env.from_string(sql).render(jinja_params))
-        self.drop_sql = format_sql(env.from_string(DROP_TABLE).render(jinja_params))
+        self.sql = self._render_formatted(sql, jinja_params)
+        self.drop_sql = self._render_formatted(DROP_TABLE, jinja_params)
 
-    def run(self, conn: psycopg.Connection, env: jinja2.Environment) -> None:
+    def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.sql)
 
-    def delete(self, conn: psycopg.Connection, env: jinja2.Environment) -> None:
+    def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.drop_sql)
 
