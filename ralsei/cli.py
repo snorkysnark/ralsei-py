@@ -1,6 +1,6 @@
 import argparse
 from argparse import ArgumentParser
-from typing import Callable, Sequence, Union
+from typing import Callable, Optional, Sequence, Union
 
 import psycopg
 
@@ -26,13 +26,20 @@ class RalseiCli:
         self._global_args = parser.add_argument_group("global")
         parser.add_argument("action", choices=["run", "delete", "redo", "describe"])
         parser.add_argument("task")
+        parser.add_argument("--conn", help="postgres conninfo")
         self._argparser = parser
 
     def add_argument(self, *args, **kwargs) -> None:
         self._global_args.add_argument(*args, **kwargs)
 
-    def run(self, pipeline: Union[Pipeline, PipelineFactory], conninfo: str):
+    def run(
+        self, pipeline: Union[Pipeline, PipelineFactory], conninfo: Optional[str] = None
+    ):
         args = self._argparser.parse_args()
+
+        conninfo = conninfo or args.conn
+        if not conninfo:
+            raise ValueError("conninfo not specified")
 
         if isinstance(pipeline, Callable):
             pipeline = pipeline(args)
@@ -47,6 +54,6 @@ class RalseiCli:
                 if args.action == "run":
                     runner.run(task_sequence)
                 elif args.action == "delete":
-                    pass
+                    runner.delete(task_sequence)
                 elif args.action == "redo":
-                    pass
+                    runner.redo(task_sequence)
