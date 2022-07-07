@@ -1,5 +1,7 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
+from typing import Iterable, Optional
+import jinja2
 
 from jinja2.environment import Environment
 
@@ -28,6 +30,24 @@ class Table:
             return f'"{self.schema}"."{self.name}"'
         else:
             return f'"{self.name}"'
+
+
+@dataclass
+class Column:
+    _name: str
+    type: str
+
+    def __post_init__(self):
+        _assert_valid_identifier(self._name)
+
+    def render(self, env: jinja2.Environment, *args, **kwargs) -> Column:
+        return Column(self._name, env.from_string(self.type).render(*args, **kwargs))
+
+    def __str__(self) -> str:
+        return f'"{self._name}" {self.type}'
+
+    def name(self) -> str:
+        return f'"{self.name}"'
 
 
 def default_env() -> Environment:

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 import jinja2
 import psycopg
 from rich.console import Console
 from rich.syntax import Syntax
 
 import ralsei.templates
+from ralsei.templates import Column
 from ralsei.preprocess import format_sql
 
 
@@ -33,10 +34,18 @@ class Task(ABC):
             console.print(f"[bold]{label}:")
             console.print(Syntax(script, "sql", line_numbers=True))
 
-    def _render_formatted(
-        self, template: Union[str, jinja2.Template], *args, **kwargs
-    ) -> str:
+    def _render(self, template: Union[str, jinja2.Template], *args, **kwargs) -> str:
         if isinstance(template, str):
             template = self._env.from_string(template)
 
-        return format_sql(template.render(*args, **kwargs))
+        return template.render(*args, **kwargs)
+
+    def _render_formatted(
+        self, template: Union[str, jinja2.Template], *args, **kwargs
+    ) -> str:
+        return format_sql(self._render(template, *args, **kwargs))
+
+    def _render_columns(
+        self, columns: Iterable[Column], *args, **kwargs
+    ) -> list[Column]:
+        return list(map(lambda c: c.render(self._env, *args, **kwargs), columns))
