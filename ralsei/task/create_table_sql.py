@@ -4,7 +4,7 @@ import jinja2
 import psycopg
 
 from ralsei.templates import Table
-import ralsei.params as params
+from ralsei import dict_utils
 from .task import Task
 
 DROP_TABLE = "DROP TABLE {{ table }}"
@@ -30,7 +30,7 @@ class CreateTableSql(Task):
         extra: dict = {},
     ) -> None:
         super().__init__(env)
-        jinja_params = params.merge_dicts_no_overwrite({"table": table}, extra)
+        jinja_params = dict_utils.merge_no_dup({"table": table}, extra)
 
         self.sql = self._render_formatted(sql, jinja_params)
         self.drop_sql = self._render_formatted(DROP_TABLE, jinja_params)

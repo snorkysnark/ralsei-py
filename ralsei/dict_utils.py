@@ -1,4 +1,4 @@
-def merge_dicts_no_overwrite(*dicts: dict) -> dict:
+def merge_no_dup(*dicts: dict) -> dict:
     merged_dict = {}
 
     for dictionary in dicts:
