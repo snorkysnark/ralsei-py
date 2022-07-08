@@ -7,4 +7,4 @@ DEFAULT_MODE = Mode()
 
 
 def format_sql(sql: str) -> str:
-    return sqlfmt.api.format_string(sql, DEFAULT_MODE)
+    return sqlfmt.api.format_string(sql, DEFAULT_MODE).strip()
