@@ -5,14 +5,13 @@ import psycopg
 from rich.console import Console
 from rich.syntax import Syntax
 
-import ralsei.templates
-from ralsei.templates import Column
+from ralsei.templates import Column, DEFAULT_ENV
 from ralsei.preprocess import format_sql
 
 
 class Task(ABC):
     def __init__(self, env: Optional[jinja2.Environment] = None) -> None:
-        self._env = env or ralsei.templates.default_env()
+        self._env = env or DEFAULT_ENV
 
     @abstractmethod
     def run(self, conn: psycopg.Connection) -> None:
