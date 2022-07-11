@@ -19,8 +19,9 @@ class FnBuilderBase:
         self.wrappers.append(wrapper)
         return self
 
-    def pop_id_fields(self, *id_fields: Union[str, dict[str, str]]):
-        self.add_wrapper(PopIdFields(*id_fields))
+    def pop_id_fields(self, *id_fields: str, keep: bool = False):
+        self.add_wrapper(PopIdFields(*id_fields, keep=keep))
+        return self
 
     def rename_input(self, remap_fields: dict[str, str]):
         self.add_wrapper(RenameInput(remap_fields))
