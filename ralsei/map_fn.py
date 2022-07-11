@@ -73,12 +73,15 @@ class FnBuilderBase:
 
     def add_wrapper(self, wrapper: FnWrapper):
         self.wrappers.append(wrapper)
+        return self
 
     def pop_id_fields(self, *id_fields: str):
         self.add_wrapper(PopIdFields([*id_fields]))
+        return self
 
     def rename_output(self, remap_fields: dict[str, str]):
         self.add_wrapper(RenameOutput(remap_fields))
+        return self
 
 
 class FnBuilderMany(FnBuilderBase):
