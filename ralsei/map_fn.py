@@ -41,6 +41,7 @@ class RenameOutput(FnWrapper):
 
     def wrap(self, fn: OneToMany) -> OneToMany:
         def wrapper(**input_row: Any):
+
             for output_row in fn(**input_row):
                 new_output_row = {}
 
@@ -62,7 +63,15 @@ def into_many(fn: OneToOne) -> OneToMany:
 
 def into_one(fn: OneToMany) -> OneToOne:
     def wrapper(**input_row: Any):
-        return next(fn(**input_row))
+        generator = fn(**input_row)
+        first_value = next(generator)
+
+        try:
+            next(generator)
+        except StopIteration:
+            return first_value
+
+        raise ValueError("Passed generator that returns more than one value")
 
     return wrapper
 
