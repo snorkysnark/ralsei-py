@@ -32,7 +32,7 @@ class FnBuilderBase:
         return self
 
     def _wrap_all(self, chain: OneToMany) -> OneToMany:
-        for wrapper in reversed(self.wrappers):
+        for wrapper in self.wrappers:
             chain = wrapper.wrap(chain)
         return chain
 
