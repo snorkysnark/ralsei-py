@@ -11,16 +11,7 @@ DROP_TABLE = "DROP TABLE {{ table }}"
 
 
 class CreateTableSql(Task):
-    """Run a `CREATE TABLE` sql script
-    ---
-    Args:
-    - sql (str): Jinja sql template for creating the table
-    Receives the following parameters:
-        - `table (Table)`
-        - `**extra`
-    - table (Table): Name and schema of the table being created
-    - env (jinja2.Environment, optional): Environment for rendering the templates
-    - extra (dict, optional): Extra parameters given the the `sql` template"""
+    """Run a `CREATE TABLE` sql script"""
 
     def __init__(
         self,
@@ -29,6 +20,15 @@ class CreateTableSql(Task):
         env: Optional[jinja2.Environment] = None,
         extra: dict = {},
     ) -> None:
+        """Args:
+        - sql (str): Jinja sql template for creating the table
+        Receives the following parameters:
+            - `table (Table)`
+            - `**extra`
+        - table (Table): Name and schema of the table being created
+        - env (jinja2.Environment, optional): Environment for rendering the templates
+        - extra (dict, optional): Extra parameters given the the `sql` template"""
+
         super().__init__(env)
         jinja_params = dict_utils.merge_no_dup({"table": table}, extra)
 
