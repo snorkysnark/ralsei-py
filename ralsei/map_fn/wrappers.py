@@ -48,7 +48,7 @@ class RenameInput(FnWrapper):
                 new_name = self.remap_fields.get(old_name, old_name)
                 new_input_row[new_name] = value
 
-            yield from fn(**input_row)
+            yield from fn(**new_input_row)
 
         return wrapper
 
