@@ -83,6 +83,11 @@ class FnBuilderBase:
         self.add_wrapper(RenameOutput(remap_fields))
         return self
 
+    def _wrap_all(self, chain: OneToMany) -> OneToMany:
+        for wrapper in reversed(self.wrappers):
+            chain = wrapper.wrap(chain)
+        return chain
+
 
 class FnBuilderMany(FnBuilderBase):
     def __init__(self, fn: OneToMany) -> None:
@@ -90,12 +95,7 @@ class FnBuilderMany(FnBuilderBase):
         self.fn = fn
 
     def build(self) -> OneToMany:
-        chain = self.fn
-
-        for wrapper in self.wrappers:
-            chain = wrapper.wrap(chain)
-
-        return chain
+        return self._wrap_all(self.fn)
 
 
 class FnBuilder(FnBuilderBase):
@@ -104,9 +104,4 @@ class FnBuilder(FnBuilderBase):
         self.fn = fn
 
     def build(self) -> OneToOne:
-        chain = into_many(self.fn)
-
-        for wrapper in self.wrappers:
-            chain = wrapper.wrap(chain)
-
-        return into_one(chain)
+        return into_one(self._wrap_all(into_many(self.fn)))
