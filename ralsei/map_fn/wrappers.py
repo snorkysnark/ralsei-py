@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Union
 
 from .protocols import OneToOne, OneToMany
 
@@ -11,15 +11,24 @@ class FnWrapper(ABC):
 
 
 class PopIdFields(FnWrapper):
-    def __init__(self, id_fields: list[str]) -> None:
-        self.id_fields = id_fields
+    def __init__(self, *id_fields: Union[str, dict[str, str]]) -> None:
+        id_fields_flat: dict[str, str] = {}
+
+        for id_field in id_fields:
+            if isinstance(id_field, dict):
+                for old_name, new_name in id_field.items():
+                    id_fields_flat[old_name] = new_name
+            else:
+                id_fields_flat[id_field] = id_field
+
+        self.id_fields = id_fields_flat
 
     def wrap(self, fn: OneToMany) -> OneToMany:
         def wrapper(**input_row: Any):
             id_field_values = {}
 
-            for id_field in self.id_fields:
-                id_field_values[id_field] = input_row.pop(id_field)
+            for id_field, id_field_rename in self.id_fields.items():
+                id_field_values[id_field_rename] = input_row.pop(id_field)
 
             for output_row in fn(**input_row):
                 yield {**id_field_values, **output_row}

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from .protocols import OneToOne, OneToMany
 from .wrappers import FnWrapper, PopIdFields, RenameOutput, into_one, into_many
@@ -12,8 +12,8 @@ class FnBuilderBase:
         self.wrappers.append(wrapper)
         return self
 
-    def pop_id_fields(self, *id_fields: str):
-        self.add_wrapper(PopIdFields([*id_fields]))
+    def pop_id_fields(self, *id_fields: Union[str, dict[str, str]]):
+        self.add_wrapper(PopIdFields(*id_fields))
         return self
 
     def rename_output(self, remap_fields: dict[str, str]):
