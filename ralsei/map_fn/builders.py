@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from .protocols import OneToOne, OneToMany
 from .wrappers import (
@@ -16,6 +16,7 @@ class FnBuilderBase:
 
     def __init__(self) -> None:
         self.wrappers: List[FnWrapper] = []
+        self.id_fields: Optional[list[str]] = None
 
     def add_wrapper(self, wrapper: FnWrapper):
         self.wrappers.append(wrapper)
@@ -24,12 +25,22 @@ class FnBuilderBase:
     def pop_id_fields(self, *id_fields: str, keep: bool = False):
         """(Optionally) removes fields from the input kwargs
         and reinserts them back into the output
+
+        Additionally, `*id_fields` are appended to `self.id_fields` list for use in SQL generation
         ---
         Args:
         - `*id_fields` (str): fields to pop from the kwargs
         - keep (bool, optional): if True, `id_fields` are not removed from kwargs
         (but still remembered and reinserted into the output), False by default"""
         self.add_wrapper(PopIdFields(*id_fields, keep=keep))
+
+        # Remember the names of the popped fields (useful for SQL generation)
+        if not self.id_fields:
+            self.id_fields = []
+
+        for id_field in id_fields:
+            self.id_fields.append(id_field)
+
         return self
 
     def rename_input(self, remap_fields: dict[str, str]):
