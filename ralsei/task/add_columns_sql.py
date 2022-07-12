@@ -29,33 +29,35 @@ class AddColumnsSql(Task):
         table: Table,
         columns: Optional[list[Column]] = None,
         env: Optional[jinja2.Environment] = None,
-        extra: dict = {},
+        jinja_args: dict = {},
+        sql_args: dict = {},
     ) -> None:
         super().__init__(env)
-        jinja_params = dict_utils.merge_no_dup({"table": table}, extra)
-        script_template = self._env.from_string(sql, jinja_params)
+        jinja_args = dict_utils.merge_no_dup({"table": table}, jinja_args)
+        script_template = self._env.from_string(sql, jinja_args)
 
         if columns is None:
             # Get columns variable from template: {% set columns = [...] %}
             columns = getattr(
-                script_template.make_module(jinja_params), "columns", None
+                script_template.make_module(jinja_args), "columns", None
             )
             if columns is None:
                 raise ValueError("Columns not specified")
 
-        rendered_columns = self._render_columns(columns, jinja_params)
+        rendered_columns = self._render_columns(columns, jinja_args)
         add_column_params = dict_utils.merge_no_dup(
-            jinja_params, {"columns": rendered_columns}
+            jinja_args, {"columns": rendered_columns}
         )
 
-        self.sql = self._render_formatted(script_template, jinja_params)
+        self.sql = self._render_formatted(script_template, jinja_args)
         self.add_columns = self._render_formatted(ADD_COLUMNS, add_column_params)
         self.drop_columns = self._render_formatted(DROP_COLUMNS, add_column_params)
+        self.sql_args = sql_args
 
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.add_columns)
-            curs.execute(self.sql)
+            curs.execute(self.sql, self.sql_args)
 
     def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
