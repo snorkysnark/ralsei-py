@@ -8,20 +8,16 @@ from ralsei.templates import Table, Column
 from .task import Task
 
 ADD_COLUMNS = """
-{% set comma = joiner(',') %}
-
 ALTER TABLE {{ table }}
-{% for column in columns %}
-    ADD COLUMN {{ column }}{{ comma() }}
+{% for column in columns -%}
+    ADD COLUMN {{ column }}{{ sep(',', not loop.last) }}
 {% endfor %}
 """
 
 DROP_COLUMNS = """
-{% set comma = joiner(',') %}
-
 ALTER TABLE {{ table }}
-{% for column in columns %}
-    DROP COLUMN {{ column.name }}{{ comma() }}
+{% for column in columns -%}
+    DROP COLUMN {{ column.name }}{{ sep(',', not loop.last) }}
 {% endfor %}
 """
 
