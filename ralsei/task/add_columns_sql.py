@@ -47,7 +47,7 @@ class AddColumnsSql(Task):
             if columns is None:
                 raise ValueError("Columns not specified")
 
-        rendered_columns = self._render_columns(columns)
+        rendered_columns = self._render_columns(columns, jinja_params)
         add_column_params = dict_utils.merge_no_dup(
             jinja_params, {"columns": rendered_columns}
         )
