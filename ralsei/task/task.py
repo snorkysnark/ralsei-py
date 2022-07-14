@@ -38,11 +38,6 @@ class Task(ABC):
 
         return template.render(*args, **kwargs)
 
-    def _render_formatted(
-        self, template: Union[str, jinja2.Template], *args, **kwargs
-    ) -> str:
-        return self._render(template, *args, **kwargs)
-
     def _render_columns(
         self, columns: Iterable[Column], *args, **kwargs
     ) -> list[Column]:

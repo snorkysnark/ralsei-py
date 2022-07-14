@@ -35,8 +35,8 @@ class CreateTableSql(Task):
         super().__init__(env)
         jinja_args = dict_utils.merge_no_dup({"table": table}, jinja_args)
 
-        self.sql = self._render_formatted(sql, jinja_args)
-        self.drop_sql = self._render_formatted(DROP_TABLE, jinja_args)
+        self.sql = self._render(sql, jinja_args)
+        self.drop_sql = self._render(DROP_TABLE, jinja_args)
         self.sql_args = sql_args
 
     def run(self, conn: psycopg.Connection) -> None:

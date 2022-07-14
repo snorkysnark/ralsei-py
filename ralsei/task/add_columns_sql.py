@@ -49,9 +49,9 @@ class AddColumnsSql(Task):
             jinja_args, {"columns": rendered_columns}
         )
 
-        self.sql = self._render_formatted(script_template, jinja_args)
-        self.add_columns = self._render_formatted(ADD_COLUMNS, add_column_params)
-        self.drop_columns = self._render_formatted(DROP_COLUMNS, add_column_params)
+        self.sql = self._render(script_template, jinja_args)
+        self.add_columns = self._render(ADD_COLUMNS, add_column_params)
+        self.drop_columns = self._render(DROP_COLUMNS, add_column_params)
         self.sql_args = sql_args
 
     def run(self, conn: psycopg.Connection) -> None:
