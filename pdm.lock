@@ -11,15 +11,6 @@ requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 summary = "Classes Without Boilerplate"
 
 [[package]]
-name = "click"
-version = "8.1.3"
-requires_python = ">=3.7"
-summary = "Composable command line interface toolkit"
-dependencies = [
-    "colorama; platform_system == \"Windows\"",
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.5"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
@@ -58,12 +49,6 @@ summary = "Core utilities for Python packages"
 dependencies = [
     "pyparsing!=3.0.5,>=2.0.2",
 ]
-
-[[package]]
-name = "platformdirs"
-version = "2.5.2"
-requires_python = ">=3.7"
-summary = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 
 [[package]]
 name = "pluggy"
@@ -125,17 +110,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shandy-sqlfmt"
-version = "0.9.0"
-requires_python = ">=3.7,<4.0"
-summary = "sqlfmt is an opinionated CLI tool that formats your sql files"
-dependencies = [
-    "click<9.0,>=8.0",
-    "platformdirs<3.0.0,>=2.4.0",
-    "tomli<3.0.0,>=2.0.1; python_version < \"3.11\"",
-]
-
-[[package]]
 name = "tomli"
 version = "2.0.1"
 requires_python = ">=3.7"
@@ -158,7 +132,7 @@ summary = "Provider of IANA time zone data"
 
 [metadata]
 lock_version = "3.1"
-content_hash = "sha256:9b107fba3c65761725bc7b30b6ee5b80f2baae0b6a51e142ac5a608abbe0bb86"
+content_hash = "sha256:d1027a80f52da134ca2c3c89782a5cfd89a4a555c03504e8c9c2264bc076ff38"
 
 [metadata.files]
 "atomicwrites 1.4.0" = [
@@ -168,10 +142,6 @@ content_hash = "sha256:9b107fba3c65761725bc7b30b6ee5b80f2baae0b6a51e142ac5a608ab
 "attrs 21.4.0" = [
     {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
     {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
-]
-"click 8.1.3" = [
-    {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
-    {file = "click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
 ]
 "colorama 0.4.5" = [
     {file = "colorama-0.4.5-py2.py3-none-any.whl", hash = "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da"},
@@ -235,10 +205,6 @@ content_hash = "sha256:9b107fba3c65761725bc7b30b6ee5b80f2baae0b6a51e142ac5a608ab
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},
     {file = "packaging-21.3.tar.gz", hash = "sha256:dd47c42927d89ab911e606518907cc2d3a1f38bbd026385970643f9c5b8ecfeb"},
 ]
-"platformdirs 2.5.2" = [
-    {file = "platformdirs-2.5.2-py3-none-any.whl", hash = "sha256:027d8e83a2d7de06bbac4e5ef7e023c02b863d7ea5d079477e722bb41ab25788"},
-    {file = "platformdirs-2.5.2.tar.gz", hash = "sha256:58c8abb07dcb441e6ee4b11d8df0ac856038f944ab98b7be6b27b2a3c7feef19"},
-]
 "pluggy 1.0.0" = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
@@ -266,10 +232,6 @@ content_hash = "sha256:9b107fba3c65761725bc7b30b6ee5b80f2baae0b6a51e142ac5a608ab
 "rich 12.4.4" = [
     {file = "rich-12.4.4-py3-none-any.whl", hash = "sha256:d2bbd99c320a2532ac71ff6a3164867884357da3e3301f0240090c5d2fdac7ec"},
     {file = "rich-12.4.4.tar.gz", hash = "sha256:4c586de507202505346f3e32d1363eb9ed6932f0c2f63184dea88983ff4971e2"},
-]
-"shandy-sqlfmt 0.9.0" = [
-    {file = "shandy_sqlfmt-0.9.0-py3-none-any.whl", hash = "sha256:20bdb7b92f9bda61bdb225d85c1d721610676740f9ba992116fa26c31dc2df04"},
-    {file = "shandy-sqlfmt-0.9.0.tar.gz", hash = "sha256:8403e187836e2aa0b0b4495786d9052f43ba5a70938d77f4e65459026605d725"},
 ]
 "tomli 2.0.1" = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

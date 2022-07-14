@@ -6,7 +6,6 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 from ralsei.templates import Column, DEFAULT_ENV
-from ralsei.preprocess import format_sql
 
 
 class Task(ABC):
@@ -42,7 +41,7 @@ class Task(ABC):
     def _render_formatted(
         self, template: Union[str, jinja2.Template], *args, **kwargs
     ) -> str:
-        return format_sql(self._render(template, *args, **kwargs))
+        return self._render(template, *args, **kwargs)
 
     def _render_columns(
         self, columns: Iterable[Column], *args, **kwargs

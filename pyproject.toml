@@ -8,10 +8,8 @@ authors = [
 dependencies = [
     "jinja2>=3.1.2",
     "psycopg>=3.0.15",
-    "shandy-sqlfmt>=0.9.0",
     "tqdm>=4.64.0",
-    "rich>=12.4.4",
-]
+    "rich>=12.4.4"]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
