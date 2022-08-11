@@ -1,16 +1,19 @@
-from jinja2 import Environment
-from .idents import Table, Column
+from jinja_psycopg import JinjaPsycopg
+from psycopg.sql import SQL
+
+from .idents import Table
 
 
-def make_default_env():
-    def sep(string: str, condition: bool):
-        return string if condition else ''
-
-    env = Environment()
-    env.globals["Table"] = Table
-    env.globals["Column"] = Column
-    env.globals["sep"] = sep
-    return env
+def _sep(string: str, condition: bool):
+    return SQL(string) if condition else ""
 
 
-DEFAULT_ENV = make_default_env()
+class RalseiRenderer(JinjaPsycopg):
+    def _prepare_environment(self):
+        super()._prepare_environment()
+
+        self._env.globals["Table"] = Table
+        self._env.globals["sep"] = _sep
+
+
+DEFAULT_RENDERER = RalseiRenderer()

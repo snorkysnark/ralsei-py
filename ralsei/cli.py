@@ -11,10 +11,10 @@ from ralsei.runner import TaskRunner
 PipelineFactory = Callable[[argparse.Namespace], Pipeline]
 
 
-def describe_sequence(task_sequence: Sequence[NamedTask]):
+def describe_sequence(conn: psycopg.Connection, task_sequence: Sequence[NamedTask]):
     if len(task_sequence) == 1:
         named_task = task_sequence[0]
-        named_task.task.describe()
+        named_task.task.describe(conn)
     else:
         for named_task in task_sequence:
             print(named_task.name)
@@ -46,14 +46,13 @@ class RalseiCli:
 
         task_sequence = list(ralsei.pipeline.resolve(args.task, pipeline))
 
-        if args.action == "describe":
-            describe_sequence(task_sequence)
-        else:
-            with psycopg.connect(conninfo) as conn:
-                runner = TaskRunner(conn)
-                if args.action == "run":
-                    runner.run(task_sequence)
-                elif args.action == "delete":
-                    runner.delete(task_sequence)
-                elif args.action == "redo":
-                    runner.redo(task_sequence)
+        with psycopg.connect(conninfo) as conn:
+            runner = TaskRunner(conn)
+            if args.action == "run":
+                runner.run(task_sequence)
+            elif args.action == "delete":
+                runner.delete(task_sequence)
+            elif args.action == "redo":
+                runner.redo(task_sequence)
+            elif args.action == "describe":
+                describe_sequence(conn, task_sequence)
