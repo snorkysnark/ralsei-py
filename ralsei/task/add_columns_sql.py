@@ -1,9 +1,9 @@
 from typing import Optional
 
-import jinja2
 import psycopg
 
 from ralsei import dict_utils
+from ralsei.renderer import RalseiRenderer, DEFAULT_RENDERER
 from ralsei.templates import Table, Column
 from .task import Task
 
@@ -28,42 +28,37 @@ class AddColumnsSql(Task):
         sql: str,
         table: Table,
         columns: Optional[list[Column]] = None,
-        env: Optional[jinja2.Environment] = None,
-        jinja_args: dict = {},
-        sql_args: dict = {},
+        renderer: RalseiRenderer = DEFAULT_RENDERER,
+        params: dict = {},
     ) -> None:
-        super().__init__(env)
-        jinja_args = dict_utils.merge_no_dup({"table": table}, jinja_args)
-        script_template = self._env.from_string(sql, jinja_args)
+        jinja_args = dict_utils.merge_no_dup({"table": table}, params)
+        script_module = renderer.from_string(sql).make_module(params)
 
         if columns is None:
             # Get columns variable from template: {% set columns = [...] %}
-            columns = getattr(
-                script_template.make_module(jinja_args), "columns", None
-            )
+            columns = script_module.getattr("columns", None)
             if columns is None:
                 raise ValueError("Columns not specified")
 
-        rendered_columns = self._render_columns(columns, jinja_args)
+        rendered_columns = list(map(lambda c: c.render(renderer, jinja_args), columns))
         add_column_params = dict_utils.merge_no_dup(
             jinja_args, {"columns": rendered_columns}
         )
 
-        self.sql = self._render(script_template, jinja_args)
-        self.add_columns = self._render(ADD_COLUMNS, add_column_params)
-        self.drop_columns = self._render(DROP_COLUMNS, add_column_params)
-        self.sql_args = sql_args
+        self.sql = script_module.render()
+        self.add_columns = renderer.render(ADD_COLUMNS, add_column_params)
+        self.drop_columns = renderer.render(DROP_COLUMNS, add_column_params)
 
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.add_columns)
-            curs.execute(self.sql, self.sql_args)
+            curs.execute(self.sql)
 
     def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.drop_columns)
 
-    def get_sql_scripts(self) -> dict[str, str]:
+    def get_sql_scripts(self):
         return {
             "Add Columns": self.add_columns,
             "Main": self.sql,
