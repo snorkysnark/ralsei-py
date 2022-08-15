@@ -3,23 +3,22 @@ from typing import Optional
 import psycopg
 
 from ralsei import dict_utils
-from ralsei.renderer import RalseiRenderer, DEFAULT_RENDERER
+from ralsei.templates import RalseiRenderer, DEFAULT_RENDERER
 from ralsei.templates import Table, Column
 from .task import Task
 
-ADD_COLUMNS = """
+ADD_COLUMNS = DEFAULT_RENDERER.from_string(
+    """\
 ALTER TABLE {{ table }}
-{% for column in columns -%}
-    ADD COLUMN {{ column }}{{ sep(',', not loop.last) }}
-{% endfor %}
-"""
+{{ columns | sqljoin(',\n', attribute='add') }}"""
+)
 
-DROP_COLUMNS = """
+DROP_COLUMNS = DEFAULT_RENDERER.from_string(
+    """\
 ALTER TABLE {{ table }}
-{% for column in columns -%}
-    DROP COLUMN {{ column.name }}{{ sep(',', not loop.last) }}
-{% endfor %}
-"""
+{{ columns | sqljoin(',\n', attribute='drop') }}"""
+)
+
 
 
 class AddColumnsSql(Task):
@@ -32,7 +31,7 @@ class AddColumnsSql(Task):
         params: dict = {},
     ) -> None:
         jinja_args = dict_utils.merge_no_dup({"table": table}, params)
-        script_module = renderer.from_string(sql).make_module(params)
+        script_module = renderer.from_string(sql).make_module(jinja_args)
 
         if columns is None:
             # Get columns variable from template: {% set columns = [...] %}
@@ -46,8 +45,8 @@ class AddColumnsSql(Task):
         )
 
         self.sql = script_module.render()
-        self.add_columns = renderer.render(ADD_COLUMNS, add_column_params)
-        self.drop_columns = renderer.render(DROP_COLUMNS, add_column_params)
+        self.add_columns = ADD_COLUMNS.render(add_column_params)
+        self.drop_columns = DROP_COLUMNS.render(add_column_params)
 
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:

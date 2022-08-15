@@ -3,7 +3,7 @@ from psycopg.sql import Composable
 
 from ralsei.templates import Table
 from ralsei import dict_utils
-from ralsei.renderer import RalseiRenderer, DEFAULT_RENDERER
+from ralsei.templates import RalseiRenderer, DEFAULT_RENDERER
 from .task import Task
 
 DROP_TABLE = "DROP TABLE {{ table }}"

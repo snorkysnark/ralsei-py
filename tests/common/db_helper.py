@@ -2,7 +2,7 @@ import psycopg
 from psycopg import Connection
 
 from ralsei import Table
-from ralsei.renderer import DEFAULT_RENDERER
+from ralsei.templates import DEFAULT_RENDERER
 
 _SELECT_TEMPLATE = DEFAULT_RENDERER.from_string("SELECT * FROM {{ table }}")
 

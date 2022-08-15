@@ -2,8 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 from psycopg.sql import SQL, Identifier, Composed
-
-from ralsei.renderer import RalseiRenderer
+from jinja_psycopg import JinjaPsycopg
 
 
 @dataclass
@@ -34,3 +33,21 @@ class ColumnRendered:
 
     def __sql__(self):
         return SQL("{} {}").format(Identifier(self.name), self.type)
+
+    @property
+    def add(self):
+        return SQL("ADD COLUMN {} {}").format(Identifier(self.name), self.type)
+
+    @property
+    def drop(self):
+        return SQL("DROP COLUMN {}").format(Identifier(self.name))
+
+
+class RalseiRenderer(JinjaPsycopg):
+    def _prepare_environment(self):
+        super()._prepare_environment()
+
+        self._env.globals["Column"] = Column
+
+
+DEFAULT_RENDERER = RalseiRenderer()
