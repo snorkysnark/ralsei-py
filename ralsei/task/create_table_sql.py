@@ -23,12 +23,10 @@ class CreateTableSql(Task):
         - sql (str): Jinja sql template for creating the table
         Receives the following parameters:
             - `table (Table)`
-            - `**jinja_args`
+            - `**params`
         - table (Table): Name and schema of the table being created
-        - env (jinja2.Environment, optional): Environment for rendering the templates
-        - jinja_args (dict, optional): Extra parameters given the the `sql` template
-        - sql_args (dict, optional): Query parameters given to psycopg:
-            Access them like this: `%(param)s`"""
+        - renderer (RalseiRenderer, optional): Environment for rendering the templates
+        - params (dict, optional): Extra parameters given the the `sql` template"""
 
         jinja_args = dict_utils.merge_no_dup({"table": table}, params)
 
