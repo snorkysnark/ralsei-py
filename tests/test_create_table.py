@@ -56,3 +56,23 @@ def test_create_table_jinja_args(conn: Connection, flag: bool, expected: list[Tu
     assert get_rows(conn, table) == expected
     task.delete(conn)
     assert not table_exists(conn, table)
+
+
+def test_create_table_literal(conn: Connection):
+    table = Table("test_create_table_literal")
+    task = CreateTableSql(
+        sql="""
+        CREATE TABLE {{ table }}(
+            foo TEXT,
+            bar INT
+        );
+        INSERT INTO {{ table }} VALUES ({{ foo }}, {{ bar }});
+        """,
+        table=table,
+        params={"foo": "Ralsei\ncute", "bar": 10},
+    )
+
+    task.run(conn)
+    assert get_rows(conn, table) == [("Ralsei\ncute", 10)]
+    task.delete(conn)
+    assert not table_exists(conn, table)
