@@ -1,7 +1,7 @@
 from jinja_psycopg import JinjaPsycopg
 from psycopg.sql import SQL
 
-from .idents import Table
+from .idents import Column
 
 
 def _sep(string: str, condition: bool):
@@ -12,7 +12,7 @@ class RalseiRenderer(JinjaPsycopg):
     def _prepare_environment(self):
         super()._prepare_environment()
 
-        self._env.globals["Table"] = Table
+        self._env.globals["Column"] = Column
         self._env.globals["sep"] = _sep
 
 
