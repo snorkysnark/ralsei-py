@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Optional, Union
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.sql import Composable, Placeholder
@@ -68,12 +68,25 @@ def make_column_statements(
 
 _CREATE_TABLE = DEFAULT_RENDERER.from_string(
     """\
-    CREATE TABLE {{ table }}(
+    CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
         {{ definition | sqljoin(',\\n    ') }}
     )"""
 )
 
+_ADD_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
+    """\
+    ALTER TABLE {{ source }}
+    ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE"""
+)
+
 _DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE {{ table }}")
+
+_DROP_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
+    """\
+    ALTER TABLE {{ source }}
+    DROP COLUMN {{ is_done }}"""
+)
+
 
 _INSERT = DEFAULT_RENDERER.from_string(
     """\
@@ -85,6 +98,12 @@ _INSERT = DEFAULT_RENDERER.from_string(
     )"""
 )
 
+_SET_IS_DONE = DEFAULT_RENDERER.from_string(
+    """UPDATE {{ source }}
+    SET {{ is_done }} = TRUE
+    WHERE {{ id_fields | sqljoin(' AND ') }}"""
+)
+
 
 class MapToNewTable(Task):
     def __init__(
@@ -93,6 +112,8 @@ class MapToNewTable(Task):
         table: Table,
         columns: list[Union[str, ValueColumn]],
         fn: OneToMany,
+        source_table: Optional[Table] = None,
+        is_done_column: Optional[str] = None,
         renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
     ) -> None:
