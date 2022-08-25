@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, Union
 import psycopg
 from psycopg.rows import dict_row
-from psycopg.sql import Composable, Placeholder
+from psycopg.sql import SQL, Composable, Identifier, Placeholder
 from tqdm import tqdm
 
 from ralsei.map_fn import OneToMany
@@ -105,6 +105,19 @@ _SET_IS_DONE = DEFAULT_RENDERER.from_string(
 )
 
 
+class IdColumn:
+    def __init__(self, name: str, value: Any = _FROM_NAME):
+        self.name = name
+
+        if value == _FROM_NAME:
+            self.value = Placeholder(name)
+        else:
+            self.value = value
+
+    def __sql__(self):
+        return SQL("{} = {}").format(Identifier(self.name), self.value)
+
+
 class MapToNewTable(Task):
     def __init__(
         self,
@@ -114,25 +127,50 @@ class MapToNewTable(Task):
         fn: OneToMany,
         source_table: Optional[Table] = None,
         is_done_column: Optional[str] = None,
+        id_fields: Optional[list[IdColumn]] = None,
         renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
     ) -> None:
-        jinja_params = dict_utils.merge_no_dup(params, {"table": table})
+        is_done_ident = Identifier(is_done_column) if is_done_column else None
+
+        jinja_params = dict_utils.merge_no_dup(
+            params, {"table": table, "source": source_table, "is_done": is_done_ident}
+        )
         self.select = renderer.render(select, jinja_params)
 
         table_definition, insert_columns = make_column_statements(
             columns, renderer, jinja_params
         )
         self.create_table = _CREATE_TABLE.render(
-            table=table, definition=table_definition
+            table=table,
+            definition=table_definition,
+            if_not_exists=(is_done_column is not None),
         )
         self.drop_table = _DROP_TABLE.render(table=table)
         self.insert = _INSERT.render(table=table, columns=insert_columns)
         self.fn = fn
 
+        if is_done_column:
+            assert (
+                source_table
+            ), "Cannot create is_done_column when source_table is None"
+
+            self.add_is_done_column = _ADD_IS_DONE_COLUMN.render(
+                source=source_table, is_done=is_done_ident
+            )
+            self.set_is_done = _SET_IS_DONE.render(
+                source=source_table, is_done=is_done_ident, id_fields=id_fields
+            )
+            self.drop_is_done_column = _DROP_IS_DONE_COLUMN.render(
+                source=source_table, is_done=is_done_ident
+            )
+
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as cursor:
             cursor.execute(self.create_table)
+
+            if self.add_is_done_column:
+                cursor.execute(self.add_is_done_column)
 
         with conn.cursor(
             row_factory=dict_row
@@ -143,14 +181,27 @@ class MapToNewTable(Task):
                 for output_row in self.fn(**input_row):
                     output_cursor.execute(self.insert, output_row)
 
+                    if self.set_is_done:
+                        output_cursor.execute(self.set_is_done, input_row)
+                        conn.commit()
+
     def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
             curs.execute(self.drop_table)
 
+            if self.drop_is_done_column:
+                curs.execute(self.drop_is_done_column)
+
     def get_sql_scripts(self) -> dict[str, Composable]:
-        return {
-            "Select": self.select,
-            "Create": self.create_table,
-            "Drop": self.drop_table,
-            "Insert": self.insert,
-        }
+        scripts = {}
+
+        if self.add_is_done_column:
+            scripts["Add marker"] = self.add_is_done_column
+            scripts["Set marker"] = self.set_is_done
+            scripts["Drop marker"] = self.drop_is_done_column
+
+        scripts["Select"] = self.select
+        scripts["Create"] = self.create_table
+        scripts["Drop"] = self.drop_table
+        scripts["Insert"] = self.insert
+        return scripts
