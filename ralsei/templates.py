@@ -39,6 +39,10 @@ class ColumnRendered:
         return SQL("{} {}").format(Identifier(self.name), self.type)
 
     @property
+    def ident(self):
+        return Identifier(self.name)
+
+    @property
     def add(self):
         return SQL("ADD COLUMN {} {}").format(Identifier(self.name), self.type)
 
