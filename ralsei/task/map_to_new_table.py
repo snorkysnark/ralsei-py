@@ -6,6 +6,7 @@ from psycopg.sql import SQL, Composable, Identifier, Placeholder
 from tqdm import tqdm
 
 from ralsei.map_fn import OneToMany
+from ralsei.map_fn.builders import GeneratorBuilder
 from ralsei.templates import (
     DEFAULT_RENDERER,
     ColumnRendered,
@@ -124,7 +125,7 @@ class MapToNewTable(Task):
         select: str,
         table: Table,
         columns: list[Union[str, ValueColumn]],
-        fn: OneToMany,
+        fn: Union[OneToMany, GeneratorBuilder],
         source_table: Optional[Table] = None,
         is_done_column: Optional[str] = None,
         id_fields: Optional[list[IdColumn]] = None,
@@ -148,9 +149,22 @@ class MapToNewTable(Task):
         )
         self.drop_table = _DROP_TABLE.render(table=table)
         self.insert = _INSERT.render(table=table, columns=insert_columns)
-        self.fn = fn
+
+        if isinstance(fn, GeneratorBuilder):
+            fn_builder = fn
+            self.fn = fn.build()
+        else:
+            fn_builder = None
+            self.fn = fn
 
         if is_done_column:
+            # Guess id fields from the function builder
+            if id_fields is None and fn_builder is not None and fn_builder.id_fields is not None:
+                id_fields = list(map(IdColumn, fn_builder.id_fields))
+
+            if id_fields is None:
+                raise RuntimeError("Must provide id_fields if using is_done_column")
+
             assert (
                 source_table
             ), "Cannot create is_done_column when source_table is None"
