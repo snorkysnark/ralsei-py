@@ -28,7 +28,7 @@ summary = "iniconfig: brain-dead simple config-ini parsing"
 
 [[package]]
 name = "jinja-psycopg"
-version = "0.1.2"
+version = "0.1.3"
 requires_python = ">=3.9"
 summary = ""
 dependencies = [
@@ -83,7 +83,7 @@ summary = "library with cross-python path, ini-parsing, io, code, log facilities
 
 [[package]]
 name = "pygments"
-version = "2.12.0"
+version = "2.13.0"
 requires_python = ">=3.6"
 summary = "Pygments is a syntax highlighting package written in Python."
 
@@ -136,13 +136,13 @@ dependencies = [
 
 [[package]]
 name = "tzdata"
-version = "2022.1"
+version = "2022.2"
 requires_python = ">=2"
 summary = "Provider of IANA time zone data"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:0e711639994d23f87145b3244f129364942d1545749f692b18a4578a96c4dcc5"
+content_hash = "sha256:d0f992116ba12478f15aeb1da75a590e2e8b1b3ed6e6a822fd0a9e91d2c0c88b"
 
 [metadata.files]
 "atomicwrites 1.4.1" = [
@@ -164,9 +164,9 @@ content_hash = "sha256:0e711639994d23f87145b3244f129364942d1545749f692b18a4578a9
     {url = "https://files.pythonhosted.org/packages/23/a2/97899f6bd0e873fed3a7e67ae8d3a08b21799430fb4da15cfedf10d6e2c2/iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
     {url = "https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
 ]
-"jinja-psycopg 0.1.2" = [
-    {url = "https://files.pythonhosted.org/packages/60/41/33deb607ef88be347bb33ffa98b149f19804ccb86701dead1f64e7bdc069/jinja-psycopg-0.1.2.tar.gz", hash = "sha256:ed401969b5296b332abdfb9fdb288e04e8303fceedc94e9bc97d428a7d6243f4"},
-    {url = "https://files.pythonhosted.org/packages/cd/ba/73374904de7b8f556664c66a79fb807517ffe253d5a8b712c5550169bcc8/jinja_psycopg-0.1.2-py3-none-any.whl", hash = "sha256:77b32c3dfec3709ca744dd3c062de30c8de9c8a9f1909fec927688792321a7ec"},
+"jinja-psycopg 0.1.3" = [
+    {url = "https://files.pythonhosted.org/packages/5e/5a/344fe3998edfd9cb6f5d77816923535141286f68c147d3f076e018010262/jinja-psycopg-0.1.3.tar.gz", hash = "sha256:3322c878eaecb542de475c3d6e520804efa38d3ae6217409c13d9a0997e3ff0a"},
+    {url = "https://files.pythonhosted.org/packages/84/6b/0c38932ca4c96636807ac069fe5967b4fecfc78e58b34354dedc3ad1806e/jinja_psycopg-0.1.3-py3-none-any.whl", hash = "sha256:cc3d5ecdd84b463993d87a5f5f502b5f96b50493db279e565c28d18aa1f49489"},
 ]
 "jinja2 3.1.2" = [
     {url = "https://files.pythonhosted.org/packages/7a/ff/75c28576a1d900e87eb6335b063fab47a8ef3c8b4d88524c4bf78f670cce/Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
@@ -230,9 +230,9 @@ content_hash = "sha256:0e711639994d23f87145b3244f129364942d1545749f692b18a4578a9
     {url = "https://files.pythonhosted.org/packages/98/ff/fec109ceb715d2a6b4c4a85a61af3b40c723a961e8828319fbcb15b868dc/py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
     {url = "https://files.pythonhosted.org/packages/f6/f0/10642828a8dfb741e5f3fbaac830550a518a775c7fff6f04a007259b0548/py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
 ]
-"pygments 2.12.0" = [
-    {url = "https://files.pythonhosted.org/packages/59/0f/eb10576eb73b5857bc22610cdfc59e424ced4004fe7132c8f2af2cc168d3/Pygments-2.12.0.tar.gz", hash = "sha256:5eb116118f9612ff1ee89ac96437bb6b49e8f04d8a13b514ba26f620208e26eb"},
-    {url = "https://files.pythonhosted.org/packages/5c/8e/1d9017950034297fffa336c72e693a5b51bbf85141b24a763882cf1977b5/Pygments-2.12.0-py3-none-any.whl", hash = "sha256:dc9c10fb40944260f6ed4c688ece0cd2048414940f1cea51b8b226318411c519"},
+"pygments 2.13.0" = [
+    {url = "https://files.pythonhosted.org/packages/4f/82/672cd382e5b39ab1cd422a672382f08a1fb3d08d9e0c0f3707f33a52063b/Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
+    {url = "https://files.pythonhosted.org/packages/e0/ef/5905cd3642f2337d44143529c941cc3a02e5af16f0f65f81cbef7af452bb/Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
 ]
 "pyparsing 3.0.9" = [
     {url = "https://files.pythonhosted.org/packages/6c/10/a7d0fa5baea8fe7b50f448ab742f26f52b80bfca85ac2be9d35cdd9a3246/pyparsing-3.0.9-py3-none-any.whl", hash = "sha256:5026bae9a10eeaefb61dab2f09052b9f4307d44aee4eda64b309723d8d206bbc"},
@@ -254,7 +254,7 @@ content_hash = "sha256:0e711639994d23f87145b3244f129364942d1545749f692b18a4578a9
     {url = "https://files.pythonhosted.org/packages/8a/c4/d15f1e627fff25443ded77ea70a7b5532d6371498f9285d44d62587e209c/tqdm-4.64.0-py2.py3-none-any.whl", hash = "sha256:74a2cdefe14d11442cedf3ba4e21a3b84ff9a2dbdc6cfae2c34addb2a14a5ea6"},
     {url = "https://files.pythonhosted.org/packages/98/2a/838de32e09bd511cf69fe4ae13ffc748ac143449bfc24bb3fd172d53a84f/tqdm-4.64.0.tar.gz", hash = "sha256:40be55d30e200777a307a7585aee69e4eabb46b4ec6a4b4a5f2d9f11e7d5408d"},
 ]
-"tzdata 2022.1" = [
-    {url = "https://files.pythonhosted.org/packages/89/2d/49329ebec33b14dae61ecc8c85abe596341832fa36c4bcd3d99fddda018b/tzdata-2022.1-py2.py3-none-any.whl", hash = "sha256:238e70234214138ed7b4e8a0fab0e5e13872edab3be586ab8198c407620e2ab9"},
-    {url = "https://files.pythonhosted.org/packages/df/c7/2d8ea31840794fb341bc2c2ea72bf1bd16bd778bd8c0d7c9e1e5f9df1de3/tzdata-2022.1.tar.gz", hash = "sha256:8b536a8ec63dc0751342b3984193a3118f8fca2afe25752bb9b7fffd398552d3"},
+"tzdata 2022.2" = [
+    {url = "https://files.pythonhosted.org/packages/3e/eb/a00286433c739bb1a0d83a069b2dc379a5d14b0b9c927e3cb00cb434d740/tzdata-2022.2.tar.gz", hash = "sha256:21f4f0d7241572efa7f7a4fdabb052e61b55dc48274e6842697ccdf5253e5451"},
+    {url = "https://files.pythonhosted.org/packages/71/9b/8b9fea4f4dc956de76baa291cec1c864a8edadf2950d1740bc386d7fe55a/tzdata-2022.2-py2.py3-none-any.whl", hash = "sha256:c3119520447d68ef3eb8187a55a4f44fa455f30eb1b4238fa5691ba094f2b05b"},
 ]

@@ -9,14 +9,14 @@ from .task import Task
 
 ADD_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
-ALTER TABLE {{ table }}
-{{ columns | sqljoin(',\n', attribute='add') }}"""
+    ALTER TABLE {{ table }}
+    {{ columns | sqljoin(',\n', attribute='add') }}"""
 )
 
 DROP_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
-ALTER TABLE {{ table }}
-{{ columns | sqljoin(',\n', attribute='drop') }}"""
+    ALTER TABLE {{ table }}
+    {{ columns | sqljoin(',\n', attribute='drop') }}"""
 )
 
 
