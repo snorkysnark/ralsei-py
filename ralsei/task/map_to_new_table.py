@@ -1,50 +1,20 @@
-from dataclasses import dataclass
-from typing import Any, Optional, Union
+from typing import Optional, Union
 import psycopg
 from psycopg.rows import dict_row
-from psycopg.sql import SQL, Composable, Identifier, Placeholder
+from psycopg.sql import Composable, Identifier
 from tqdm import tqdm
 
 from ralsei.map_fn import OneToMany
 from ralsei.map_fn.builders import GeneratorBuilder
 from ralsei.templates import (
     DEFAULT_RENDERER,
-    ColumnRendered,
     RalseiRenderer,
     Table,
-    Column,
+    ValueColumn,
+    IdColumn
 )
 from .task import Task
 from ralsei import dict_utils
-
-_FROM_NAME = object()
-
-
-class ValueColumn:
-    def __init__(self, name: str, type: str, value: Any = _FROM_NAME):
-        self.column = Column(name, type)
-
-        if value == _FROM_NAME:
-            self.value = Placeholder(name)
-        else:
-            self.value = value
-
-    def render(self, renderer: RalseiRenderer, params: dict = {}):
-        return ValueColumnRendered(self.column.render(renderer, params), self.value)
-
-
-@dataclass
-class ValueColumnRendered:
-    column: ColumnRendered
-    value: Any
-
-    @property
-    def definition(self):
-        return self.column.definition
-
-    @property
-    def ident(self):
-        return self.column.ident
 
 
 def make_column_statements(
@@ -106,19 +76,6 @@ _SET_IS_DONE = DEFAULT_RENDERER.from_string(
 )
 
 
-class IdColumn:
-    def __init__(self, name: str, value: Any = _FROM_NAME):
-        self.name = name
-
-        if value == _FROM_NAME:
-            self.value = Placeholder(name)
-        else:
-            self.value = value
-
-    def __sql__(self):
-        return SQL("{} = {}").format(Identifier(self.name), self.value)
-
-
 class MapToNewTable(Task):
     def __init__(
         self,
@@ -159,7 +116,11 @@ class MapToNewTable(Task):
 
         if is_done_column:
             # Guess id fields from the function builder
-            if id_fields is None and fn_builder is not None and fn_builder.id_fields is not None:
+            if (
+                id_fields is None
+                and fn_builder is not None
+                and fn_builder.id_fields is not None
+            ):
                 id_fields = list(map(IdColumn, fn_builder.id_fields))
 
             if id_fields is None:
