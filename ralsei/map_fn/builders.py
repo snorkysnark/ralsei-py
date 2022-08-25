@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from .protocols import OneToOne, OneToMany
 from .wrappers import (
@@ -75,10 +75,13 @@ class FnBuilderBase:
 class GeneratorBuilder(FnBuilderBase):
     """Build a function of type `(*args) -> Generator[dict]`"""
 
-    def __init__(self, fn: OneToMany) -> None:
+    def __init__(self, fn: Union[OneToOne, OneToMany]) -> None:
         """Args:
         - fn (OneToMany): Base function around which to create wrappers"""
         super().__init__()
+
+        if isinstance(fn, OneToOne):
+            fn = into_many(fn)
         self.fn = fn
 
     def build(self) -> OneToMany:
@@ -88,10 +91,13 @@ class GeneratorBuilder(FnBuilderBase):
 class FnBuilder(FnBuilderBase):
     """Build a function of type (*args) -> dict"""
 
-    def __init__(self, fn: OneToOne) -> None:
+    def __init__(self, fn: Union[OneToOne, OneToMany]) -> None:
         """Args:
         - fn (OneToOne): Base function around which to create wrappers"""
         super().__init__()
+
+        if isinstance(fn, OneToMany):
+            fn = into_one(fn)
         self.fn = fn
 
     def build(self) -> OneToOne:
