@@ -34,6 +34,18 @@ class ValueColumnRendered:
     def ident(self):
         return self.column.ident
 
+    @property
+    def set(self):
+        return SQL("{} = {}").format(self.ident, self.value)
+
+    @property
+    def add(self):
+        return self.column.add
+
+    @property
+    def drop(self):
+        return self.column.drop
+
 
 class IdColumn:
     def __init__(self, name: str, value: Any = _FROM_NAME):

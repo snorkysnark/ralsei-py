@@ -1,6 +1,5 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
 from psycopg.sql import SQL, Identifier, Composed
 from jinja_psycopg import JinjaPsycopg
 
@@ -9,15 +8,21 @@ from jinja_psycopg import JinjaPsycopg
 class Column:
     name: str
     type: str
+    add_if_not_exists: bool = False
 
     def render(self, renderer: RalseiRenderer, params: dict = {}):
-        return ColumnRendered(self.name, renderer.render(self.type, params))
+        return ColumnRendered(
+            name=self.name,
+            type=renderer.render(self.type, params),
+            add_if_not_exists=self.add_if_not_exists,
+        )
 
 
 @dataclass
 class ColumnRendered:
     name: str
     type: Composed
+    add_if_not_exists: bool = False
 
     def __sql__(self):
         return SQL("{} {}").format(Identifier(self.name), self.type)
@@ -32,7 +37,11 @@ class ColumnRendered:
 
     @property
     def add(self):
-        return SQL("ADD COLUMN {} {}").format(Identifier(self.name), self.type)
+        return SQL("ADD COLUMN {if_not_exists}{name} {type}").format(
+            if_not_exists=SQL("IF NOT EXISTS ") if self.add_if_not_exists else SQL(""),
+            name=Identifier(self.name),
+            type=self.type,
+        )
 
     @property
     def drop(self):
