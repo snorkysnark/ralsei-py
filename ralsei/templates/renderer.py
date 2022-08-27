@@ -44,8 +44,8 @@ class ColumnRendered:
         )
 
     @property
-    def drop(self):
-        return SQL("DROP COLUMN {}").format(Identifier(self.name))
+    def drop_if_exists(self):
+        return SQL("DROP COLUMN IF EXISTS {}").format(Identifier(self.name))
 
 
 class RalseiRenderer(JinjaPsycopg):

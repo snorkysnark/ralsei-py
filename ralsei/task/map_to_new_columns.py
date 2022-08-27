@@ -3,7 +3,6 @@ import psycopg
 from psycopg.rows import dict_row
 
 from psycopg.sql import SQL, Composable, Identifier
-from requests import delete
 from tqdm import tqdm
 from ralsei import dict_utils
 
@@ -18,10 +17,6 @@ from ralsei.templates import (
 from .task import Task
 
 
-_ADD_COLUMN = DEFAULT_RENDERER.from_string(
-    "ADD COLUMN {% if if_not_exists %}IF NOT EXISTS {% endif %} {{ column }}"
-)
-
 _ADD_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
@@ -31,7 +26,7 @@ _ADD_COLUMNS = DEFAULT_RENDERER.from_string(
 _DROP_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\\n', attribute='drop') }}"""
+    {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }}"""
 )
 
 _UPDATE = DEFAULT_RENDERER.from_string(

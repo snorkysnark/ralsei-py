@@ -16,7 +16,7 @@ ADD_COLUMNS = DEFAULT_RENDERER.from_string(
 DROP_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\n', attribute='drop') }}"""
+    {{ columns | sqljoin(',\n', attribute='drop_if_exists') }}"""
 )
 
 

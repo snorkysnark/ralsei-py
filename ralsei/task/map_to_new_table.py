@@ -50,12 +50,12 @@ _ADD_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
     ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE"""
 )
 
-_DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE {{ table }}")
+_DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE IF EXISTS {{ table }}")
 
 _DROP_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ source }}
-    DROP COLUMN {{ is_done }}"""
+    DROP COLUMN IF EXISTS {{ is_done }}"""
 )
 
 

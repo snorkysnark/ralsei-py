@@ -43,8 +43,8 @@ class ValueColumnRendered:
         return self.column.add
 
     @property
-    def drop(self):
-        return self.column.drop
+    def drop_if_exists(self):
+        return self.column.drop_if_exists
 
 
 class IdColumn:
