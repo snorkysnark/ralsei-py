@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, List, Optional
 
 from .protocols import OneToOne, OneToMany
@@ -81,6 +82,10 @@ class GeneratorBuilder(FnBuilderBase):
         super().__init__()
         self.fn = fn
 
+    @staticmethod
+    def from_fn(fn: OneToOne) -> GeneratorBuilder:
+        return GeneratorBuilder(into_many(fn))
+
     def build(self) -> OneToMany:
         return self._wrap_all(self.fn)
 
@@ -93,6 +98,10 @@ class FnBuilder(FnBuilderBase):
         - fn (OneToOne): Base function around which to create wrappers"""
         super().__init__()
         self.fn = fn
+
+    @staticmethod
+    def from_generator(fn: OneToMany) -> FnBuilder:
+        return FnBuilder(into_one(fn))
 
     def build(self) -> OneToOne:
         return into_one(self._wrap_all(into_many(self.fn)))
