@@ -139,6 +139,10 @@ class MapToNewTable(Task):
             self.drop_is_done_column = _DROP_IS_DONE_COLUMN.render(
                 source=source_table, is_done=is_done_ident
             )
+        else:
+            self.add_is_done_column = None
+            self.set_is_done = None
+            self.drop_is_done_column = None
 
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as cursor:
