@@ -11,7 +11,7 @@ from ralsei.templates import (
     RalseiRenderer,
     Table,
     ValueColumn,
-    IdColumn
+    IdColumn,
 )
 from .task import Task
 from ralsei import dict_utils
@@ -79,10 +79,10 @@ _SET_IS_DONE = DEFAULT_RENDERER.from_string(
 class MapToNewTable(Task):
     def __init__(
         self,
-        select: str,
         table: Table,
         columns: list[Union[str, ValueColumn]],
         fn: Union[OneToMany, GeneratorBuilder],
+        select: Optional[str] = None,
         source_table: Optional[Table] = None,
         is_done_column: Optional[str] = None,
         id_fields: Optional[list[IdColumn]] = None,
@@ -94,7 +94,7 @@ class MapToNewTable(Task):
         jinja_params = dict_utils.merge_no_dup(
             params, {"table": table, "source": source_table, "is_done": is_done_ident}
         )
-        self.select = renderer.render(select, jinja_params)
+        self.select = renderer.render(select, jinja_params) if select else None
 
         table_definition, insert_columns = make_column_statements(
             columns, renderer, jinja_params
@@ -151,18 +151,22 @@ class MapToNewTable(Task):
             if self.add_is_done_column:
                 cursor.execute(self.add_is_done_column)
 
-        with conn.cursor(
-            row_factory=dict_row
-        ) as input_cursor, conn.cursor() as output_cursor:
-            input_cursor.execute(self.select)
-
-            for input_row in tqdm(input_cursor, total=input_cursor.rowcount):
+        def process_output(input_row: dict):
+            with conn.cursor() as output_cursor:
                 for output_row in self.fn(**input_row):
                     output_cursor.execute(self.insert, output_row)
 
                     if self.set_is_done:
                         output_cursor.execute(self.set_is_done, input_row)
                         conn.commit()
+
+        if self.select:
+            with conn.cursor(row_factory=dict_row) as input_cursor:
+                input_cursor.execute(self.select)
+                for input_row in tqdm(input_cursor, total=input_cursor.rowcount):
+                    process_output(input_row)
+        else:
+            process_output({})
 
     def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
@@ -179,7 +183,8 @@ class MapToNewTable(Task):
             scripts["Set marker"] = self.set_is_done
             scripts["Drop marker"] = self.drop_is_done_column
 
-        scripts["Select"] = self.select
+        if self.select:
+            scripts["Select"] = self.select
         scripts["Create"] = self.create_table
         scripts["Drop"] = self.drop_table
         scripts["Insert"] = self.insert
