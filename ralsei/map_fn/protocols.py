@@ -1,13 +1,9 @@
-from typing import Any, Generator, Protocol
+from typing import Callable, Generator
 
 
-class OneToOne(Protocol):
-    """Any function of type (*args) -> dict"""
-    def __call__(self, *args: Any) -> dict:
-        ...
+# Any function of type (*args) -> dict
+OneToOne = Callable[..., dict]
 
 
-class OneToMany(Protocol):
-    """Any function of type (*args) -> Generator[dict]"""
-    def __call__(self, *args: Any) -> Generator[dict, None, None]:
-        ...
+# Any function of type (*args) -> Generator[dict]
+OneToMany = Callable[..., Generator[dict, None, None]]
