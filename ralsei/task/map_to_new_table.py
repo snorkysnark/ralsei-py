@@ -156,15 +156,17 @@ class MapToNewTable(Task):
                 for output_row in self.fn(**input_row):
                     output_cursor.execute(self.insert, output_row)
 
-                    if self.set_is_done:
-                        output_cursor.execute(self.set_is_done, input_row)
-                        conn.commit()
-
         if self.select:
-            with conn.cursor(row_factory=dict_row) as input_cursor:
+            with conn.cursor(
+                row_factory=dict_row
+            ) as input_cursor, conn.cursor() as done_cursor:
                 input_cursor.execute(self.select)
                 for input_row in tqdm(input_cursor, total=input_cursor.rowcount):
                     process_output(input_row)
+
+                    if self.set_is_done:
+                        done_cursor.execute(self.set_is_done, input_row)
+                        conn.commit()
         else:
             process_output({})
 
