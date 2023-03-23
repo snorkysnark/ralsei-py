@@ -90,7 +90,7 @@ class AddToInput(FnWrapper):
 
     def wrap(self, fn: OneToMany) -> OneToMany:
         def wrapper(**input_row: Any):
-            yield from fn({**input_row, **self.add_values})
+            yield from fn(**input_row, **self.add_values)
 
         return wrapper
 
