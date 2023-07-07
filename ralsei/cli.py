@@ -37,7 +37,7 @@ class RalseiCli:
     ):
         args = self._argparser.parse_args()
 
-        conninfo = conninfo or args.conn
+        conninfo = args.conn or conninfo
         if not conninfo:
             raise ValueError("conninfo not specified")
 

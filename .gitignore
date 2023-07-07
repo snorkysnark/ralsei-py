@@ -1,6 +1,6 @@
 *.pyc
 
-.pdm.toml
+.pdm-python
 __pypackages__/
 
 dist/
