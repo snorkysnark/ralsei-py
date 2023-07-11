@@ -3,6 +3,7 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.sql import Composable, Identifier
 from tqdm import tqdm
+from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToMany
 from ralsei.map_fn.builders import GeneratorBuilder
@@ -88,6 +89,7 @@ class MapToNewTable(Task):
         id_fields: Optional[list[IdColumn]] = None,
         renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
+        cursor_factory: CursorFactory = ClientCursorFactory(),
     ) -> None:
         is_done_ident = Identifier(is_done_column) if is_done_column else None
 
@@ -106,6 +108,8 @@ class MapToNewTable(Task):
         )
         self.drop_table = _DROP_TABLE.render(table=table)
         self.insert = _INSERT.render(table=table, columns=insert_columns)
+
+        self.cursor_factory = cursor_factory
 
         if isinstance(fn, GeneratorBuilder):
             fn_builder = fn
@@ -151,24 +155,30 @@ class MapToNewTable(Task):
             if self.add_is_done_column:
                 cursor.execute(self.add_is_done_column)
 
-        def process_output(input_row: dict):
+        def iter_input_rows():
+            if self.select:
+                with self.cursor_factory.create_cursor(
+                    conn
+                ) as input_cursor, conn.cursor() as done_cursor:
+                    input_cursor.execute(self.select)
+                    for input_row in tqdm(
+                        input_cursor,
+                        total=input_cursor.rowcount
+                        if input_cursor.rowcount >= 0
+                        else None,
+                    ):
+                        yield input_row
+
+                        if self.set_is_done:
+                            done_cursor.execute(self.set_is_done, input_row)
+                            conn.commit()
+            else:
+                yield {}
+
+        for input_row in iter_input_rows():
             with conn.cursor() as output_cursor:
                 for output_row in self.fn(**input_row):
                     output_cursor.execute(self.insert, output_row)
-
-        if self.select:
-            with conn.cursor(
-                row_factory=dict_row
-            ) as input_cursor, conn.cursor() as done_cursor:
-                input_cursor.execute(self.select)
-                for input_row in tqdm(input_cursor, total=input_cursor.rowcount):
-                    process_output(input_row)
-
-                    if self.set_is_done:
-                        done_cursor.execute(self.set_is_done, input_row)
-                        conn.commit()
-        else:
-            process_output({})
 
     def delete(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as curs:
