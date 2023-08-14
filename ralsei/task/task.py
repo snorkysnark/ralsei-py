@@ -5,6 +5,7 @@ from psycopg import Connection
 from psycopg.sql import Composable
 from rich.console import Console
 from rich.syntax import Syntax
+import sys
 
 
 class Task(ABC):
@@ -24,6 +25,12 @@ class Task(ABC):
     def describe(self, conn: Connection, console: Optional[Console] = None) -> None:
         console = console or Console()
 
+        sql_parts = []
         for label, script in self.get_sql_scripts().items():
-            console.print(f"[bold]{label}:")
-            console.print(Syntax(script.as_string(conn), "sql", line_numbers=True))
+            sql_parts.append(f"-- {label}\n{script.as_string(conn)}")
+        sql = "\n\n".join(sql_parts)
+
+        if sys.stdout.isatty():
+            console.print(Syntax(sql, "sql"))
+        else:
+            print(sql)
