@@ -5,6 +5,7 @@ from psycopg.rows import dict_row
 from psycopg.sql import SQL, Composable, Identifier
 from tqdm import tqdm
 from ralsei import dict_utils
+from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToOne, FnBuilder
 from ralsei.templates import (
@@ -67,6 +68,7 @@ class MapToNewColumns(Task):
         id_fields: Optional[list[IdColumn]] = None,
         renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
+        cursor_factory: CursorFactory = ClientCursorFactory(),
     ) -> None:
         if is_done_column:
             columns.append(
@@ -111,16 +113,21 @@ class MapToNewColumns(Task):
             table=table, updates=update_statements, id_fields=id_fields
         )
 
+        self.cursor_factory = cursor_factory
+
     def run(self, conn: psycopg.Connection) -> None:
         with conn.cursor() as cursor:
             cursor.execute(self.add_columns)
 
-        with conn.cursor(
-            row_factory=dict_row
+        with self.cursor_factory.create_cursor(
+            conn, self.commit_each
         ) as input_cursor, conn.cursor() as output_cursor:
             input_cursor.execute(self.select)
 
-            for input_row in tqdm(input_cursor, total=input_cursor.rowcount):
+            for input_row in tqdm(
+                input_cursor,
+                total=input_cursor.rowcount if input_cursor.rowcount >= 0 else None,
+            ):
                 output_row = self.fn(**input_row)
                 output_cursor.execute(self.update_table, output_row)
 

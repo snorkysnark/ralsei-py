@@ -158,7 +158,7 @@ class MapToNewTable(Task):
         def iter_input_rows():
             if self.select:
                 with self.cursor_factory.create_cursor(
-                    conn
+                    conn, self.add_is_done_column is not None
                 ) as input_cursor, conn.cursor() as done_cursor:
                     input_cursor.execute(self.select)
                     for input_row in tqdm(
