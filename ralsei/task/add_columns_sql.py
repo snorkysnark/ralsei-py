@@ -10,15 +10,14 @@ from .task import Task
 ADD_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\n', attribute='add') }}"""
+    {{ columns | sqljoin(',\n', attribute='add') }};"""
 )
 
 DROP_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\n', attribute='drop_if_exists') }}"""
+    {{ columns | sqljoin(',\n', attribute='drop_if_exists') }};"""
 )
-
 
 
 class AddColumnsSql(Task):

@@ -21,13 +21,13 @@ from .task import Task
 _ADD_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\\n', attribute='add') }}"""
+    {{ columns | sqljoin(',\\n', attribute='add') }};"""
 )
 
 _DROP_COLUMNS = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }}"""
+    {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }};"""
 )
 
 _UPDATE = DEFAULT_RENDERER.from_string(
@@ -35,7 +35,7 @@ _UPDATE = DEFAULT_RENDERER.from_string(
     UPDATE {{ table }} SET
     {{ updates | sqljoin(',\\n') }}
     WHERE
-    {{ id_fields | sqljoin(' AND ') }}"""
+    {{ id_fields | sqljoin(' AND ') }};"""
 )
 
 

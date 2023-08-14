@@ -42,13 +42,13 @@ _CREATE_TABLE = DEFAULT_RENDERER.from_string(
     """\
     CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
         {{ definition | sqljoin(',\\n    ') }}
-    )"""
+    );"""
 )
 
 _ADD_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ source }}
-    ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE"""
+    ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE;"""
 )
 
 _DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE IF EXISTS {{ table }}")
@@ -56,7 +56,7 @@ _DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE IF EXISTS {{ table }}")
 _DROP_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
     """\
     ALTER TABLE {{ source }}
-    DROP COLUMN IF EXISTS {{ is_done }}"""
+    DROP COLUMN IF EXISTS {{ is_done }};"""
 )
 
 
@@ -67,13 +67,13 @@ _INSERT = DEFAULT_RENDERER.from_string(
     )
     VALUES (
         {{ columns | sqljoin(',\\n    ', attribute='value') }}
-    )"""
+    );"""
 )
 
 _SET_IS_DONE = DEFAULT_RENDERER.from_string(
     """UPDATE {{ source }}
     SET {{ is_done }} = TRUE
-    WHERE {{ id_fields | sqljoin(' AND ') }}"""
+    WHERE {{ id_fields | sqljoin(' AND ') }};"""
 )
 
 

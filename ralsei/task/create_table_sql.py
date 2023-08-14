@@ -6,7 +6,7 @@ from ralsei import dict_utils
 from ralsei.templates import RalseiRenderer, DEFAULT_RENDERER
 from .task import Task
 
-DROP_TABLE = "DROP TABLE IF EXISTS {{ table }}"
+DROP_TABLE = "DROP TABLE IF EXISTS {{ table }};"
 
 
 class CreateTableSql(Task):
