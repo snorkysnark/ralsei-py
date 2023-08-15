@@ -1,6 +1,9 @@
 import argparse
 from argparse import ArgumentParser
 from typing import Callable, Optional, Sequence, Union
+from pathlib import Path
+import sqlalchemy
+import json
 
 import psycopg
 
@@ -9,6 +12,26 @@ from ralsei.pipeline import NamedTask, Pipeline
 from ralsei.runner import TaskRunner
 
 PipelineFactory = Callable[[argparse.Namespace], Pipeline]
+
+
+def create_connection_url(credentials: str) -> sqlalchemy.URL:
+    if credentials.endswith(".json"):
+        with Path(credentials).open() as file:
+            creds_dict = json.load(file)
+            creds_dict["drivername"] = "postgresql+psycopg"
+            return sqlalchemy.URL.create(**creds_dict)
+    elif credentials.find("://") != -1:
+        url = sqlalchemy.make_url(credentials)
+        return sqlalchemy.URL.create(
+            "postgresql+psycopg",
+            url.username,
+            url.password,
+            url.host,
+            url.port,
+            url.database,
+        )
+    else:
+        return sqlalchemy.make_url("postgresql+psycopg://" + credentials)
 
 
 def describe_sequence(conn: psycopg.Connection, task_sequence: Sequence[NamedTask]):
@@ -26,27 +49,35 @@ class RalseiCli:
         self._global_args = parser.add_argument_group("global")
         parser.add_argument("action", choices=["run", "delete", "redo", "describe"])
         parser.add_argument("task")
-        parser.add_argument("--conn", help="postgres conninfo")
+        parser.add_argument("--db", help="connection url")
         self._argparser = parser
 
     def add_argument(self, *args, **kwargs) -> None:
         self._global_args.add_argument(*args, **kwargs)
 
     def run(
-        self, pipeline: Union[Pipeline, PipelineFactory], conninfo: Optional[str] = None
+        self,
+        pipeline: Union[Pipeline, PipelineFactory],
+        credentials: Optional[str] = None,
     ):
         args = self._argparser.parse_args()
 
-        conninfo = args.conn or conninfo
-        if not conninfo:
-            raise ValueError("conninfo not specified")
+        credentials = args.db or credentials
+        if not credentials:
+            raise ValueError("credentials not specified")
 
         if isinstance(pipeline, Callable):
             pipeline = pipeline(args)
 
         task_sequence = list(ralsei.pipeline.resolve(args.task, pipeline))
 
-        with psycopg.connect(conninfo) as conn:
+        engine = sqlalchemy.create_engine(create_connection_url(credentials))
+        with engine.connect() as sqlalchemy_conn:
+            conn = sqlalchemy_conn.connection.dbapi_connection
+            assert isinstance(
+                conn, psycopg.Connection
+            ), "Connection is not from psycopg"
+
             runner = TaskRunner(conn)
             if args.action == "run":
                 runner.run(task_sequence)

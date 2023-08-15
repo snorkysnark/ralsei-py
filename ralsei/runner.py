@@ -13,10 +13,14 @@ class TaskRunner:
             print("Running " + named_task.name)
             named_task.task.run(self.conn)
 
+            self.conn.commit()
+
     def delete(self, sequence: Sequence[NamedTask]):
         for named_task in reversed(sequence):
             print("Deleting " + named_task.name)
             named_task.task.delete(self.conn)
+
+            self.conn.commit()
 
     def redo(self, sequence: Sequence[NamedTask]):
         self.delete(sequence)
