@@ -5,11 +5,10 @@ from pathlib import Path
 import sqlalchemy
 import json
 
-import psycopg
-
 import ralsei.pipeline
 from ralsei.pipeline import NamedTask, Pipeline
 from ralsei.runner import TaskRunner
+from ralsei.task.context import MultiConnection
 
 PipelineFactory = Callable[[argparse.Namespace], Pipeline]
 
@@ -34,7 +33,7 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
         return sqlalchemy.make_url("postgresql+psycopg://" + credentials)
 
 
-def describe_sequence(conn: psycopg.Connection, task_sequence: Sequence[NamedTask]):
+def describe_sequence(conn: MultiConnection, task_sequence: Sequence[NamedTask]):
     if len(task_sequence) == 1:
         named_task = task_sequence[0]
         named_task.task.describe(conn)
@@ -73,10 +72,7 @@ class RalseiCli:
 
         engine = sqlalchemy.create_engine(create_connection_url(credentials))
         with engine.connect() as sqlalchemy_conn:
-            conn = sqlalchemy_conn.connection.dbapi_connection
-            assert isinstance(
-                conn, psycopg.Connection
-            ), "Connection is not from psycopg"
+            conn = MultiConnection(sqlalchemy_conn)
 
             runner = TaskRunner(conn)
             if args.action == "run":
