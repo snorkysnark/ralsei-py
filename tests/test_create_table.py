@@ -4,9 +4,10 @@ import pytest
 
 from ralsei import Table, CreateTableSql
 from common.db_helper import get_rows, table_exists
+from ralsei.task.context import MultiConnection
 
 
-def test_create_table(conn: Connection):
+def test_create_table(conn: MultiConnection):
     table = Table("test_create_table")
     task = CreateTableSql(
         sql="""
@@ -36,7 +37,9 @@ def test_create_table(conn: Connection):
         (False, []),
     ],
 )
-def test_create_table_jinja_args(conn: Connection, flag: bool, expected: list[Tuple]):
+def test_create_table_jinja_args(
+    conn: MultiConnection, flag: bool, expected: list[Tuple]
+):
     table = Table("test_create_table_jinja_args")
     task = CreateTableSql(
         sql="""
@@ -58,7 +61,7 @@ def test_create_table_jinja_args(conn: Connection, flag: bool, expected: list[Tu
     assert not table_exists(conn, table)
 
 
-def test_create_table_literal(conn: Connection):
+def test_create_table_literal(conn: MultiConnection):
     table = Table("test_create_table_literal")
     task = CreateTableSql(
         sql="""

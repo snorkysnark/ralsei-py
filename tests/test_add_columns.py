@@ -2,6 +2,7 @@ from psycopg import Connection
 
 from ralsei import Table, CreateTableSql, AddColumnsSql, Column
 from common.db_helper import get_rows
+from ralsei.task.context import MultiConnection
 
 
 def prepare_table_task(table: Table):
@@ -15,7 +16,7 @@ def prepare_table_task(table: Table):
     )
 
 
-def test_add_column(conn: Connection):
+def test_add_column(conn: MultiConnection):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
@@ -36,7 +37,7 @@ def test_add_column(conn: Connection):
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_add_column_jinja_var(conn: Connection):
+def test_add_column_jinja_var(conn: MultiConnection):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
@@ -61,7 +62,7 @@ def test_add_column_jinja_var(conn: Connection):
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_column_template(conn: Connection):
+def test_column_template(conn: MultiConnection):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
