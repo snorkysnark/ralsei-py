@@ -1,6 +1,4 @@
 from typing import Optional, Union
-import psycopg
-from psycopg.rows import dict_row
 
 from psycopg.sql import SQL, Composable, Identifier
 from tqdm import tqdm
@@ -8,6 +6,7 @@ from ralsei import dict_utils
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToOne, FnBuilder
+from ralsei.task.context import MultiConnection
 from ralsei.templates import (
     RalseiRenderer,
     DEFAULT_RENDERER,
@@ -115,13 +114,15 @@ class MapToNewColumns(Task):
 
         self.cursor_factory = cursor_factory
 
-    def run(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as cursor:
+    def run(self, conn: MultiConnection) -> None:
+        pgconn = conn.pg()
+
+        with pgconn.cursor() as cursor:
             cursor.execute(self.add_columns)
 
         with self.cursor_factory.create_cursor(
-            conn, self.commit_each
-        ) as input_cursor, conn.cursor() as output_cursor:
+            pgconn, self.commit_each
+        ) as input_cursor, pgconn.cursor() as output_cursor:
             input_cursor.execute(self.select)
 
             for input_row in tqdm(
@@ -132,10 +133,10 @@ class MapToNewColumns(Task):
                 output_cursor.execute(self.update_table, output_row)
 
                 if self.commit_each:
-                    conn.commit()
+                    pgconn.commit()
 
-    def delete(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as curs:
+    def delete(self, conn: MultiConnection) -> None:
+        with conn.pg().cursor() as curs:
             curs.execute(self.drop_columns)
 
     def get_sql_scripts(self) -> dict[str, Composable]:

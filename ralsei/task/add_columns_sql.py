@@ -1,8 +1,7 @@
 from typing import Optional
 
-import psycopg
-
 from ralsei import dict_utils
+from ralsei.task.context import MultiConnection
 from ralsei.templates import RalseiRenderer, DEFAULT_RENDERER
 from ralsei.templates import Table, Column
 from .task import Task
@@ -47,13 +46,13 @@ class AddColumnsSql(Task):
         self.add_columns = ADD_COLUMNS.render(add_column_params)
         self.drop_columns = DROP_COLUMNS.render(add_column_params)
 
-    def run(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as curs:
+    def run(self, conn: MultiConnection) -> None:
+        with conn.pg().cursor() as curs:
             curs.execute(self.add_columns)
             curs.execute(self.sql)
 
-    def delete(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as curs:
+    def delete(self, conn: MultiConnection) -> None:
+        with conn.pg().cursor() as curs:
             curs.execute(self.drop_columns)
 
     def get_sql_scripts(self):

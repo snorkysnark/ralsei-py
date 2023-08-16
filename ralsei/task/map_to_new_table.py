@@ -1,12 +1,11 @@
 from typing import Optional, Union
-import psycopg
-from psycopg.rows import dict_row
 from psycopg.sql import Composable, Identifier
 from tqdm import tqdm
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToMany
 from ralsei.map_fn.builders import GeneratorBuilder
+from ralsei.task.context import MultiConnection
 from ralsei.templates import (
     DEFAULT_RENDERER,
     RalseiRenderer,
@@ -148,8 +147,10 @@ class MapToNewTable(Task):
             self.set_is_done = None
             self.drop_is_done_column = None
 
-    def run(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as cursor:
+    def run(self, conn: MultiConnection) -> None:
+        pgconn = conn.pg()
+
+        with pgconn.cursor() as cursor:
             cursor.execute(self.create_table)
 
             if self.add_is_done_column:
@@ -158,8 +159,8 @@ class MapToNewTable(Task):
         def iter_input_rows():
             if self.select:
                 with self.cursor_factory.create_cursor(
-                    conn, self.add_is_done_column is not None
-                ) as input_cursor, conn.cursor() as done_cursor:
+                    pgconn, self.add_is_done_column is not None
+                ) as input_cursor, pgconn.cursor() as done_cursor:
                     input_cursor.execute(self.select)
                     for input_row in tqdm(
                         input_cursor,
@@ -171,17 +172,17 @@ class MapToNewTable(Task):
 
                         if self.set_is_done:
                             done_cursor.execute(self.set_is_done, input_row)
-                            conn.commit()
+                            pgconn.commit()
             else:
                 yield {}
 
         for input_row in iter_input_rows():
-            with conn.cursor() as output_cursor:
+            with pgconn.cursor() as output_cursor:
                 for output_row in self.fn(**input_row):
                     output_cursor.execute(self.insert, output_row)
 
-    def delete(self, conn: psycopg.Connection) -> None:
-        with conn.cursor() as curs:
+    def delete(self, conn: MultiConnection) -> None:
+        with conn.pg().cursor() as curs:
             curs.execute(self.drop_table)
 
             if self.drop_is_done_column:
