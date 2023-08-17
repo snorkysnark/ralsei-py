@@ -24,7 +24,7 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
             creds_dict = json.load(file)
             creds_dict["drivername"] = "postgresql+psycopg"
             return sqlalchemy.URL.create(**creds_dict)
-    elif credentials.find("://") != -1:
+    else:
         url = sqlalchemy.make_url(credentials)
         return sqlalchemy.URL.create(
             "postgresql+psycopg",
@@ -34,8 +34,6 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
             url.port,
             url.database,
         )
-    else:
-        return sqlalchemy.make_url("postgresql+psycopg://" + credentials)
 
 
 def render_task_scripts(conn: PsycopgConn, task: Task):
