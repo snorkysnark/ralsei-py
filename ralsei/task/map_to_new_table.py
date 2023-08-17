@@ -1,13 +1,12 @@
 from typing import Optional, Union
-from psycopg.sql import Composable, Identifier
+from psycopg.sql import Identifier
 from tqdm import tqdm
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToMany
 from ralsei.map_fn.builders import GeneratorBuilder
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
 from ralsei.templates import (
-    DEFAULT_RENDERER,
     RalseiRenderer,
     Table,
     ValueColumn,
@@ -37,45 +36,6 @@ def make_column_statements(
     return table_definition, insert_columns
 
 
-_CREATE_TABLE = DEFAULT_RENDERER.from_string(
-    """\
-    CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
-        {{ definition | sqljoin(',\\n    ') }}
-    );"""
-)
-
-_ADD_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ source }}
-    ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE;"""
-)
-
-_DROP_TABLE = DEFAULT_RENDERER.from_string("DROP TABLE IF EXISTS {{ table }}")
-
-_DROP_IS_DONE_COLUMN = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ source }}
-    DROP COLUMN IF EXISTS {{ is_done }};"""
-)
-
-
-_INSERT = DEFAULT_RENDERER.from_string(
-    """\
-    INSERT INTO {{ table }}(
-        {{ columns | sqljoin(',\\n    ', attribute='ident') }}
-    )
-    VALUES (
-        {{ columns | sqljoin(',\\n    ', attribute='value') }}
-    );"""
-)
-
-_SET_IS_DONE = DEFAULT_RENDERER.from_string(
-    """UPDATE {{ source }}
-    SET {{ is_done }} = TRUE
-    WHERE {{ id_fields | sqljoin(' AND ') }};"""
-)
-
-
 class MapToNewTable(Task):
     def __init__(
         self,
@@ -86,29 +46,21 @@ class MapToNewTable(Task):
         source_table: Optional[Table] = None,
         is_done_column: Optional[str] = None,
         id_fields: Optional[list[IdColumn]] = None,
-        renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
         cursor_factory: CursorFactory = ClientCursorFactory(),
     ) -> None:
-        is_done_ident = Identifier(is_done_column) if is_done_column else None
+        super().__init__()
 
-        jinja_params = dict_utils.merge_no_dup(
-            params, {"table": table, "source": source_table, "is_done": is_done_ident}
-        )
-        self.select = renderer.render(select, jinja_params) if select else None
+        self.__table = table
+        self.__select_raw = select
+        self.__columns_raw = columns
+        self.__is_done_ident = Identifier(is_done_column) if is_done_column else None
+        self.__cursor_factory = cursor_factory
 
-        table_definition, insert_columns = make_column_statements(
-            columns, renderer, jinja_params
+        self.__jinja_params = dict_utils.merge_no_dup(
+            params,
+            {"table": table, "source": source_table, "is_done": self.__is_done_ident},
         )
-        self.create_table = _CREATE_TABLE.render(
-            table=table,
-            definition=table_definition,
-            if_not_exists=(is_done_column is not None),
-        )
-        self.drop_table = _DROP_TABLE.render(table=table)
-        self.insert = _INSERT.render(table=table, columns=insert_columns)
-
-        self.cursor_factory = cursor_factory
 
         if isinstance(fn, GeneratorBuilder):
             fn_builder = fn
@@ -133,35 +85,82 @@ class MapToNewTable(Task):
                 source_table
             ), "Cannot create is_done_column when source_table is None"
 
-            self.add_is_done_column = _ADD_IS_DONE_COLUMN.render(
-                source=source_table, is_done=is_done_ident
-            )
-            self.set_is_done = _SET_IS_DONE.render(
-                source=source_table, is_done=is_done_ident, id_fields=id_fields
-            )
-            self.drop_is_done_column = _DROP_IS_DONE_COLUMN.render(
-                source=source_table, is_done=is_done_ident
-            )
-        else:
-            self.add_is_done_column = None
-            self.set_is_done = None
-            self.drop_is_done_column = None
+        self.__id_fields = id_fields
+        self.__source_table = source_table
 
-    def run(self, conn: MultiConnection) -> None:
+    def render(self, renderer: RalseiRenderer) -> None:
+        if self.__select_raw:
+            self.scripts["Select"] = self.__select = renderer.render(
+                self.__select_raw, self.__jinja_params
+            )
+
+        table_definition, insert_columns = make_column_statements(
+            self.__columns_raw, renderer, self.__jinja_params
+        )
+        self.scripts["Create table"] = self.__create_table = renderer.render(
+            """\
+            CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
+                {{ definition | sqljoin(',\\n    ') }}
+            );""",
+            {
+                "table": self.__table,
+                "definition": table_definition,
+                "if_not_exists": self.__is_done_ident is not None,
+            },
+        )
+        self.scripts["Insert"] = self.__insert = renderer.render(
+            """\
+            INSERT INTO {{ table }}(
+                {{ columns | sqljoin(',\\n    ', attribute='ident') }}
+            )
+            VALUES (
+                {{ columns | sqljoin(',\\n    ', attribute='value') }}
+            );""",
+            {"table": self.__table, "columns": insert_columns},
+        )
+        self.scripts["Drop table"] = self.__drop_table = renderer.render(
+            "DROP TABLE IF EXISTS {{ table }}", {"table": self.__table}
+        )
+
+        if self.__id_fields:
+            self.scripts["Add marker"] = self.__add_is_done_column = renderer.render(
+                """\
+                ALTER TABLE {{ source }}
+                ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE;""",
+                {"source": self.__source_table, "is_done": self.__is_done_ident},
+            )
+            self.scripts["Set marker"] = self.__set_is_done = renderer.render(
+                """UPDATE {{ source }}
+                SET {{ is_done }} = TRUE
+                WHERE {{ id_fields | sqljoin(' AND ') }};""",
+                {
+                    "source": self.__source_table,
+                    "is_done": self.__is_done_ident,
+                    "id_fields": self.__id_fields,
+                },
+            )
+            self.scripts["Drop marker"] = self.__drop_is_done_column = renderer.render(
+                """\
+                ALTER TABLE {{ source }}
+                DROP COLUMN IF EXISTS {{ is_done }};""",
+                {"source": self.__source_table, "is_done": self.__is_done_ident},
+            )
+
+    def run(self, conn: PsycopgConn) -> None:
         pgconn = conn.pg()
 
         with pgconn.cursor() as cursor:
-            cursor.execute(self.create_table)
+            cursor.execute(self.__create_table)
 
-            if self.add_is_done_column:
-                cursor.execute(self.add_is_done_column)
+            if self.__add_is_done_column:
+                cursor.execute(self.__add_is_done_column)
 
         def iter_input_rows():
-            if self.select:
-                with self.cursor_factory.create_cursor(
-                    pgconn, self.add_is_done_column is not None
+            if self.__select:
+                with self.__cursor_factory.create_cursor(
+                    pgconn, self.__add_is_done_column is not None
                 ) as input_cursor, pgconn.cursor() as done_cursor:
-                    input_cursor.execute(self.select)
+                    input_cursor.execute(self.__select)
                     for input_row in tqdm(
                         input_cursor,
                         total=input_cursor.rowcount
@@ -170,8 +169,8 @@ class MapToNewTable(Task):
                     ):
                         yield input_row
 
-                        if self.set_is_done:
-                            done_cursor.execute(self.set_is_done, input_row)
+                        if self.__set_is_done:
+                            done_cursor.execute(self.__set_is_done, input_row)
                             pgconn.commit()
             else:
                 yield {}
@@ -179,26 +178,11 @@ class MapToNewTable(Task):
         for input_row in iter_input_rows():
             with pgconn.cursor() as output_cursor:
                 for output_row in self.fn(**input_row):
-                    output_cursor.execute(self.insert, output_row)
+                    output_cursor.execute(self.__insert, output_row)
 
-    def delete(self, conn: MultiConnection) -> None:
+    def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.drop_table)
+            curs.execute(self.__drop_table)
 
-            if self.drop_is_done_column:
-                curs.execute(self.drop_is_done_column)
-
-    def get_sql_scripts(self) -> dict[str, Composable]:
-        scripts = {}
-
-        if self.add_is_done_column:
-            scripts["Add marker"] = self.add_is_done_column
-            scripts["Set marker"] = self.set_is_done
-            scripts["Drop marker"] = self.drop_is_done_column
-
-        if self.select:
-            scripts["Select"] = self.select
-        scripts["Create"] = self.create_table
-        scripts["Drop"] = self.drop_table
-        scripts["Insert"] = self.insert
-        return scripts
+            if self.__drop_is_done_column:
+                curs.execute(self.__drop_is_done_column)

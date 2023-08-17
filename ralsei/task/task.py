@@ -1,38 +1,26 @@
 from abc import ABC, abstractmethod
-from typing import Optional
-from psycopg.sql import Composable
-from rich.console import Console
-from rich.syntax import Syntax
-import sys
+from psycopg.sql import Composed
 
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
+from ralsei.templates.renderer import RalseiRenderer
 
 
 class Task(ABC):
+    def __init__(self) -> None:
+        self.scripts: dict[str, Composed] = {}
+
     @abstractmethod
-    def run(self, conn: MultiConnection) -> None:
+    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
         """Execute the task"""
 
     @abstractmethod
-    def delete(self, ctx: MultiConnection) -> None:
+    def delete(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
         """Delete whatever `run()` method has created"""
 
-    def get_sql_scripts(self) -> dict[str, Composable]:
-        """Returns a dictionary of named SQL scripts,
-        such as `{ "create table": "CREATE TABLE table(...)" }`"""
-        return {}
+    @abstractmethod
+    def render(self, renderer: RalseiRenderer) -> None:
+        """
+        Render your sql scripts here, like this:
 
-    def describe(
-        self, conn: MultiConnection, console: Optional[Console] = None
-    ) -> None:
-        console = console or Console()
-
-        sql_parts = []
-        for label, script in self.get_sql_scripts().items():
-            sql_parts.append(f"-- {label}\n{script.as_string(conn.pg())}")
-        sql = "\n\n".join(sql_parts)
-
-        if sys.stdout.isatty():
-            console.print(Syntax(sql, "sql"))
-        else:
-            print(sql)
+        `self.scripts["Create table"] = self.__create_table = renderer.render(...)`
+        """

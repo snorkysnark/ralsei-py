@@ -5,7 +5,7 @@ from .task import (
     AddColumnsSql,
     MapToNewTable,
     MapToNewColumns,
-    MultiConnection,
+    PsycopgConn,
 )
 from .cli import RalseiCli
 from .map_fn import FnBuilder, GeneratorBuilder

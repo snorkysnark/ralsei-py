@@ -1,41 +1,19 @@
 from typing import Optional, Union
 
-from psycopg.sql import SQL, Composable, Identifier
+from psycopg.sql import SQL, Identifier
 from tqdm import tqdm
 from ralsei import dict_utils
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToOne, FnBuilder
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
 from ralsei.templates import (
     RalseiRenderer,
-    DEFAULT_RENDERER,
     Table,
     ValueColumn,
     IdColumn,
 )
 from .task import Task
-
-
-_ADD_COLUMNS = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\\n', attribute='add') }};"""
-)
-
-_DROP_COLUMNS = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }};"""
-)
-
-_UPDATE = DEFAULT_RENDERER.from_string(
-    """\
-    UPDATE {{ table }} SET
-    {{ updates | sqljoin(',\\n') }}
-    WHERE
-    {{ id_fields | sqljoin(' AND ') }};"""
-)
 
 
 def make_column_statements(
@@ -65,10 +43,16 @@ class MapToNewColumns(Task):
         fn: Union[OneToOne, FnBuilder],
         is_done_column: Optional[str] = None,
         id_fields: Optional[list[IdColumn]] = None,
-        renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
         cursor_factory: CursorFactory = ClientCursorFactory(),
     ) -> None:
+        super().__init__()
+
+        self.__select_raw = select
+        self.__table = table
+        self.__columns_raw = columns
+        self.__cursor_factory = cursor_factory
+
         if is_done_column:
             columns.append(
                 ValueColumn(is_done_column, "BOOL DEFAULT FALSE", SQL("TRUE"))
@@ -78,25 +62,14 @@ class MapToNewColumns(Task):
                 column.column.add_if_not_exists = True
 
             is_done_ident = Identifier(is_done_column)
-            self.commit_each = True
+            self.__commit_each = True
         else:
             is_done_ident = None
-            self.commit_each = False
+            self.__commit_each = False
 
-        jinja_params = dict_utils.merge_no_dup(
+        self.__jinja_params = dict_utils.merge_no_dup(
             params, {"table": table, "is_done": is_done_ident}
         )
-        self.select = renderer.render(select, jinja_params)
-
-        columns_to_add, update_statements = make_column_statements(
-            raw_list=columns,
-            renderer=renderer,
-            params=params,
-        )
-
-        self.add_columns = _ADD_COLUMNS.render(table=table, columns=columns_to_add)
-
-        self.drop_columns = _DROP_COLUMNS.render(table=table, columns=columns_to_add)
 
         if isinstance(fn, FnBuilder):
             self.fn = fn.build()
@@ -108,41 +81,65 @@ class MapToNewColumns(Task):
         if id_fields is None:
             raise RuntimeError("Must provide id_fields if using is_done_column")
 
-        self.update_table = _UPDATE.render(
-            table=table, updates=update_statements, id_fields=id_fields
+        self.__id_fields = id_fields
+
+    def render(self, renderer: RalseiRenderer) -> None:
+        self.scripts["Select"] = self.__select = renderer.render(
+            self.__select_raw, self.__jinja_params
         )
 
-        self.cursor_factory = cursor_factory
+        columns_to_add, update_statements = make_column_statements(
+            raw_list=self.__columns_raw,
+            renderer=renderer,
+            params=self.__jinja_params,
+        )
 
-    def run(self, conn: MultiConnection) -> None:
+        self.scripts["Add"] = self.__add_columns = renderer.render(
+            """\
+            ALTER TABLE {{ table }}
+            {{ columns | sqljoin(',\\n', attribute='add') }};""",
+            {"table": self.__table, "columns": columns_to_add},
+        )
+        self.scripts["Update"] = self.__update_table = renderer.render(
+            """\
+            UPDATE {{ table }} SET
+            {{ updates | sqljoin(',\\n') }}
+            WHERE
+            {{ id_fields | sqljoin(' AND ') }};""",
+            {
+                "table": self.__table,
+                "updates": update_statements,
+                "id_fields": self.__id_fields,
+            },
+        )
+        self.scripts["Drop"] = self.__drop_columns = renderer.render(
+            """\
+            ALTER TABLE {{ table }}
+            {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }};""",
+            {"table": self.__table, "columns": columns_to_add},
+        )
+
+    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
         pgconn = conn.pg()
 
         with pgconn.cursor() as cursor:
-            cursor.execute(self.add_columns)
+            cursor.execute(self.__add_columns)
 
-        with self.cursor_factory.create_cursor(
-            pgconn, self.commit_each
+        with self.__cursor_factory.create_cursor(
+            pgconn, self.__commit_each
         ) as input_cursor, pgconn.cursor() as output_cursor:
-            input_cursor.execute(self.select)
+            input_cursor.execute(self.__select)
 
             for input_row in tqdm(
                 input_cursor,
                 total=input_cursor.rowcount if input_cursor.rowcount >= 0 else None,
             ):
                 output_row = self.fn(**input_row)
-                output_cursor.execute(self.update_table, output_row)
+                output_cursor.execute(self.__update_table, output_row)
 
-                if self.commit_each:
+                if self.__commit_each:
                     pgconn.commit()
 
-    def delete(self, conn: MultiConnection) -> None:
+    def delete(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.drop_columns)
-
-    def get_sql_scripts(self) -> dict[str, Composable]:
-        return {
-            "Select": self.select,
-            "Add": self.add_columns,
-            "Update": self.update_table,
-            "Drop": self.drop_columns,
-        }
+            curs.execute(self.__drop_columns)

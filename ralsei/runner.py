@@ -1,11 +1,11 @@
 from typing import Sequence
 
 from ralsei.pipeline import NamedTask
-from ralsei.task.context import MultiConnection
+from ralsei.task.context import PsycopgConn
 
 
 class TaskRunner:
-    def __init__(self, conn: MultiConnection):
+    def __init__(self, conn: PsycopgConn):
         self.conn = conn
 
     def run(self, sequence: Sequence[NamedTask]):

@@ -1,22 +1,10 @@
 from typing import Optional
 
 from ralsei import dict_utils
-from ralsei.task.context import MultiConnection
-from ralsei.templates import RalseiRenderer, DEFAULT_RENDERER
+from ralsei.context import PsycopgConn
+from ralsei.templates import RalseiRenderer
 from ralsei.templates import Table, Column
 from .task import Task
-
-ADD_COLUMNS = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\n', attribute='add') }};"""
-)
-
-DROP_COLUMNS = DEFAULT_RENDERER.from_string(
-    """\
-    ALTER TABLE {{ table }}
-    {{ columns | sqljoin(',\n', attribute='drop_if_exists') }};"""
-)
 
 
 class AddColumnsSql(Task):
@@ -25,39 +13,52 @@ class AddColumnsSql(Task):
         sql: str,
         table: Table,
         columns: Optional[list[Column]] = None,
-        renderer: RalseiRenderer = DEFAULT_RENDERER,
         params: dict = {},
     ) -> None:
-        jinja_args = dict_utils.merge_no_dup({"table": table}, params)
-        script_module = renderer.from_string(sql).make_module(jinja_args)
+        super().__init__()
 
+        self.__raw_sql = sql
+        self.__jinja_args = dict_utils.merge_no_dup({"table": table}, params)
+        self.__raw_columns = columns
+
+    def render(self, renderer: RalseiRenderer) -> None:
+        script_module = renderer.from_string(self.__raw_sql).make_module(
+            self.__jinja_args
+        )
+
+        columns = self.__raw_columns
         if columns is None:
             # Get columns variable from template: {% set columns = [...] %}
             columns = script_module.getattr("columns", None)
             if columns is None:
                 raise ValueError("Columns not specified")
 
-        rendered_columns = list(map(lambda c: c.render(renderer, jinja_args), columns))
+        rendered_columns = list(
+            map(lambda col: col.render(renderer, self.__jinja_args), columns)
+        )
         add_column_params = dict_utils.merge_no_dup(
-            jinja_args, {"columns": rendered_columns}
+            self.__jinja_args, {"columns": rendered_columns}
         )
 
-        self.sql = script_module.render()
-        self.add_columns = ADD_COLUMNS.render(add_column_params)
-        self.drop_columns = DROP_COLUMNS.render(add_column_params)
+        self.scripts["Add columns"] = self.__add_columns = renderer.render(
+            """\
+            ALTER TABLE {{ table }}
+            {{ columns | sqljoin(',\n', attribute='add') }};""",
+            add_column_params,
+        )
+        self.scripts["Main"] = self.__sql = script_module.render()
+        self.scripts["Drop columns"] = self.__drop_columns = renderer.render(
+            """\
+            ALTER TABLE {{ table }}
+            {{ columns | sqljoin(',\n', attribute='drop_if_exists') }};""",
+            add_column_params,
+        )
 
-    def run(self, conn: MultiConnection) -> None:
+    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.add_columns)
-            curs.execute(self.sql)
+            curs.execute(self.__add_columns)
+            curs.execute(self.__sql)
 
-    def delete(self, conn: MultiConnection) -> None:
+    def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.drop_columns)
-
-    def get_sql_scripts(self):
-        return {
-            "Add Columns": self.add_columns,
-            "Main": self.sql,
-            "Drop Columns": self.drop_columns,
-        }
+            curs.execute(self.__drop_columns)
