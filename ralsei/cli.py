@@ -45,14 +45,13 @@ def describe_sequence(conn: MultiConnection, task_sequence: Sequence[NamedTask])
 class RalseiCli:
     def __init__(self) -> None:
         parser = ArgumentParser()
-        self._global_args = parser.add_argument_group("global")
         parser.add_argument("action", choices=["run", "delete", "redo", "describe"])
         parser.add_argument("task")
         parser.add_argument("--db", help="connection url")
         self._argparser = parser
 
-    def add_argument(self, *args, **kwargs) -> None:
-        self._global_args.add_argument(*args, **kwargs)
+        # Allows for better intellisense than using a wrapper methid
+        self.add_argument = parser.add_argument
 
     def run(
         self,
