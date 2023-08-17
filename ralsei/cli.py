@@ -2,13 +2,18 @@ import argparse
 from argparse import ArgumentParser
 from typing import Callable, Optional, Sequence, Union
 from pathlib import Path
+from rich.console import Console
+from rich.syntax import Syntax
 import sqlalchemy
 import json
+import sys
 
 import ralsei.pipeline
 from ralsei.pipeline import NamedTask, Pipeline
 from ralsei.runner import TaskRunner
 from ralsei.context import PsycopgConn
+from ralsei.task import Task
+from ralsei.templates.renderer import RalseiRenderer
 
 PipelineFactory = Callable[[argparse.Namespace], Pipeline]
 
@@ -33,14 +38,31 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
         return sqlalchemy.make_url("postgresql+psycopg://" + credentials)
 
 
+def render_task_scripts(conn: PsycopgConn, task: Task):
+    return "\n\n".join(
+        map(
+            lambda item: f"-- {item[0]}\n{item[1].as_string(conn.pg())}",
+            task.scripts.items(),
+        )
+    )
+
+
+def describe_task(conn: PsycopgConn, task: Task):
+    sql = render_task_scripts(conn, task)
+
+    if sys.stdout.isatty():
+        Console().print(Syntax(sql, "sql"))
+    else:
+        print(sql)
+
+
 def describe_sequence(conn: PsycopgConn, task_sequence: Sequence[NamedTask]):
-    pass
-    # if len(task_sequence) == 1:
-    #     named_task = task_sequence[0]
-    #     named_task.task.describe(conn)
-    # else:
-    #     for named_task in task_sequence:
-    #         print(named_task.name)
+    if len(task_sequence) == 1:
+        named_task = task_sequence[0]
+        describe_task(conn, named_task.task)
+    else:
+        for named_task in task_sequence:
+            print(named_task.name)
 
 
 class RalseiCli:
@@ -70,6 +92,10 @@ class RalseiCli:
             pipeline = pipeline(args)
 
         task_sequence = list(ralsei.pipeline.resolve(args.task, pipeline))
+
+        renderer = RalseiRenderer()
+        for named_task in task_sequence:
+            named_task.task.render(renderer)
 
         engine = sqlalchemy.create_engine(create_connection_url(credentials))
         with engine.connect() as sqlalchemy_conn:
