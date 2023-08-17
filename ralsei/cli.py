@@ -66,9 +66,9 @@ def describe_sequence(conn: PsycopgConn, task_sequence: Sequence[NamedTask]):
 class RalseiCli:
     def __init__(self) -> None:
         parser = ArgumentParser()
+        parser.add_argument("task", help="Task name in the pipeline")
         parser.add_argument("action", choices=["run", "delete", "redo", "describe"])
-        parser.add_argument("task")
-        parser.add_argument("--db", help="connection url")
+        parser.add_argument("--db", help="postgres:// url or .json file")
         self._argparser = parser
 
         # Allows for better intellisense than using a wrapper method
