@@ -1,13 +1,13 @@
 from typing import Tuple
-from psycopg import Connection
 import pytest
 
 from ralsei import Table, CreateTableSql
 from common.db_helper import get_rows, table_exists
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
+from ralsei.templates.renderer import RalseiRenderer
 
 
-def test_create_table(conn: MultiConnection):
+def test_create_table(conn: PsycopgConn):
     table = Table("test_create_table")
     task = CreateTableSql(
         sql="""
@@ -23,6 +23,7 @@ def test_create_table(conn: MultiConnection):
         """,
         table=table,
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [(1, "a"), (2, "b")]
@@ -37,9 +38,7 @@ def test_create_table(conn: MultiConnection):
         (False, []),
     ],
 )
-def test_create_table_jinja_args(
-    conn: MultiConnection, flag: bool, expected: list[Tuple]
-):
+def test_create_table_jinja_args(conn: PsycopgConn, flag: bool, expected: list[Tuple]):
     table = Table("test_create_table_jinja_args")
     task = CreateTableSql(
         sql="""
@@ -54,6 +53,7 @@ def test_create_table_jinja_args(
         table=table,
         params={"flag": flag},
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == expected
@@ -61,7 +61,7 @@ def test_create_table_jinja_args(
     assert not table_exists(conn, table)
 
 
-def test_create_table_literal(conn: MultiConnection):
+def test_create_table_literal(conn: PsycopgConn):
     table = Table("test_create_table_literal")
     task = CreateTableSql(
         sql="""
@@ -74,6 +74,7 @@ def test_create_table_literal(conn: MultiConnection):
         table=table,
         params={"foo": "Ralsei\ncute", "bar": 10},
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [("Ralsei\ncute", 10)]

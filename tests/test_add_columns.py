@@ -1,12 +1,11 @@
-from psycopg import Connection
-
 from ralsei import Table, CreateTableSql, AddColumnsSql, Column
 from common.db_helper import get_rows
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
+from ralsei.templates.renderer import RalseiRenderer
 
 
 def prepare_table_task(table: Table):
-    return CreateTableSql(
+    task = CreateTableSql(
         sql="""\
         CREATE TABLE {{ table }}(
             a INT
@@ -14,9 +13,11 @@ def prepare_table_task(table: Table):
         INSERT INTO {{ table }} VALUES (2), (5);""",
         table=table,
     )
+    task.render(RalseiRenderer())
+    return task
 
 
-def test_add_column(conn: MultiConnection):
+def test_add_column(conn: PsycopgConn):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
@@ -27,6 +28,7 @@ def test_add_column(conn: MultiConnection):
         table=table,
         columns=[Column("b", "INT"), Column("c", "TEXT")],
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [
@@ -37,7 +39,7 @@ def test_add_column(conn: MultiConnection):
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_add_column_jinja_var(conn: MultiConnection):
+def test_add_column_jinja_var(conn: PsycopgConn):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
@@ -52,6 +54,7 @@ def test_add_column_jinja_var(conn: MultiConnection):
         UPDATE {{ table }} SET c = a || '-' || b;""",
         table=table,
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [
@@ -62,7 +65,7 @@ def test_add_column_jinja_var(conn: MultiConnection):
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_column_template(conn: MultiConnection):
+def test_column_template(conn: PsycopgConn):
     table = Table("test_add_column")
     prepare_table_task(table).run(conn)
 
@@ -72,6 +75,7 @@ def test_column_template(conn: MultiConnection):
         columns=[Column("b", "TEXT DEFAULT {{ default }}")],
         params={"default": "Hello"},
     )
+    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [(2, "Hello"), (5, "Hello")]

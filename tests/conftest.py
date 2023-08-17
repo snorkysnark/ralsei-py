@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import sqlalchemy
 
-from ralsei.task.context import MultiConnection
+from ralsei.context import PsycopgConn
 
 # Helper module used in multiple tests
 sys.path.append(Path(__file__).parent.joinpath("common").__str__())
@@ -14,5 +14,5 @@ sys.path.append(Path(__file__).parent.joinpath("common").__str__())
 def conn():
     engine = sqlalchemy.create_engine("postgresql+psycopg:///ralsei_test")
     conn = engine.connect()
-    yield MultiConnection(conn)
+    yield PsycopgConn(conn)
     conn.close()
