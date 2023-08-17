@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from ralsei.pipeline import NamedTask
-from ralsei.task.context import PsycopgConn
+from ralsei.context import PsycopgConn
 
 
 class TaskRunner:

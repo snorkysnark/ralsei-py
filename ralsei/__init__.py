@@ -5,8 +5,8 @@ from .task import (
     AddColumnsSql,
     MapToNewTable,
     MapToNewColumns,
-    PsycopgConn,
 )
 from .cli import RalseiCli
 from .map_fn import FnBuilder, GeneratorBuilder
 from .cursor_factory import ServerCursorFactory
+from .context import PsycopgConn

@@ -8,7 +8,7 @@ import json
 import ralsei.pipeline
 from ralsei.pipeline import NamedTask, Pipeline
 from ralsei.runner import TaskRunner
-from ralsei.task.context import PsycopgConn
+from ralsei.context import PsycopgConn
 
 PipelineFactory = Callable[[argparse.Namespace], Pipeline]
 
@@ -34,12 +34,13 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
 
 
 def describe_sequence(conn: PsycopgConn, task_sequence: Sequence[NamedTask]):
-    if len(task_sequence) == 1:
-        named_task = task_sequence[0]
-        named_task.task.describe(conn)
-    else:
-        for named_task in task_sequence:
-            print(named_task.name)
+    pass
+    # if len(task_sequence) == 1:
+    #     named_task = task_sequence[0]
+    #     named_task.task.describe(conn)
+    # else:
+    #     for named_task in task_sequence:
+    #         print(named_task.name)
 
 
 class RalseiCli:

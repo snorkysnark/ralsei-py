@@ -29,17 +29,17 @@ class CreateTableSql(Task):
         self.__sql_raw = sql
 
     def render(self, renderer: RalseiRenderer) -> None:
-        self.scripts["Create"] = self.sql = renderer.render(
+        self.scripts["Create"] = self.__sql = renderer.render(
             self.__sql_raw, self.__jinja_args
         )
-        self.scripts["Drop"] = self.drop_sql = renderer.render(
+        self.scripts["Drop"] = self.__drop_sql = renderer.render(
             "DROP TABLE IF EXISTS {{ table }};", self.__jinja_args
         )
 
     def run(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.sql)
+            curs.execute(self.__sql)
 
     def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
-            curs.execute(self.drop_sql)
+            curs.execute(self.__drop_sql)
