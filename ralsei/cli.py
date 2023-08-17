@@ -73,7 +73,7 @@ class RalseiCli:
         parser.add_argument("--db", help="connection url")
         self._argparser = parser
 
-        # Allows for better intellisense than using a wrapper methid
+        # Allows for better intellisense than using a wrapper method
         custom_group = parser.add_argument_group("custom", "Custom arguments")
         self.add_argument = custom_group.add_argument
 
