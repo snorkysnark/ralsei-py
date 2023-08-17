@@ -54,7 +54,7 @@ class AddColumnsSql(Task):
             add_column_params,
         )
 
-    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
+    def run(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
             curs.execute(self.__add_columns)
             curs.execute(self.__sql)

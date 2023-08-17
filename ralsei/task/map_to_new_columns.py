@@ -119,7 +119,7 @@ class MapToNewColumns(Task):
             {"table": self.__table, "columns": columns_to_add},
         )
 
-    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
+    def run(self, conn: PsycopgConn) -> None:
         pgconn = conn.pg()
 
         with pgconn.cursor() as cursor:
@@ -140,6 +140,6 @@ class MapToNewColumns(Task):
                 if self.__commit_each:
                     pgconn.commit()
 
-    def delete(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
+    def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
             curs.execute(self.__drop_columns)

@@ -1,5 +1,3 @@
-from psycopg.sql import Composable
-
 from ralsei.context import PsycopgConn
 from ralsei.templates import Table
 from ralsei import dict_utils
@@ -38,10 +36,10 @@ class CreateTableSql(Task):
             "DROP TABLE IF EXISTS {{ table }};", self.__jinja_args
         )
 
-    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
+    def run(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
             curs.execute(self.sql)
 
-    def delete(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
+    def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:
             curs.execute(self.drop_sql)

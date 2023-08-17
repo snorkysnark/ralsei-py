@@ -1,26 +1,27 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from psycopg.sql import Composed
 
 from ralsei.context import PsycopgConn
 from ralsei.templates.renderer import RalseiRenderer
 
 
-class Task(ABC):
+class Task:
     def __init__(self) -> None:
         self.scripts: dict[str, Composed] = {}
-
-    @abstractmethod
-    def run(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
-        """Execute the task"""
-
-    @abstractmethod
-    def delete(self, conn: PsycopgConn, renderer: RalseiRenderer) -> None:
-        """Delete whatever `run()` method has created"""
 
     @abstractmethod
     def render(self, renderer: RalseiRenderer) -> None:
         """
         Render your sql scripts here, like this:
-
         `self.scripts["Create table"] = self.__create_table = renderer.render(...)`
+
+        This methon runs before `run` and `delete`
         """
+
+    @abstractmethod
+    def run(self, conn: PsycopgConn) -> None:
+        """Execute the task"""
+
+    @abstractmethod
+    def delete(self, conn: PsycopgConn) -> None:
+        """Delete whatever `run()` method has created"""
