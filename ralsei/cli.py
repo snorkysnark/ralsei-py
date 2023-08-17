@@ -51,7 +51,8 @@ class RalseiCli:
         self._argparser = parser
 
         # Allows for better intellisense than using a wrapper methid
-        self.add_argument = parser.add_argument
+        custom_group = parser.add_argument_group("custom", "Custom arguments")
+        self.add_argument = custom_group.add_argument
 
     def run(
         self,
