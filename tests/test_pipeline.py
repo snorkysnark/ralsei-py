@@ -1,5 +1,6 @@
 from ralsei import Task
-from ralsei.pipeline import resolve
+from ralsei.pipeline.pipeline import Sequence, resolve_name
+from ralsei.templates.renderer import RalseiRenderer
 
 
 class DummyTask(Task):
@@ -21,7 +22,9 @@ def test_resolve():
         ],
         "full": ["group_ab", "task_c"],
     }
-    resolved = resolve("full", pipeline)
-    resolved_names = list(map(lambda task: task.name, resolved))
+    resolved = resolve_name("full", pipeline, RalseiRenderer())
+    assert isinstance(resolved, Sequence)
+
+    resolved_names = list(map(lambda task: task.name, resolved.tasks))
 
     assert resolved_names == ["task_a", "task_b", "task_c"]
