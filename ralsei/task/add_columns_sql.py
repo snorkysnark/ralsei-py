@@ -1,6 +1,7 @@
 from typing import Optional
 
 from ralsei import dict_utils
+from ralsei.checks import columns_exist
 from ralsei.context import PsycopgConn
 from ralsei.templates import RalseiRenderer
 from ralsei.templates import Table, Column
@@ -20,6 +21,7 @@ class AddColumnsSql(Task):
         self.__raw_sql = sql
         self.__jinja_args = dict_utils.merge_no_dup({"table": table}, params)
         self.__raw_columns = columns
+        self.__table = table
 
     def render(self, renderer: RalseiRenderer) -> None:
         script_module = renderer.from_string(self.__raw_sql).make_module(
@@ -32,6 +34,7 @@ class AddColumnsSql(Task):
             columns = script_module.getattr("columns", None)
             if columns is None:
                 raise ValueError("Columns not specified")
+        self.__column_names = list(map(lambda col: col.name, columns))
 
         rendered_columns = list(
             map(lambda col: col.render(renderer, self.__jinja_args), columns)
@@ -53,6 +56,9 @@ class AddColumnsSql(Task):
             {{ columns | sqljoin(',\n', attribute='drop_if_exists') }};""",
             add_column_params,
         )
+
+    def exists(self, conn: PsycopgConn) -> bool:
+        return columns_exist(conn, self.__table, self.__column_names)
 
     def run(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:

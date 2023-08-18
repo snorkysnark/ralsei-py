@@ -1,8 +1,9 @@
 from typing import Optional, Union
 
-from psycopg.sql import SQL, Identifier
+from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
 from ralsei import dict_utils
+from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToOne, FnBuilder
@@ -13,6 +14,7 @@ from ralsei.templates import (
     ValueColumn,
     IdColumn,
 )
+from ralsei.templates.value_column import ValueColumnRendered
 from .task import Task
 
 
@@ -21,8 +23,8 @@ def make_column_statements(
     renderer: RalseiRenderer,
     params: dict = {},
 ):
-    columns_to_add = []
-    update_statements = []
+    columns_to_add: list[ValueColumnRendered] = []
+    update_statements: list[Composed] = []
 
     for raw_column in raw_list:
         rendered = raw_column.render(renderer, params)
@@ -139,6 +141,15 @@ class MapToNewColumns(Task):
 
                 if self.__commit_each:
                     pgconn.commit()
+
+    def exists(self, conn: PsycopgConn) -> bool:
+        return columns_exist(
+            conn, self.__table, map(lambda col: col.column.name, self.__columns_raw)
+        ) and (
+            not self.__commit_each
+            # If this is a resumable task, check if inputs are empty
+            or conn.pg().execute(self.__select).fetchone() is None
+        )
 
     def delete(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:

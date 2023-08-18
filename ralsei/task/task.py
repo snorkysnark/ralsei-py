@@ -19,6 +19,10 @@ class Task:
         """
 
     @abstractmethod
+    def exists(self, conn: PsycopgConn) -> bool:
+        """Check if task has already been done"""
+
+    @abstractmethod
     def run(self, conn: PsycopgConn) -> None:
         """Execute the task"""
 

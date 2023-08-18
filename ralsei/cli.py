@@ -1,21 +1,13 @@
 import argparse
 from argparse import ArgumentParser
-from typing import Callable, Optional, Sequence, Union
+from typing import Callable, Optional, Union
 from pathlib import Path
-from rich.console import Console
-from rich.syntax import Syntax
 import sqlalchemy
 import json
-import sys
 
-import ralsei.pipeline
-from ralsei.pipeline import NamedTask, Pipeline
-from ralsei.runner import TaskRunner
+from ralsei.pipeline import Pipeline
+from ralsei.pipeline.pipeline import TaskDefinitions
 from ralsei.context import PsycopgConn
-from ralsei.task import Task
-from ralsei.templates.renderer import RalseiRenderer
-
-PipelineFactory = Callable[[argparse.Namespace], Pipeline]
 
 
 def create_connection_url(credentials: str) -> sqlalchemy.URL:
@@ -36,31 +28,7 @@ def create_connection_url(credentials: str) -> sqlalchemy.URL:
         )
 
 
-def render_task_scripts(conn: PsycopgConn, task: Task):
-    return "\n\n".join(
-        map(
-            lambda item: f"-- {item[0]}\n{item[1].as_string(conn.pg())}",
-            task.scripts.items(),
-        )
-    )
-
-
-def describe_task(conn: PsycopgConn, task: Task):
-    sql = render_task_scripts(conn, task)
-
-    if sys.stdout.isatty():
-        Console().print(Syntax(sql, "sql"))
-    else:
-        print(sql)
-
-
-def describe_sequence(conn: PsycopgConn, task_sequence: Sequence[NamedTask]):
-    if len(task_sequence) == 1:
-        named_task = task_sequence[0]
-        describe_task(conn, named_task.task)
-    else:
-        for named_task in task_sequence:
-            print(named_task.name)
+TaskDefinitionsFactory = Callable[[argparse.Namespace], TaskDefinitions]
 
 
 class RalseiCli:
@@ -77,7 +45,7 @@ class RalseiCli:
 
     def run(
         self,
-        pipeline: Union[Pipeline, PipelineFactory],
+        task_tree: Union[TaskDefinitions, TaskDefinitionsFactory],
         credentials: Optional[str] = None,
     ):
         args = self._argparser.parse_args()
@@ -86,25 +54,25 @@ class RalseiCli:
         if not credentials:
             raise ValueError("credentials not specified")
 
-        if isinstance(pipeline, Callable):
-            pipeline = pipeline(args)
+        if isinstance(task_tree, Callable):
+            task_tree = task_tree(args)
 
-        task_sequence = list(ralsei.pipeline.resolve(args.task, pipeline))
-
-        renderer = RalseiRenderer()
-        for named_task in task_sequence:
-            named_task.task.render(renderer)
+        pipeline = Pipeline(task_tree)
+        task = pipeline[args.task]
 
         engine = sqlalchemy.create_engine(create_connection_url(credentials))
         with engine.connect() as sqlalchemy_conn:
             conn = PsycopgConn(sqlalchemy_conn)
 
-            runner = TaskRunner(conn)
             if args.action == "run":
-                runner.run(task_sequence)
+                task.run(conn)
             elif args.action == "delete":
-                runner.delete(task_sequence)
+                task.delete(conn)
             elif args.action == "redo":
-                runner.redo(task_sequence)
+                task.delete(conn)
+                task.run(conn)
             elif args.action == "describe":
-                describe_sequence(conn, task_sequence)
+                task.describe(conn)
+
+
+__all__ = ["RalseiCli"]

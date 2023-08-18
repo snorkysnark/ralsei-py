@@ -1,6 +1,7 @@
 from typing import Optional, Union
-from psycopg.sql import Identifier
+from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
+from ralsei.checks import table_exists
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 from ralsei.map_fn import OneToMany
@@ -12,6 +13,7 @@ from ralsei.templates import (
     ValueColumn,
     IdColumn,
 )
+from ralsei.templates.value_column import ValueColumnRendered
 from .task import Task
 from ralsei import dict_utils
 
@@ -19,8 +21,8 @@ from ralsei import dict_utils
 def make_column_statements(
     raw_list: list[Union[str, ValueColumn]], renderer: RalseiRenderer, params: dict = {}
 ):
-    table_definition = []
-    insert_columns = []
+    table_definition: list[Composed] = []
+    insert_columns: list[ValueColumnRendered] = []
 
     for raw_column in raw_list:
         if isinstance(raw_column, str):
@@ -93,6 +95,8 @@ class MapToNewTable(Task):
             self.scripts["Select"] = self.__select = renderer.render(
                 self.__select_raw, self.__jinja_params
             )
+        else:
+            self.__select = None
 
         table_definition, insert_columns = make_column_statements(
             self.__columns_raw, renderer, self.__jinja_params
@@ -145,6 +149,17 @@ class MapToNewTable(Task):
                 DROP COLUMN IF EXISTS {{ is_done }};""",
                 {"source": self.__source_table, "is_done": self.__is_done_ident},
             )
+        else:
+            self.__add_is_done_column = None
+            self.__set_is_done = None
+            self.__drop_is_done_column = None
+
+    def exists(self, conn: PsycopgConn) -> bool:
+        return table_exists(conn, self.__table) and (
+            not self.__add_is_done_column
+            # If this is a resumable task, check if inputs are empty
+            or conn.pg().execute(self.__select).fetchone() is None
+        )
 
     def run(self, conn: PsycopgConn) -> None:
         pgconn = conn.pg()
