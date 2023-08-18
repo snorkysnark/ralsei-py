@@ -68,7 +68,7 @@ class Sequence:
             if not named_task.task.exists(conn):
                 print(f"Skipping {named_task.name}: does not exist")
             else:
-                named_task.task.delete(conn)
+                named_task.delete(conn)
 
     def describe(self, conn: PsycopgConn):
         for named_task in self.tasks:
