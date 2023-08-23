@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from ralsei.checks import table_exists
 from ralsei import dict_utils
-from .task import Task
+from .base import Task
 
 if TYPE_CHECKING:
     from ralsei import PsycopgConn, Table, RalseiRenderer

@@ -17,12 +17,21 @@ from .wrappers import (
 class FnBuilderBase:
     """Base class for function wrapper builders"""
 
+    id_fields: Optional[list[str]]
+    """
+    Keeps track of the tasks that were popped using `FnBuilderBase.pop_id_fields`
+
+    Tasks may use this information to guess which fields uniquely identify a row
+    """
+
     def __init__(self) -> None:
-        self.wrappers: List[FnWrapper] = []
-        self.id_fields: Optional[list[str]] = None
+        self._wrappers: List[FnWrapper] = []
+        self.id_fields = None
 
     def add_wrapper(self, wrapper: FnWrapper):
-        self.wrappers.append(wrapper)
+        """Apply a custom wrapper"""
+
+        self._wrappers.append(wrapper)
         return self
 
     def pop_id_fields(self, *id_fields: str, keep: bool = False):
@@ -30,7 +39,9 @@ class FnBuilderBase:
         and reinserts them back into the output
 
         Additionally, `*id_fields` are appended to `self.id_fields` list for use in SQL generation
+
         ---
+
         Args:
         - `*id_fields` (str): fields to pop from the kwargs
         - keep (bool, optional): if True, `id_fields` are not removed from kwargs
@@ -68,7 +79,7 @@ class FnBuilderBase:
 
     def _wrap_all(self, fn: OneToMany) -> OneToMany:
         """Apply all of the wrappers in the order they were added"""
-        for wrapper in self.wrappers:
+        for wrapper in self._wrappers:
             fn = wrapper.wrap(fn)
         return fn
 
@@ -78,16 +89,22 @@ class GeneratorBuilder(FnBuilderBase):
 
     def __init__(self, fn: OneToMany) -> None:
         """Args:
-        - fn (OneToMany): Base function around which to create wrappers"""
+        - fn (OneToMany): Base function to build wrappers around"""
         super().__init__()
-        self.fn = fn
+        self._fn = fn
 
     @staticmethod
     def from_fn(fn: OneToOne) -> GeneratorBuilder:
+        """
+        Create from a function of type `(*args) -> dict`
+        by converting it into a generator function
+        """
+
         return GeneratorBuilder(into_many(fn))
 
     def build(self) -> OneToMany:
-        return self._wrap_all(self.fn)
+        """Returns the wrapped function"""
+        return self._wrap_all(self._fn)
 
 
 class FnBuilder(FnBuilderBase):
@@ -95,13 +112,18 @@ class FnBuilder(FnBuilderBase):
 
     def __init__(self, fn: OneToOne) -> None:
         """Args:
-        - fn (OneToOne): Base function around which to create wrappers"""
+        - fn (OneToOne): Base function to build wrappers around"""
         super().__init__()
         self.fn = fn
 
     @staticmethod
     def from_generator(fn: OneToMany) -> FnBuilder:
+        """
+        Create from a function of type `(*args) -> Generator[dict]`
+        that yields a single value
+        """
         return FnBuilder(into_one(fn))
 
     def build(self) -> OneToOne:
+        """Returns the wrapped function"""
         return into_one(self._wrap_all(into_many(self.fn)))

@@ -6,7 +6,7 @@ from tqdm import tqdm
 from ralsei.checks import table_exists
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from ralsei import dict_utils
-from .task import Task
+from .base import Task
 
 if TYPE_CHECKING:
     from ralsei.map_fn import OneToMany

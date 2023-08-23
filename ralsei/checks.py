@@ -1,3 +1,9 @@
+"""
+Checks for table/column's existence
+
+You can use these to implement `ralsei.task.base.Task.exists`
+"""
+
 from typing import Iterable
 from ralsei.connection import PsycopgConn
 from ralsei.templates import Table
