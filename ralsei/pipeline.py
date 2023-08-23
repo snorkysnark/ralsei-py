@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 import sys
 
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.task import Task
 from ralsei.templates import RalseiRenderer
 

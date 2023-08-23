@@ -6,7 +6,7 @@ import sqlalchemy
 import json
 
 from ralsei.pipeline import Pipeline, TaskDefinitions
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 
 
 def create_connection_url(credentials: str) -> sqlalchemy.URL:

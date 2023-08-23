@@ -3,7 +3,7 @@ import pytest
 
 from ralsei import Table, CreateTableSql
 from common.db_helper import get_rows, table_exists
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.templates.renderer import RalseiRenderer
 
 

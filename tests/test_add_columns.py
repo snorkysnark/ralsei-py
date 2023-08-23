@@ -1,6 +1,6 @@
 from ralsei import Table, CreateTableSql, AddColumnsSql, Column
 from common.db_helper import get_rows
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.templates.renderer import RalseiRenderer
 
 

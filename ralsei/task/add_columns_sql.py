@@ -2,9 +2,8 @@ from typing import Optional
 
 from ralsei import dict_utils
 from ralsei.checks import columns_exist
-from ralsei.context import PsycopgConn
-from ralsei.templates import RalseiRenderer
-from ralsei.templates import Table, Column
+from ralsei.connection import PsycopgConn
+from ralsei.templates import RalseiRenderer, Table, Column
 from .task import Task
 
 

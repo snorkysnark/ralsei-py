@@ -9,4 +9,4 @@ from .task import (
 from .cli import RalseiCli, TaskDefinitions
 from .map_fn import FnBuilder, GeneratorBuilder
 from .cursor_factory import ServerCursorFactory
-from .context import PsycopgConn
+from .connection import PsycopgConn

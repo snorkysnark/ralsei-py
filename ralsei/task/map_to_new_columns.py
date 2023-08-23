@@ -2,12 +2,12 @@ from typing import Optional, Union
 
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
+
 from ralsei import dict_utils
 from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-
 from ralsei.map_fn import OneToOne, FnBuilder
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.templates import (
     RalseiRenderer,
     Table,

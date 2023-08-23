@@ -1,5 +1,5 @@
 from typing import Iterable
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.templates import Table
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import sqlalchemy
 
-from ralsei.context import PsycopgConn
+from ralsei import PsycopgConn
 
 # Helper module used in multiple tests
 sys.path.append(Path(__file__).parent.joinpath("common").__str__())

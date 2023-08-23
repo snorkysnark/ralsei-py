@@ -1,12 +1,11 @@
 from typing import Optional, Union
 from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
+
 from ralsei.checks import table_exists
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-
-from ralsei.map_fn import OneToMany
-from ralsei.map_fn.builders import GeneratorBuilder
-from ralsei.context import PsycopgConn
+from ralsei.map_fn import OneToMany, GeneratorBuilder
+from ralsei.connection import PsycopgConn
 from ralsei.templates import (
     RalseiRenderer,
     Table,

@@ -1,5 +1,5 @@
 from ralsei.checks import table_exists
-from ralsei.context import PsycopgConn
+from ralsei.connection import PsycopgConn
 from ralsei.templates import Table
 from ralsei import dict_utils
 from ralsei.templates import RalseiRenderer
