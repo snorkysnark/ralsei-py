@@ -1,5 +1,4 @@
 from typing import Iterable
-from typing_extensions import Protocol
 from ralsei.context import PsycopgConn
 from ralsei.templates import Table
 
@@ -16,10 +15,6 @@ def table_exists(conn: PsycopgConn, table: Table) -> bool:
         .fetchone()
         is not None
     )
-
-
-class ColumnLike(Protocol):
-    name: str
 
 
 def column_exists(conn: PsycopgConn, table: Table, column: str) -> bool:
