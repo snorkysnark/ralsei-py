@@ -1,4 +1,11 @@
-from .templates import Table, Column, ValueColumn, IdColumn
+from .templates import (
+    Table,
+    Column,
+    ColumnRendered,
+    ValueColumn,
+    ValueColumnRendered,
+    IdColumn,
+)
 from .task import (
     Task,
     CreateTableSql,

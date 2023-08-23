@@ -1,4 +1,5 @@
-from typing import Optional, Union
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional, Union
 
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
@@ -6,11 +7,19 @@ from tqdm import tqdm
 from ralsei import dict_utils
 from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-from ralsei.map_fn import OneToOne, FnBuilder
-from ralsei.connection import PsycopgConn
-from ralsei.templates import Table, ValueColumn, IdColumn, ValueColumnRendered
-from ralsei.renderer import RalseiRenderer
 from .task import Task
+
+if TYPE_CHECKING:
+    from ralsei.map_fn import OneToOne
+    from ralsei import (
+        FnBuilder,
+        PsycopgConn,
+        Table,
+        ValueColumn,
+        IdColumn,
+        ValueColumnRendered,
+        RalseiRenderer,
+    )
 
 
 def make_column_statements(

@@ -1,9 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from ralsei.checks import table_exists
-from ralsei.connection import PsycopgConn
-from ralsei.templates import Table
 from ralsei import dict_utils
-from ralsei.renderer import RalseiRenderer
 from .task import Task
+
+if TYPE_CHECKING:
+    from ralsei import PsycopgConn, Table, RalseiRenderer
 
 
 class CreateTableSql(Task):

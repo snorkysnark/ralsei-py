@@ -1,8 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from abc import abstractmethod
 from psycopg.sql import Composed
 
-from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
+if TYPE_CHECKING:
+    from ralsei import PsycopgConn, RalseiRenderer
 
 
 class Task:
