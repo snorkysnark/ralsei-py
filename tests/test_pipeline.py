@@ -1,5 +1,5 @@
 from ralsei import Task
-from ralsei.pipeline.pipeline import Sequence, resolve_name
+from ralsei.pipeline import Sequence, resolve_name
 from ralsei.templates.renderer import RalseiRenderer
 
 

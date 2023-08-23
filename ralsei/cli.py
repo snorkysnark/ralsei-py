@@ -5,8 +5,7 @@ from pathlib import Path
 import sqlalchemy
 import json
 
-from ralsei.pipeline import Pipeline
-from ralsei.pipeline.pipeline import TaskDefinitions
+from ralsei.pipeline import Pipeline, TaskDefinitions
 from ralsei.context import PsycopgConn
 
 
