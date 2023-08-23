@@ -1,20 +1,23 @@
-from typing import Optional, Union
+from typing import Optional, Union, TYPE_CHECKING
 from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
 
 from ralsei.checks import table_exists
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-from ralsei.map_fn import OneToMany, GeneratorBuilder
-from ralsei.connection import PsycopgConn
-from ralsei.templates import (
-    Table,
-    ValueColumn,
-    IdColumn,
-    ValueColumnRendered,
-)
-from ralsei.renderer import RalseiRenderer
-from .task import Task
 from ralsei import dict_utils
+from .task import Task
+
+if TYPE_CHECKING:
+    from ralsei.map_fn import OneToMany
+    from ralsei import (
+        RalseiRenderer,
+        PsycopgConn,
+        GeneratorBuilder,
+        Table,
+        ValueColumn,
+        IdColumn,
+        ValueColumnRendered,
+    )
 
 
 def make_column_statements(
@@ -155,7 +158,7 @@ class MapToNewTable(Task):
 
     def exists(self, conn: PsycopgConn) -> bool:
         return table_exists(conn, self.__table) and (
-            not self.__add_is_done_column
+            not self.__select
             # If this is a resumable task, check if inputs are empty
             or conn.pg().execute(self.__select).fetchone() is None
         )
