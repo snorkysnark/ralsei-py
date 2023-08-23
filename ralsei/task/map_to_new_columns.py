@@ -8,13 +8,8 @@ from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from ralsei.map_fn import OneToOne, FnBuilder
 from ralsei.connection import PsycopgConn
-from ralsei.templates import (
-    RalseiRenderer,
-    Table,
-    ValueColumn,
-    IdColumn,
-)
-from ralsei.templates.value_column import ValueColumnRendered
+from ralsei.templates import Table, ValueColumn, IdColumn, ValueColumnRendered
+from ralsei.renderer import RalseiRenderer
 from .task import Task
 
 

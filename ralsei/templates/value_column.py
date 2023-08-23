@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
-
 from psycopg.sql import SQL, Identifier, Placeholder
 
-from .renderer import Column, ColumnRendered, RalseiRenderer
+from .column import Column, ColumnRendered
+from ralsei.renderer import RalseiRenderer
 
 _FROM_NAME = object()
 

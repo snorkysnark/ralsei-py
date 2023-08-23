@@ -4,7 +4,7 @@ import pytest
 from ralsei import Table, CreateTableSql
 from common.db_helper import get_rows, table_exists
 from ralsei.connection import PsycopgConn
-from ralsei.templates.renderer import RalseiRenderer
+from ralsei.renderer import RalseiRenderer
 
 
 def test_create_table(conn: PsycopgConn):

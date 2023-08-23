@@ -7,12 +7,12 @@ from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from ralsei.map_fn import OneToMany, GeneratorBuilder
 from ralsei.connection import PsycopgConn
 from ralsei.templates import (
-    RalseiRenderer,
     Table,
     ValueColumn,
     IdColumn,
+    ValueColumnRendered,
 )
-from ralsei.templates.value_column import ValueColumnRendered
+from ralsei.renderer import RalseiRenderer
 from .task import Task
 from ralsei import dict_utils
 

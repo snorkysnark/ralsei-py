@@ -6,7 +6,7 @@ import sys
 
 from ralsei.connection import PsycopgConn
 from ralsei.task import Task
-from ralsei.templates import RalseiRenderer
+from ralsei.renderer import RalseiRenderer
 
 
 class CliTask(Protocol):

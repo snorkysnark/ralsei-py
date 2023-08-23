@@ -1,7 +1,11 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from dataclasses import dataclass
 from psycopg.sql import SQL, Identifier, Composed
-from jinja_psycopg import JinjaPsycopg
+
+# Avoid circular import
+if TYPE_CHECKING:
+    from ralsei.renderer import RalseiRenderer
 
 
 @dataclass
@@ -46,13 +50,3 @@ class ColumnRendered:
     @property
     def drop_if_exists(self):
         return SQL("DROP COLUMN IF EXISTS {}").format(Identifier(self.name))
-
-
-class RalseiRenderer(JinjaPsycopg):
-    def _prepare_environment(self):
-        super()._prepare_environment()
-
-        self._env.globals["Column"] = Column
-
-
-DEFAULT_RENDERER = RalseiRenderer()

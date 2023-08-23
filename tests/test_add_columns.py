@@ -1,7 +1,7 @@
 from ralsei import Table, CreateTableSql, AddColumnsSql, Column
 from common.db_helper import get_rows
 from ralsei.connection import PsycopgConn
-from ralsei.templates.renderer import RalseiRenderer
+from ralsei.renderer import RalseiRenderer
 
 
 def prepare_table_task(table: Table):

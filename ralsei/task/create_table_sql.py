@@ -2,7 +2,7 @@ from ralsei.checks import table_exists
 from ralsei.connection import PsycopgConn
 from ralsei.templates import Table
 from ralsei import dict_utils
-from ralsei.templates import RalseiRenderer
+from ralsei.renderer import RalseiRenderer
 from .task import Task
 
 
