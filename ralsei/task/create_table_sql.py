@@ -10,22 +10,48 @@ if TYPE_CHECKING:
 
 
 class CreateTableSql(Task):
-    """Run a `CREATE TABLE` sql script"""
-
     def __init__(
         self,
         sql: str,
         table: Table,
         params: dict = {},
     ) -> None:
-        """Args:
-        - sql (str): Jinja sql template for creating the table
-        Receives the following parameters:
-            - `table (Table)`
-            - `**params`
-        - table (Table): Name and schema of the table being created
-        - renderer (RalseiRenderer, optional): Environment for rendering the templates
-        - params (dict, optional): Extra parameters given the the `sql` template"""
+        """
+        Runs a `CREATE TABLE` sql script
+
+        ### Args:
+        - sql: sql template string
+        - table: Table being created
+        - params (optional): parameters passed to the jinja template
+
+        ### Template:
+
+        Environment variables: `table`, `**params`
+
+        ### Example:
+
+        ```sql
+        -- unnest.sql
+
+        CREATE TABLE {{table}}(
+            id SERIAL PRIMARY KEY,
+            name TEXT
+        );
+
+        INSERT INTO {{table}}(name)
+        SELECT json_array_elements_text(json->'names')
+        FROM {{sources}};
+        ```
+        ```python
+        # pipeline.py
+
+        "unnest": CreateTableSql(
+            sql=Path("./unnest.sql").read_text(),
+            table=TABLE_names,
+            params={"table": TABLE_sources},
+        )
+        ```
+        """
 
         super().__init__()
 

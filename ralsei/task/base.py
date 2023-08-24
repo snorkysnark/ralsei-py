@@ -8,14 +8,22 @@ if TYPE_CHECKING:
 
 
 class Task:
+    scripts: dict[str, Composed]
+    """
+    Named SQL scripts created by the `render` method
+    """
+
     def __init__(self) -> None:
-        self.scripts: dict[str, Composed] = {}
+        """Base Task class"""
+        self.scripts = {}
 
     @abstractmethod
     def render(self, renderer: RalseiRenderer) -> None:
         """
         Render your sql scripts here, like this:
-        `self.scripts["Create table"] = self.__create_table = renderer.render(...)`
+        ```python
+        self.scripts["Create table"] = self.__create_table = renderer.render(...)
+        ```
 
         This methon runs before `run` and `delete`
         """
