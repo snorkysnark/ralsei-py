@@ -15,8 +15,6 @@ from .wrappers import (
 
 
 class FnBuilderBase:
-    """Base class for function wrapper builders"""
-
     id_fields: Optional[list[str]]
     """
     Keeps track of the tasks that were popped using `FnBuilderBase.pop_id_fields`
@@ -25,6 +23,7 @@ class FnBuilderBase:
     """
 
     def __init__(self) -> None:
+        """Base class for function wrapper builders"""
         self._wrappers: List[FnWrapper] = []
         self.id_fields = None
 
@@ -85,11 +84,13 @@ class FnBuilderBase:
 
 
 class GeneratorBuilder(FnBuilderBase):
-    """Build a function of type `(*args) -> Generator[dict]`"""
-
     def __init__(self, fn: OneToMany) -> None:
-        """Args:
-        - fn (OneToMany): Base function to build wrappers around"""
+        """
+        Build a function of type `(*args) -> Generator[dict]`
+
+        Args:
+        - fn (OneToMany): Base function to build wrappers around
+        """
         super().__init__()
         self._fn = fn
 
@@ -108,11 +109,13 @@ class GeneratorBuilder(FnBuilderBase):
 
 
 class FnBuilder(FnBuilderBase):
-    """Build a function of type (*args) -> dict"""
-
     def __init__(self, fn: OneToOne) -> None:
-        """Args:
-        - fn (OneToOne): Base function to build wrappers around"""
+        """
+        Build a function of type `(*args) -> dict`
+
+        Args:
+        - fn (OneToOne): Base function to build wrappers around
+        """
         super().__init__()
         self.fn = fn
 
