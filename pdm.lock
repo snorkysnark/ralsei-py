@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:2abc1e0ce29aa527c351862dab19d3660f0a42759e26810a9e0f7ce1d65bfd40"
+content_hash = "sha256:40b69e764865ff69e02e901399e6e998c437e90488e01435e4ced030fe6e3e52"
 
 [[package]]
 name = "atomicwrites"
@@ -138,6 +138,21 @@ files = [
 ]
 
 [[package]]
+name = "pdoc"
+version = "14.0.0"
+requires_python = ">=3.8"
+summary = "API Documentation for Python Projects"
+dependencies = [
+    "Jinja2>=2.11.0",
+    "MarkupSafe",
+    "pygments>=2.12.0",
+]
+files = [
+    {file = "pdoc-14.0.0-py3-none-any.whl", hash = "sha256:4514041ff5da33f1adbc700002a661600fc13a9adadef317bc6ae8be9e61154b"},
+    {file = "pdoc-14.0.0.tar.gz", hash = "sha256:ad6c16c949e5dd8b30effc5398aedb5779ffe8ab94be91ce2cddc320e8127900"},
+]
+
+[[package]]
 name = "pluggy"
 version = "1.0.0"
 requires_python = ">=3.6"
@@ -172,12 +187,12 @@ files = [
 
 [[package]]
 name = "pygments"
-version = "2.13.0"
-requires_python = ">=3.6"
+version = "2.16.1"
+requires_python = ">=3.7"
 summary = "Pygments is a syntax highlighting package written in Python."
 files = [
-    {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
-    {file = "Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
+    {file = "Pygments-2.16.1-py3-none-any.whl", hash = "sha256:13fc09fa63bc8d8671a6d247e1eb303c4b343eaee81d861f3404db2935653692"},
+    {file = "Pygments-2.16.1.tar.gz", hash = "sha256:1daff0494820c69bc8941e407aa20f577374ee88364ee10a98fdbe0aece96e29"},
 ]
 
 [[package]]
