@@ -21,36 +21,32 @@ class AddColumnsSql(Task):
         Adds the specified Columns to an existing Table
         and runs the SQL script to fill them with data
 
-        ### Args:
-        - sql: sql template string
-        - table: Table to add columns to
-        - columns (optional): these column definitions
-          take precedence over those defined in the template
-        - params (optional): parameters passed to the jinja template
+        Args:
+            sql: sql template string
+            table: Table to add columns to
+            columns: these column definitions take precedence over those defined in the template
+            params: parameters passed to the jinja template
 
-        ### Template:
+        Template:
+            Environment variables: `table`, `**params`
 
-        Environment variables: `table`, `**params`
+            Columns can be defined in the template itself,
+            using `{% set columns = [...] %}`
 
-        Columns can be defined in the template itself,
-        using `{% set columns = [...] %}`
+        Example:
+            ```sql title="postprocess.sql"
+            {% set columns = [Column("name_upper", "TEXT")] %}
 
-        ### Example:
-        ```sql
-        -- postprocess.sql
-        {% set columns = [Column("name_upper", "TEXT")] %}
+            UPDATE {{table}}
+            SET name_upper = UPPER(name);
+            ```
 
-        UPDATE {{table}}
-        SET name_upper = UPPER(name);
-        ```
-        ```python
-        # pipeline.py
-
-        "postprocess": AddColumnsSql(
-            sql=Path("./postprocess.sql").read_text(),
-            table=TABLE_people,
-        )
-        ```
+            ```python title="pipeline.py"
+            "postprocess": AddColumnsSql(
+                sql=Path("./postprocess.sql").read_text(),
+                table=TABLE_people,
+            )
+            ```
         """
 
         super().__init__()

@@ -16,41 +16,35 @@ class CreateTableSql(Task):
         table: Table,
         params: dict = {},
     ) -> None:
-        """
-        Runs a `CREATE TABLE` sql script
+        """Runs a `CREATE TABLE` sql script
 
-        ### Args:
-        - sql: sql template string
-        - table: Table being created
-        - params (optional): parameters passed to the jinja template
+        Args:
+            sql: sql template string
+            table: Table being created
+            params: parameters passed to the jinja template
 
-        ### Template:
+        Template:
+            Environment variables: `table`, `**params`
 
-        Environment variables: `table`, `**params`
+        Example:
+            ```sql title="unnest.sql"
+            CREATE TABLE {{table}}(
+                id SERIAL PRIMARY KEY,
+                name TEXT
+            );
 
-        ### Example:
+            INSERT INTO {{table}}(name)
+            SELECT json_array_elements_text(json->'names')
+            FROM {{sources}};
+            ```
 
-        ```sql
-        -- unnest.sql
-
-        CREATE TABLE {{table}}(
-            id SERIAL PRIMARY KEY,
-            name TEXT
-        );
-
-        INSERT INTO {{table}}(name)
-        SELECT json_array_elements_text(json->'names')
-        FROM {{sources}};
-        ```
-        ```python
-        # pipeline.py
-
-        "unnest": CreateTableSql(
-            sql=Path("./unnest.sql").read_text(),
-            table=TABLE_names,
-            params={"table": TABLE_sources},
-        )
-        ```
+            ```python title="pipeline.py"
+            "unnest": CreateTableSql(
+                sql=Path("./unnest.sql").read_text(),
+                table=TABLE_names,
+                params={"table": TABLE_sources},
+            )
+            ```
         """
 
         super().__init__()
