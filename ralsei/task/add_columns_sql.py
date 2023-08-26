@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 
-from ralsei import dict_utils
+from ralsei.dict_utils import merge_safe
 from ralsei.checks import columns_exist
 from .base import Task
 
@@ -52,7 +52,7 @@ class AddColumnsSql(Task):
         super().__init__()
 
         self.__raw_sql = sql
-        self.__jinja_args = dict_utils.merge_no_dup({"table": table}, params)
+        self.__jinja_args = merge_safe({"table": table}, params)
         self.__raw_columns = columns
         self.__table = table
 
@@ -72,22 +72,25 @@ class AddColumnsSql(Task):
         rendered_columns = list(
             map(lambda col: col.render(renderer, self.__jinja_args), columns)
         )
-        add_column_params = dict_utils.merge_no_dup(
-            self.__jinja_args, {"columns": rendered_columns}
-        )
 
         self.scripts["Add columns"] = self.__add_columns = renderer.render(
             """\
             ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\n', attribute='add') }};""",
-            add_column_params,
+            {{ columns | sqljoin(',\n') }};""",
+            merge_safe(
+                self.__jinja_args,
+                {"columns": map(lambda col: col.add(False), rendered_columns)},
+            ),
         )
         self.scripts["Main"] = self.__sql = script_module.render()
         self.scripts["Drop columns"] = self.__drop_columns = renderer.render(
             """\
             ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\n', attribute='drop_if_exists') }};""",
-            add_column_params,
+            {{ columns | sqljoin(',\n') }};""",
+            merge_safe(
+                self.__jinja_args,
+                {"columns": map(lambda col: col.drop(True), rendered_columns)},
+            ),
         )
 
     def exists(self, conn: PsycopgConn) -> bool:

@@ -1,4 +1,4 @@
-def merge_no_dup(*dicts: dict) -> dict:
+def merge_safe(*dicts: dict) -> dict:
     """
     Merge dictionaries raising a ValueError if there's a duplicate key
     """

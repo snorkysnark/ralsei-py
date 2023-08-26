@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
 
-from ralsei import dict_utils
+from ralsei.dict_utils import merge_safe
 from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from .base import Task
@@ -160,16 +160,13 @@ class MapToNewColumns(Task):
                 ValueColumn(is_done_column, "BOOL DEFAULT FALSE", SQL("TRUE"))
             )
 
-            for column in columns:
-                column.column.add_if_not_exists = True
-
             is_done_ident = Identifier(is_done_column)
             self.__commit_each = True
         else:
             is_done_ident = None
             self.__commit_each = False
 
-        self.__jinja_params = dict_utils.merge_no_dup(
+        self.__jinja_params = merge_safe(
             params, {"table": table, "is_done": is_done_ident}
         )
 
@@ -199,8 +196,11 @@ class MapToNewColumns(Task):
         self.scripts["Add"] = self.__add_columns = renderer.render(
             """\
             ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\\n', attribute='add') }};""",
-            {"table": self.__table, "columns": columns_to_add},
+            {{ columns | sqljoin(',\\n') }};""",
+            {
+                "table": self.__table,
+                "columns": map(lambda col: col.add(self.__commit_each), columns_to_add),
+            },
         )
         self.scripts["Update"] = self.__update_table = renderer.render(
             """\
@@ -217,8 +217,11 @@ class MapToNewColumns(Task):
         self.scripts["Drop"] = self.__drop_columns = renderer.render(
             """\
             ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\\n', attribute='drop_if_exists') }};""",
-            {"table": self.__table, "columns": columns_to_add},
+            {{ columns | sqljoin(',\\n') }};""",
+            {
+                "table": self.__table,
+                "columns": map(lambda col: col.drop(True), columns_to_add),
+            },
         )
 
     def run(self, conn: PsycopgConn) -> None:
@@ -244,7 +247,7 @@ class MapToNewColumns(Task):
 
     def exists(self, conn: PsycopgConn) -> bool:
         return columns_exist(
-            conn, self.__table, map(lambda col: col.column.name, self.__columns_raw)
+            conn, self.__table, map(lambda col: col.name, self.__columns_raw)
         ) and (
             not self.__commit_each
             # If this is a resumable task, check if inputs are empty

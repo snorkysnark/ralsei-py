@@ -49,7 +49,7 @@ class CreateTableSql(Task):
 
         super().__init__()
 
-        self.__jinja_args = dict_utils.merge_no_dup({"table": table}, params)
+        self.__jinja_args = dict_utils.merge_safe({"table": table}, params)
         self.__sql_raw = sql
         self.__table = table
 

@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from ralsei.checks import table_exists
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-from ralsei import dict_utils
+from ralsei.dict_utils import merge_safe
 from .base import Task
 
 if TYPE_CHECKING:
@@ -202,7 +202,7 @@ class MapToNewTable(Task):
         self.__is_done_ident = Identifier(is_done_column) if is_done_column else None
         self.__cursor_factory = cursor_factory
 
-        self.__jinja_params = dict_utils.merge_no_dup(
+        self.__jinja_params = merge_safe(
             params,
             {"table": table, "source": source_table, "is_done": self.__is_done_ident},
         )
