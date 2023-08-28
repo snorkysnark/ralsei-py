@@ -1,13 +1,15 @@
 from psycopg.sql import SQL, Identifier
 import pytest
+
 from ralsei import (
     MapToNewTable,
-    PsycopgConn,
     Table,
     ValueColumn,
-    DEFAULT_RENDERER,
     GeneratorBuilder,
 )
+from ralsei.connection import PsycopgConn
+from ralsei.renderer import DEFAULT_RENDERER
+
 from common.db_helper import get_rows, table_exists
 
 

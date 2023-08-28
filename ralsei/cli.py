@@ -5,7 +5,7 @@ from pathlib import Path
 import sqlalchemy
 import json
 
-from ralsei.pipeline import Pipeline, TaskDefinitions
+from ralsei._pipeline import Pipeline, TaskDefinitions
 from ralsei.connection import PsycopgConn
 
 
@@ -101,4 +101,4 @@ class RalseiCli:
                 task.describe(conn)
 
 
-__all__ = ["RalseiCli"]
+__all__ = ["RalseiCli", "TaskDefinitions", "TaskDefinitionsFactory"]
