@@ -1,10 +1,11 @@
 """All the common imports for writing a task"""
 
+from .base import Task as Task
 from ralsei.map_fn import *
 from ralsei.templates import *
-from ralsei import checks
-from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
+from ralsei import checks as checks
+from ralsei.connection import PsycopgConn as PsycopgConn
+from ralsei.renderer import RalseiRenderer as RalseiRenderer
 
 
 def merge_params(*dicts: dict) -> dict:

@@ -1,7 +1,14 @@
 from typing import Optional
 
-from .base import Task
-from .prelude import Table, Column, PsycopgConn, RalseiRenderer, merge_params, checks
+from .prelude import (
+    Task,
+    Table,
+    Column,
+    PsycopgConn,
+    RalseiRenderer,
+    merge_params,
+    checks,
+)
 
 
 class AddColumnsSql(Task):

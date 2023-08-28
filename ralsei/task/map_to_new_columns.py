@@ -3,8 +3,8 @@ from typing import Callable, Optional
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
 
-from .base import Task
 from .prelude import (
+    Task,
     PsycopgConn,
     RalseiRenderer,
     FnBuilder,

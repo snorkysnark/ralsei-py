@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from psycopg.sql import Composed
 
-from .prelude import RalseiRenderer, PsycopgConn
+from ralsei.connection import PsycopgConn
+from ralsei.renderer import RalseiRenderer
 
 
 class Task:
