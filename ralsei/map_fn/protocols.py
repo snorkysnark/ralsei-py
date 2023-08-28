@@ -1,13 +1,13 @@
-from typing import Callable, Generator
+from typing import Callable, Iterator
 
 
 OneToOne = Callable[..., dict]
 """
-Any function of type (*args) -> dict
+A function that maps one row to multiple rows
 """
 
 
-OneToMany = Callable[..., Generator[dict, None, None]]
+OneToMany = Callable[..., Iterator[dict]]
 """
-Any function of type (*args) -> Generator[dict]
+A function that maps one row to another
 """
