@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:7a9854a436d94fadf0f689a3a5f76be9390a32e0c3772fd82cfe0690a3d5d72f"
+content_hash = "sha256:7cad32d30c7aa2d75b090aa3a93223e944d15ff4d00dcc29b16a689cd43296d4"
 
 [[package]]
 name = "atomicwrites"
@@ -372,6 +372,32 @@ files = [
 ]
 
 [[package]]
+name = "mkdocs-gen-files"
+version = "0.5.0"
+requires_python = ">=3.7"
+summary = "MkDocs plugin to programmatically generate documentation pages during the build"
+dependencies = [
+    "mkdocs>=1.0.3",
+]
+files = [
+    {file = "mkdocs_gen_files-0.5.0-py3-none-any.whl", hash = "sha256:7ac060096f3f40bd19039e7277dd3050be9a453c8ac578645844d4d91d7978ea"},
+    {file = "mkdocs_gen_files-0.5.0.tar.gz", hash = "sha256:4c7cf256b5d67062a788f6b1d035e157fc1a9498c2399be9af5257d4ff4d19bc"},
+]
+
+[[package]]
+name = "mkdocs-literate-nav"
+version = "0.6.0"
+requires_python = ">=3.7"
+summary = "MkDocs plugin to specify the navigation in Markdown instead of YAML"
+dependencies = [
+    "mkdocs>=1.0.3",
+]
+files = [
+    {file = "mkdocs_literate_nav-0.6.0-py3-none-any.whl", hash = "sha256:8c1b84714e5974da5e44e011ec0069275ae7647270c13a679662cf6ffce675a4"},
+    {file = "mkdocs_literate_nav-0.6.0.tar.gz", hash = "sha256:81ccbea18163ae8e10bd0bd39237fe70c32a1f2dff6c170779f5d52dd98a0470"},
+]
+
+[[package]]
 name = "mkdocs-material"
 version = "9.2.3"
 requires_python = ">=3.7"
@@ -404,6 +430,19 @@ summary = "Extension pack for Python Markdown and MkDocs Material."
 files = [
     {file = "mkdocs_material_extensions-1.1.1-py3-none-any.whl", hash = "sha256:e41d9f38e4798b6617ad98ca8f7f1157b1e4385ac1459ca1e4ea219b556df945"},
     {file = "mkdocs_material_extensions-1.1.1.tar.gz", hash = "sha256:9c003da71e2cc2493d910237448c672e00cefc800d3d6ae93d2fc69979e3bd93"},
+]
+
+[[package]]
+name = "mkdocs-section-index"
+version = "0.3.5"
+requires_python = ">=3.7"
+summary = "MkDocs plugin to allow clickable sections that lead to an index page"
+dependencies = [
+    "mkdocs>=1.0.3",
+]
+files = [
+    {file = "mkdocs_section_index-0.3.5-py3-none-any.whl", hash = "sha256:1f6359287b0a823d6297cf1cb6c0a49ed75851d0d1cea8b425b207a45ce10141"},
+    {file = "mkdocs_section_index-0.3.5.tar.gz", hash = "sha256:fa8b1ce0649326b1873c6460c1df2bb0c4825fd21e3dd416f13ec212d31edf12"},
 ]
 
 [[package]]

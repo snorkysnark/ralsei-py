@@ -2,16 +2,43 @@ site_name: "ralsei"
 
 theme:
   name: "material"
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
     - content.code.annotate
 
 plugins:
   - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
   - mkdocstrings:
       handlers:
         python:
           options:
             show_source: false
+            members_order: source
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://docs.sqlalchemy.org/en/20/objects.inv
+            - https://www.psycopg.org/psycopg3/docs/objects.inv
+
+nav:
+  - Index: index.md
+  - Code Reference: reference/
 
 markdown_extensions:
   - pymdownx.highlight:
