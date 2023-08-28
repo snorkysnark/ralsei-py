@@ -292,6 +292,7 @@ class MapToNewTable(Task):
     def exists(self, conn: PsycopgConn) -> bool:
         return table_exists(conn, self.__table) and (
             not self.__select
+            or not self.__add_is_done_column
             # If this is a resumable task, check if inputs are empty
             or conn.pg().execute(self.__select).fetchone() is None
         )
