@@ -1,24 +1,16 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import Callable, Optional
 
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
 
+from ralsei.connection import PsycopgConn
+from ralsei.renderer import RalseiRenderer
+from ralsei.map_fn import FnBuilder
+from ralsei.templates import ValueColumn, IdColumn, Table, ValueColumnRendered
 from ralsei.dict_utils import merge_safe
 from ralsei.checks import columns_exist
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from .base import Task
-
-if TYPE_CHECKING:
-    from ralsei import (
-        FnBuilder,
-        PsycopgConn,
-        Table,
-        ValueColumn,
-        IdColumn,
-        ValueColumnRendered,
-        RalseiRenderer,
-    )
 
 
 def make_column_statements(
