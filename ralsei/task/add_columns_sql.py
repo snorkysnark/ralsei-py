@@ -1,12 +1,8 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
-from ralsei.dict_utils import merge_safe
-from ralsei.checks import columns_exist
 from .base import Task
-
-if TYPE_CHECKING:
-    from ralsei import PsycopgConn, Table, Column, RalseiRenderer
+from .prelude import Table, Column, PsycopgConn, RalseiRenderer, merge_params, checks
 
 
 class AddColumnsSql(Task):
@@ -52,7 +48,7 @@ class AddColumnsSql(Task):
         super().__init__()
 
         self.__raw_sql = sql
-        self.__jinja_args = merge_safe({"table": table}, params)
+        self.__jinja_args = merge_params({"table": table}, params)
         self.__raw_columns = columns
         self.__table = table
 
@@ -77,7 +73,7 @@ class AddColumnsSql(Task):
             """\
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\n') }};""",
-            merge_safe(
+            merge_params(
                 self.__jinja_args,
                 {"columns": map(lambda col: col.add(False), rendered_columns)},
             ),
@@ -87,14 +83,14 @@ class AddColumnsSql(Task):
             """\
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\n') }};""",
-            merge_safe(
+            merge_params(
                 self.__jinja_args,
                 {"columns": map(lambda col: col.drop(True), rendered_columns)},
             ),
         )
 
     def exists(self, conn: PsycopgConn) -> bool:
-        return columns_exist(conn, self.__table, self.__column_names)
+        return checks.columns_exist(conn, self.__table, self.__column_names)
 
     def run(self, conn: PsycopgConn) -> None:
         with conn.pg().cursor() as curs:

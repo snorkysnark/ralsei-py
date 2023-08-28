@@ -3,14 +3,19 @@ from typing import Callable, Optional
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
 
-from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
-from ralsei.map_fn import FnBuilder
-from ralsei.templates import ValueColumn, IdColumn, Table, ValueColumnRendered
-from ralsei.dict_utils import merge_safe
-from ralsei.checks import columns_exist
-from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 from .base import Task
+from .prelude import (
+    PsycopgConn,
+    RalseiRenderer,
+    FnBuilder,
+    ValueColumn,
+    IdColumn,
+    Table,
+    ValueColumnRendered,
+    merge_params,
+    checks,
+)
+from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 
 def make_column_statements(
@@ -158,7 +163,7 @@ class MapToNewColumns(Task):
             is_done_ident = None
             self.__commit_each = False
 
-        self.__jinja_params = merge_safe(
+        self.__jinja_params = merge_params(
             params, {"table": table, "is_done": is_done_ident}
         )
 
@@ -238,7 +243,7 @@ class MapToNewColumns(Task):
                     pgconn.commit()
 
     def exists(self, conn: PsycopgConn) -> bool:
-        return columns_exist(
+        return checks.columns_exist(
             conn, self.__table, map(lambda col: col.name, self.__columns_raw)
         ) and (
             not self.__commit_each

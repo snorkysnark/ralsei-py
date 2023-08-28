@@ -2,14 +2,19 @@ from typing import Callable, Iterator, Optional
 from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
 
-from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
-from ralsei.map_fn import GeneratorBuilder
-from ralsei.templates import Table, ValueColumn, IdColumn, ValueColumnRendered
-from ralsei.checks import table_exists
-from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
-from ralsei.dict_utils import merge_safe
 from .base import Task
+from .prelude import (
+    PsycopgConn,
+    RalseiRenderer,
+    GeneratorBuilder,
+    Table,
+    ValueColumn,
+    IdColumn,
+    ValueColumnRendered,
+    checks,
+    merge_params,
+)
+from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 
 def make_column_statements(
@@ -194,7 +199,7 @@ class MapToNewTable(Task):
         self.__is_done_ident = Identifier(is_done_column) if is_done_column else None
         self.__cursor_factory = cursor_factory
 
-        self.__jinja_params = merge_safe(
+        self.__jinja_params = merge_params(
             params,
             {"table": table, "source": source_table, "is_done": self.__is_done_ident},
         )
@@ -290,7 +295,7 @@ class MapToNewTable(Task):
             self.__drop_is_done_column = None
 
     def exists(self, conn: PsycopgConn) -> bool:
-        return table_exists(conn, self.__table) and (
+        return checks.table_exists(conn, self.__table) and (
             not self.__select
             or not self.__add_is_done_column
             # If this is a resumable task, check if inputs are empty
