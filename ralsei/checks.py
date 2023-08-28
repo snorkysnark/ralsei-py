@@ -1,7 +1,7 @@
 """
 Checks for table/column's existence
 
-You can use these to implement `ralsei.task.base.Task.exists`
+You can use these to implement [ralsei.task.Task][]
 """
 
 from typing import Iterable
@@ -10,6 +10,14 @@ from ralsei.templates import Table
 
 
 def table_exists(conn: PsycopgConn, table: Table) -> bool:
+    """
+    Args:
+        conn: db connection
+        table: table name and schema
+
+    Returns:
+        True if table exists, False otherwise
+    """
     return (
         conn.pg()
         .execute(
@@ -24,6 +32,15 @@ def table_exists(conn: PsycopgConn, table: Table) -> bool:
 
 
 def column_exists(conn: PsycopgConn, table: Table, column: str) -> bool:
+    """
+    Args:
+        conn: db connection
+        table: table name and schema
+        column: column name
+
+    Returns:
+        True if column exists, False otherwise
+    """
     return (
         conn.pg()
         .execute(
@@ -39,6 +56,15 @@ def column_exists(conn: PsycopgConn, table: Table, column: str) -> bool:
 
 
 def columns_exist(conn: PsycopgConn, table: Table, columns: Iterable[str]) -> bool:
+    """
+    Args:
+        conn: db connection
+        table: table name and schema
+        columns: column names
+
+    Returns:
+        True if all column exist, False otherwise
+    """
     for column in columns:
         if not column_exists(conn, table, column):
             return False

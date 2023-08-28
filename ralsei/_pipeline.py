@@ -1,5 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import MutableMapping, Protocol, Union
+from typing import Protocol, TYPE_CHECKING
 from rich.console import Console
 from rich.syntax import Syntax
 import sys
@@ -7,6 +8,9 @@ import sys
 from ralsei.connection import PsycopgConn
 from ralsei.task import Task
 from ralsei.renderer import RalseiRenderer
+
+if TYPE_CHECKING:
+    from ralsei.cli import TaskDefinitions
 
 
 class CliTask(Protocol):
@@ -75,9 +79,6 @@ class Sequence:
             print(named_task.name)
 
 
-TaskDefinitions = MutableMapping[str, Union[Task, list[str]]]
-
-
 def resolve_name(
     name: str, definitions: TaskDefinitions, renderer: RalseiRenderer
 ) -> CliTask:
@@ -122,4 +123,4 @@ class Pipeline:
         return self.__tasks[name]
 
 
-__all__ = ["Pipeline", "CliTask", "TaskDefinitions"]
+__all__ = ["Pipeline", "CliTask"]

@@ -1,14 +1,17 @@
-import sqlalchemy
+from sqlalchemy.engine import Connection as SqlalchemyConn
 import psycopg
 
 
 class PsycopgConn:
     __slots__ = ("__sqlalchemy", "__pg")
 
-    def __init__(self, conn: sqlalchemy.Connection) -> None:
+    def __init__(self, conn: SqlalchemyConn) -> None:
         """
-        A wrapper over [sqlalchemy.Connection](https://docs.sqlalchemy.org/en/20/core/connections.html#sqlalchemy.engine.Connection)
-        that is guaranteed to be using the [psycopg](https://www.psycopg.org/psycopg3/) driver
+        A wrapper over [sqlalchemy.engine.Connection][]
+        that is guaranteed to be using the psycopg3 driver
+
+        Args:
+            conn: sqlalchemy connection
         """
 
         self.__sqlalchemy = conn
@@ -17,27 +20,31 @@ class PsycopgConn:
         assert isinstance(inner, psycopg.Connection), "Connection is not from psycopg"
         self.__pg: psycopg.Connection = inner
 
-    def sqlalchemy(self) -> sqlalchemy.Connection:
+    def sqlalchemy(self) -> SqlalchemyConn:
         """
-        Returns the sqlalchemy connection
+        Returns:
+            sqlalchemy connection
 
-        Can be used for pandas interop:
-        ```python
-        pd.read_sql_query("SELECT * FROM orgs", conn.sqlalchemy())
-        ```
+        Example:
+            Can be used for pandas interop:
+            ```python
+            pd.read_sql_query("SELECT * FROM orgs", conn.sqlalchemy())
+            ```
         """
         return self.__sqlalchemy
 
     def pg(self) -> psycopg.Connection:
         """
-        Returns the raw psycopg connection
+        Returns:
+            the raw psycopg connection
 
-        Can be used for executing/displaying [composed sql](https://www.psycopg.org/psycopg3/docs/api/sql.html)
-        ```python
-        renderer.render(
-            "SELECT * FROM {{table}}",
-            {"table": Table("orgs", "dev")}
-        ).as_string(conn.pg())
-        ```
+        Example:
+            Can be used for executing/displaying [composed sql][psycopg.sql]
+            ```python
+            renderer.render(
+                "SELECT * FROM {{table}}",
+                {"table": Table("orgs", "dev")}
+            ).as_string(conn.pg())
+            ```
         """
         return self.__pg

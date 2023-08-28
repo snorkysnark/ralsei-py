@@ -6,8 +6,6 @@ from psycopg.rows import dict_row
 
 
 class CursorFactory(ABC):
-    """"""
-
     @abstractmethod
     def create_cursor(self, conn: psycopg.Connection, withhold: bool) -> psycopg.Cursor:
         """
@@ -15,11 +13,12 @@ class CursorFactory(ABC):
         psycopg.Cursor
 
         Args:
-        - conn (`psycopg.Connection`): connection
-        - [withhold](https://www.psycopg.org/psycopg3/docs/api/cursors.html#psycopg.ServerCursor.withhold)
-          (bool): If the cursor can be used after the creating transaction has committed.
+            conn: connection
+            withhold: if the cursor can be used after committing a transaction,
+                see [psycopg.ServerCursor.withhold][]
 
-        The returned cursor should use row_factory=dict_row by default
+        Returns:
+            cursor, should use row_factory=dict_row by default
         """
         ...
 
@@ -41,8 +40,8 @@ class ServerCursorFactory:
         Use this if the number of rows is too large to fit into memory
 
         Args:
-        - name (str), optional: how to name this cursor on the backend
-        - itersize (int), optional: how many rows to load into memory at once
+            name: how to name this cursor on the backend
+            itersize: how many rows to load into memory at once
         """
 
         self._name = name
