@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .base import Task
 from .prelude import Table, RalseiRenderer, PsycopgConn, checks, merge_params
 
