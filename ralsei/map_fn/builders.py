@@ -130,3 +130,6 @@ class FnBuilder(FnBuilderBase):
     def build(self) -> OneToOne:
         """Returns the wrapped function"""
         return into_one(self._wrap_all(into_many(self.fn)))
+
+
+__all__ = ["FnBuilder", "GeneratorBuilder"]
