@@ -32,7 +32,7 @@ class ClientCursorFactory(CursorFactory):
         return conn.cursor(row_factory=dict_row)
 
 
-class ServerCursorFactory:
+class ServerCursorFactory(CursorFactory):
     def __init__(
         self, name: str = "input_cursor", itersize: Optional[int] = None
     ) -> None:
