@@ -5,21 +5,24 @@ from .templates import Column
 
 class RalseiRenderer(JinjaPsycopg):
     """
-    JinjaPsycopg renderer pre-initialized with ralsei's environment variables
+    [JinjaPsycopg](https://github.com/snorkysnark/jinja-psycopg)
+    renderer pre-initialized with ralsei's environment variables
 
-    ## Usage
+    Better documentation coming soon
 
-    Build template:
-    ```python
-    renderer.from_string("SELECT * FROM {{table}}")
-    # jinja_psycopg.SqlTemplate
-    ```
+    Example:
+        Build template:
+        ```python
+        renderer.from_string("SELECT * FROM {{table}}")
+        # jinja_psycopg.SqlTemplate
+        ```
 
-    Render SQL:
-    ```python
-    renderer.render("SELECT * FROM {{table}}", {"table": Table("foo")})
-    # psycopg.sql.Composed
-    ```
+    Example:
+        Render SQL:
+        ```python
+        renderer.render("SELECT * FROM {{table}}", {"table": Table("foo")})
+        # psycopg.sql.Composed
+        ```
     """
 
     def _prepare_environment(self):

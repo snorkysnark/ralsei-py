@@ -6,10 +6,12 @@ from ralsei.renderer import RalseiRenderer
 
 
 class Task:
+    """
+    Attributes:
+        scripts: Named SQL scripts created by the `render` method
+    """
+
     scripts: dict[str, Composed]
-    """
-    Named SQL scripts created by the `render` method
-    """
 
     def __init__(self) -> None:
         """Base Task class"""
@@ -24,16 +26,37 @@ class Task:
         ```
 
         This methon runs before `run` and `delete`
+
+        Args:
+            renderer: jinja sql renderer
         """
 
     @abstractmethod
     def exists(self, conn: PsycopgConn) -> bool:
-        """Check if task has already been done"""
+        """
+        Check if task has already been done
+
+        Args:
+            conn: db connection
+
+        Returns:
+            has been done?
+        """
 
     @abstractmethod
     def run(self, conn: PsycopgConn) -> None:
-        """Execute the task"""
+        """
+        Execute the task
+
+        Args:
+            conn: db connection
+        """
 
     @abstractmethod
     def delete(self, conn: PsycopgConn) -> None:
-        """Delete whatever `run()` method has created"""
+        """
+        Delete whatever `run()` method has created
+
+        Args:
+            conn: db connection
+        """
