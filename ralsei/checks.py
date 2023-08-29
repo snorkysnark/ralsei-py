@@ -1,7 +1,7 @@
 """
 Checks for table/column's existence
 
-You can use these to implement [ralsei.task.Task][]
+You can use these to implement [ralsei.task.Task.exists][]
 """
 
 from typing import Iterable

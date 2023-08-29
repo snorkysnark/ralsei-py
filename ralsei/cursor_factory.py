@@ -18,7 +18,7 @@ class CursorFactory(ABC):
                 see [psycopg.ServerCursor.withhold][]
 
         Returns:
-            cursor, should use row_factory=dict_row by default
+            cursor, must use row_factory=dict_row
         """
         ...
 

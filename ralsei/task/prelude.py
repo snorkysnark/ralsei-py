@@ -10,7 +10,7 @@ from ralsei.renderer import RalseiRenderer as RalseiRenderer
 
 def merge_params(*dicts: dict) -> dict:
     """
-    Merge dictionaries, asserting there's no duplicate keys
+    Merge dictionaries, asserting there are no duplicate keys
 
     Args:
         *dicts: dictionaries to merge
