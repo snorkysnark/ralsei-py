@@ -6,6 +6,14 @@ import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
+
+def is_private(parts: list[str]) -> bool:
+    for part in parts:
+        if part.startswith("_") and part != "__init__":
+            return True
+    return False
+
+
 for path in sorted(Path("ralsei").rglob("*.py")):
     module_path = path.with_suffix("")
     doc_path = path.with_suffix(".md")
@@ -13,12 +21,12 @@ for path in sorted(Path("ralsei").rglob("*.py")):
 
     parts = list(module_path.parts)
 
+    if is_private(parts):
+        continue
     if parts[-1] == "__init__":
         parts = parts[:-1]
         doc_path = doc_path.with_name("index.md")
         full_doc_path = full_doc_path.with_name("index.md")
-    elif parts[-1] == "__main__":
-        continue
 
     nav[tuple(parts)] = doc_path.as_posix()
 
