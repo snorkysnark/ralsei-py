@@ -11,7 +11,7 @@ _FROM_NAME = object()
 class ValueColumn(Column):
     def __init__(self, name: str, type: str, value: Any = _FROM_NAME):
         """
-        Defines a column and the value that should be filled with some value
+        Defines a column that should be filled with some value
 
         Args:
             name: column name
@@ -47,7 +47,7 @@ class ValueColumn(Column):
 class ValueColumnRendered(ColumnRendered):
     def __init__(self, column: ColumnRendered, value: Any):
         """
-        Defines a column and the value that should be filled with some value
+        Defines a column that should be filled with some value
 
         Args:
             column: column name and type
