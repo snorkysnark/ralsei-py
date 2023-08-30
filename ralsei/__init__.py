@@ -5,6 +5,7 @@ from .templates import (
     IdColumn as IdColumn,
 )
 from .task import (
+    Task as Task,
     CreateTableSql as CreateTableSql,
     AddColumnsSql as AddColumnsSql,
     MapToNewTable as MapToNewTable,
