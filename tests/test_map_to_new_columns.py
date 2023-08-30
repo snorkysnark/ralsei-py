@@ -9,6 +9,7 @@ from ralsei import (
 )
 from ralsei.connection import PsycopgConn
 from ralsei.renderer import DEFAULT_RENDERER
+from sqlalchemy import Engine
 
 from common.db_helper import get_rows
 
@@ -53,7 +54,7 @@ def test_map_columns(conn: PsycopgConn):
     ]
 
 
-def test_map_columns_resumable(conn: PsycopgConn):
+def test_map_columns_resumable(engine: Engine):
     def failing(val: int):
         if val < 10:
             return {"doubled": val * 2}
@@ -61,39 +62,41 @@ def test_map_columns_resumable(conn: PsycopgConn):
             raise RuntimeError()
 
     table = Table("test_map_columns_resumable")
-    conn.pg().execute(
-        DEFAULT_RENDERER.render(
-            """\
-            CREATE TABLE {{table}}(
-                id SERIAL PRIMARY KEY,
-                val INT
-            );
-            INSERT INTO {{table}}(val) VALUES
-            (2),(5),(12);""",
-            {"table": table},
+    with PsycopgConn(engine.connect()) as conn:
+        conn.pg().execute(
+            DEFAULT_RENDERER.render(
+                """\
+                CREATE TABLE {{table}}(
+                    id SERIAL PRIMARY KEY,
+                    val INT
+                );
+                INSERT INTO {{table}}(val) VALUES
+                (2),(5),(12);""",
+                {"table": table},
+            )
         )
-    )
 
-    task = MapToNewColumns(
-        table=table,
-        select="SELECT id, val FROM {{table}}",
-        columns=[ValueColumn("doubled", "INT")],
-        fn=FnBuilder(failing).pop_id_fields("id"),
-        is_done_column="__success",
-    )
-    task.render(DEFAULT_RENDERER)
+        task = MapToNewColumns(
+            table=table,
+            select="SELECT id, val FROM {{table}}",
+            columns=[ValueColumn("doubled", "INT")],
+            fn=FnBuilder(failing).pop_id_fields("id"),
+            is_done_column="__success",
+        )
+        task.render(DEFAULT_RENDERER)
 
-    with pytest.raises(RuntimeError):
-        task.run(conn)
+        with pytest.raises(RuntimeError):
+            task.run(conn)
 
-    assert get_rows(conn, table, order_by=[Identifier("id")]) == [
-        (1, 2, 4, True),
-        (2, 5, 10, True),
-        (3, 12, None, False),
-    ]
-    task.delete(conn)
-    assert get_rows(conn, table, order_by=[Identifier("id")]) == [
-        (1, 2),
-        (2, 5),
-        (3, 12),
-    ]
+    with PsycopgConn(engine.connect()) as conn:
+        assert get_rows(conn, table, order_by=[Identifier("id")]) == [
+            (1, 2, 4, True),
+            (2, 5, 10, True),
+            (3, 12, None, False),
+        ]
+        task.delete(conn)
+        assert get_rows(conn, table, order_by=[Identifier("id")]) == [
+            (1, 2),
+            (2, 5),
+            (3, 12),
+        ]

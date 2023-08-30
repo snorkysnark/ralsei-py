@@ -48,3 +48,9 @@ class PsycopgConn:
             ```
         """
         return self.__pg
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.sqlalchemy().close()

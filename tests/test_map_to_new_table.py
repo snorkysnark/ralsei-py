@@ -9,6 +9,7 @@ from ralsei import (
 )
 from ralsei.connection import PsycopgConn
 from ralsei.renderer import DEFAULT_RENDERER
+from sqlalchemy import Engine
 
 from common.db_helper import get_rows, table_exists
 
@@ -74,46 +75,48 @@ def test_map_table_jinja(conn: PsycopgConn):
     assert not table_exists(conn, table)
 
 
-def test_map_table_resumable(conn: PsycopgConn):
+def test_map_table_resumable(engine: Engine):
     def failing(val: int):
-        if val < 10:
-            yield {"doubled": val * 2}
-        else:
+        yield {"doubled": val * 2}
+        if val >= 10:
             raise RuntimeError()
 
     table_source = Table("source_args")
-    conn.pg().execute(
-        DEFAULT_RENDERER.render(
-            """\
-            CREATE TABLE {{table}}(
-                id SERIAL PRIMARY KEY,
-                val INT
-            );
-            INSERT INTO {{table}}(val) VALUES
-            (2),(5),(12);""",
-            {"table": table_source},
+
+    with PsycopgConn(engine.connect()) as conn:
+        conn.pg().execute(
+            DEFAULT_RENDERER.render(
+                """\
+                CREATE TABLE {{table}}(
+                    id SERIAL PRIMARY KEY,
+                    val INT
+                );
+                INSERT INTO {{table}}(val) VALUES
+                (2),(5),(12);""",
+                {"table": table_source},
+            )
         )
-    )
 
-    table = Table("test_map_table_resumable")
-    task = MapToNewTable(
-        source_table=table_source,
-        select="SELECT id, val FROM {{source}} WHERE NOT {{is_done}} ORDER BY id",
-        table=table,
-        columns=[ValueColumn("doubled", "INT")],
-        is_done_column="__success",
-        fn=GeneratorBuilder(failing).pop_id_fields("id"),
-    )
-    task.render(DEFAULT_RENDERER)
+        table = Table("test_map_table_resumable")
+        task = MapToNewTable(
+            source_table=table_source,
+            select="SELECT id, val FROM {{source}} WHERE NOT {{is_done}} ORDER BY id",
+            table=table,
+            columns=[ValueColumn("doubled", "INT")],
+            is_done_column="__success",
+            fn=GeneratorBuilder(failing).pop_id_fields("id"),
+        )
+        task.render(DEFAULT_RENDERER)
 
-    with pytest.raises(RuntimeError):
-        task.run(conn)
+        with pytest.raises(RuntimeError):
+            task.run(conn)
 
-    assert get_rows(conn, table) == [(4,), (10,)]
-    assert get_rows(conn, table_source, order_by=[Identifier("id")]) == [
-        (1, 2, True),
-        (2, 5, True),
-        (3, 12, False),
-    ]
-    task.delete(conn)
-    assert not table_exists(conn, table)
+    with PsycopgConn(engine.connect()) as conn:
+        assert get_rows(conn, table) == [(4,), (10,)]
+        assert get_rows(conn, table_source, order_by=[Identifier("id")]) == [
+            (1, 2, True),
+            (2, 5, True),
+            (3, 12, False),
+        ]
+        task.delete(conn)
+        assert not table_exists(conn, table)
