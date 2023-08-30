@@ -1,6 +1,6 @@
 from typing import Optional
 
-from .prelude import (
+from .common import (
     Task,
     Table,
     Column,

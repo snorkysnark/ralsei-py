@@ -1,4 +1,4 @@
-from .prelude import Task, Table, RalseiRenderer, PsycopgConn, checks, merge_params
+from .common import Task, Table, RalseiRenderer, PsycopgConn, checks, merge_params
 
 
 class CreateTableSql(Task):

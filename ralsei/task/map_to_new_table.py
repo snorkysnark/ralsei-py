@@ -2,7 +2,7 @@ from typing import Callable, Iterator, Optional
 from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
 
-from .prelude import (
+from .common import (
     Task,
     PsycopgConn,
     RalseiRenderer,
