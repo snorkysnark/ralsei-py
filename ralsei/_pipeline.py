@@ -1,6 +1,10 @@
-from __future__ import annotations
+"""
+Warning:
+    This module is experimental and will change!
+"""
+
 from dataclasses import dataclass
-from typing import Protocol, TYPE_CHECKING
+from typing import MutableMapping, Protocol
 from rich.console import Console
 from rich.syntax import Syntax
 import sys
@@ -9,8 +13,36 @@ from ralsei.connection import PsycopgConn
 from ralsei.task import Task
 from ralsei.renderer import RalseiRenderer
 
-if TYPE_CHECKING:
-    from ralsei.cli import TaskDefinitions
+TaskDefinitions = MutableMapping[str, Task | list[str]]
+"""
+A dictionary mapping names to tasks or sequences of tasks.
+
+There is also an implied sequence named `__full__` that, by default,
+will contain keys of this dictionary in the order they were defined.
+You can override the `__full__` sequence by explicitly defining it,
+such as to exclude some tasks or change their order.
+
+Example:
+    ```python
+    definitions = {
+        "make_urls": MapToNewTable(...),
+        "download": MapToNewColumns(...),
+        "extract1": AddColumnsSql(...),
+        "extract2": CreateTableSql(...),
+
+        "old": [
+            "make_urls",
+            "download",
+            "extract1"
+        ],
+        "__full__": [ # If defined, will default to list(definitions.keys())
+            "make_urls",
+            "download",
+            "extract2"
+        ]
+    }
+    ```
+"""
 
 
 class CliTask(Protocol):

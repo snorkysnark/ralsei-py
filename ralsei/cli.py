@@ -1,44 +1,12 @@
 import argparse
 from argparse import ArgumentParser
-from typing import Callable, MutableMapping, Optional
+from typing import Callable, Optional
 from pathlib import Path
 import sqlalchemy
 import json
 
-from ralsei._pipeline import Pipeline
+from ralsei._pipeline import Pipeline, TaskDefinitions
 from ralsei.connection import PsycopgConn
-from ralsei.task import Task
-
-TaskDefinitions = MutableMapping[str, Task | list[str]]
-"""
-A dictionary mapping names to tasks or sequences of tasks.
-
-There is also an implied sequence named `__full__` that, by default,
-will contain keys of this dictionary in the order they were defined.
-You can override the `__full__` sequence by explicitly defining it,
-such as to exclude some tasks or change their order.
-
-Example:
-    ```python
-    definitions = {
-        "make_urls": MapToNewTable(...),
-        "download": MapToNewColumns(...),
-        "extract1": AddColumnsSql(...),
-        "extract2": CreateTableSql(...),
-
-        "old": [
-            "make_urls",
-            "download",
-            "extract1"
-        ],
-        "__full__": [ # If defined, will default to list(definitions.keys())
-            "make_urls",
-            "download",
-            "extract2"
-        ]
-    }
-    ```
-"""
 
 
 def create_connection_url(credentials: str) -> sqlalchemy.URL:
@@ -128,4 +96,4 @@ class RalseiCli:
                 task.describe(conn)
 
 
-__all__ = ["RalseiCli", "TaskDefinitions"]
+__all__ = ["RalseiCli"]

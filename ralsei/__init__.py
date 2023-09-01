@@ -11,6 +11,7 @@ from .task import (
     MapToNewTable as MapToNewTable,
     MapToNewColumns as MapToNewColumns,
 )
-from .cli import RalseiCli as RalseiCli, TaskDefinitions as TaskDefinitions
+from .cli import RalseiCli as RalseiCli
+from ._pipeline import TaskDefinitions as TaskDefinitions
 from .map_fn import FnBuilder as FnBuilder, GeneratorBuilder as GeneratorBuilder
 from .cursor_factory import ServerCursorFactory as ServerCursorFactory
