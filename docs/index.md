@@ -24,12 +24,15 @@ First, create a script from the following template:
 from ralsei import RalseiCli
 
 def make_pipeline(args):
-    return {}
+    return {} # (1)!
 
 if __name__ == "__main__":
-    cli = RalseiCli()
+    cli = RalseiCli() # (2)!
     cli.run(make_pipeline)
 ```
+
+1. fff
+2. fff
 
 ## Alternatives
 

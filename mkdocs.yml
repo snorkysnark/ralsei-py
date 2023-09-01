@@ -44,12 +44,16 @@ plugins:
             - https://docs.sqlalchemy.org/en/20/objects.inv
             - https://www.psycopg.org/psycopg3/docs/objects.inv
             - https://snorkysnark.github.io/jinja-psycopg/objects.inv
+            - https://pandas.pydata.org/docs/objects.inv
 
 extra_css:
   - css/mkdocstrings.css
 
 nav:
   - Home: index.md
+  - Guides:
+      - Using Tasks: guides/tasks.md
+      - Building Function Wrappers: guides/map_fn.md
   - Code Reference: reference/
 
 markdown_extensions:
