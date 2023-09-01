@@ -1,28 +1,14 @@
-from jinja_psycopg import JinjaPsycopg
+from jinja_psycopg.renderer import JinjaPsycopg
 
 from .templates import Column
 
 
 class RalseiRenderer(JinjaPsycopg):
     """
-    [JinjaPsycopg](https://github.com/snorkysnark/jinja-psycopg)
+    Jinja+Psycopg
     renderer pre-initialized with ralsei's environment variables
 
-    Better documentation coming soon
-
-    Example:
-        Build template:
-        ```python
-        renderer.from_string("SELECT * FROM {{table}}")
-        # jinja_psycopg.SqlTemplate
-        ```
-
-    Example:
-        Render SQL:
-        ```python
-        renderer.render("SELECT * FROM {{table}}", {"table": Table("foo")})
-        # psycopg.sql.Composed
-        ```
+    See [JinjaPsycopg](https://snorkysnark.github.io/jinja-psycopg/)'s page for usage
     """
 
     def _prepare_environment(self):
