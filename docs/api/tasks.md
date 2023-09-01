@@ -15,7 +15,8 @@ In most cases, you can compose your data pipeline just out of 4 [Builtin Tasks](
 
 However, if you need a dynamically generated table (such as a pivot table)
 where the columns aren't known in advance,
-you may need a [custom task](#writing-your-own-task).
+or a task with multiple outputs,
+you may need to write a [custom task](#writing-your-own-task).
 
 ## Builtin Tasks
 
@@ -28,20 +29,7 @@ you may need a [custom task](#writing-your-own-task).
     options:
         docstring_section_style: table
 
-## Writing your own Task
-
-Import building blocks from the [prelude][ralsei.task.prelude] module,
-
-```py
-from ralsei.task.prelude import (
-    Task, # base class
-    Table, # db table
-    PsycopgConn, # db connection
-    RalseiRenderer, # jinja renderer
-    merge_params, # dict helper function
-    checks, # existence checks
-)
-```
+## Reference
 
 ### ::: ralsei.task.base
-### ::: ralsei.task.prelude
+### ::: ralsei.task.common
