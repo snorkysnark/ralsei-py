@@ -20,9 +20,15 @@ theme:
     - content.code.annotate
     - content.code.copy
     - content.tooltips
+    - navigation.indexes
 
 plugins:
   - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocstrings:
       handlers:
         python:
@@ -44,18 +50,7 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Guides:
-      - Custom Task: usage/custom_task.md
-      - Jinja Sql Templates: https://snorkysnark.github.io/jinja-psycopg/
-  - API Reference:
-      - Tasks: api/tasks.md
-      - Templates: api/templates.md
-      - Map Functions: api/map_fn.md
-      - Cli: api/cli.md
-      - Connection: api/connection.md
-      - Renderer: api/renderer.md
-      - Cursor Factory: api/cursor_factory.md
-      - Checks: api/checks.md
+  - Code Reference: reference/
 
 markdown_extensions:
   - pymdownx.highlight:
