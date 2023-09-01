@@ -99,10 +99,10 @@ class AddColumnsSql(Task):
         return checks.columns_exist(conn, self.__table, self.__column_names)
 
     def run(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__add_columns)
             curs.execute(self.__sql)
 
     def delete(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__drop_columns)

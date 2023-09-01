@@ -19,7 +19,7 @@ def test_map_columns(conn: PsycopgConn):
         return {"doubled": val * 2}
 
     table = Table("test_map_columns")
-    conn.pg().execute(
+    conn.pg.execute(
         DEFAULT_RENDERER.render(
             """\
             CREATE TABLE {{table}}(
@@ -63,7 +63,7 @@ def test_map_columns_resumable(engine: Engine):
 
     table = Table("test_map_columns_resumable")
     with PsycopgConn(engine.connect()) as conn:
-        conn.pg().execute(
+        conn.pg.execute(
             DEFAULT_RENDERER.render(
                 """\
                 CREATE TABLE {{table}}(

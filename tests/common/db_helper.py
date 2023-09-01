@@ -16,14 +16,14 @@ _SELECT_TEMPLATE = DEFAULT_RENDERER.from_string(
 def get_rows(
     conn: PsycopgConn, table: Table, order_by: Optional[list[Identifier]] = None
 ):
-    with conn.pg().cursor() as curs:
+    with conn.pg.cursor() as curs:
         return curs.execute(
             _SELECT_TEMPLATE.render(table=table, order_by=order_by)
         ).fetchall()
 
 
 def table_exists(conn: PsycopgConn, table: Table) -> bool:
-    with conn.pg().cursor() as curs:
+    with conn.pg.cursor() as curs:
         try:
             curs.execute(_SELECT_TEMPLATE.render(table=table))
         except psycopg.errors.UndefinedTable:

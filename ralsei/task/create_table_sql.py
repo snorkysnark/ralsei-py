@@ -57,9 +57,9 @@ class CreateTableSql(Task):
         return checks.table_exists(conn, self.__table)
 
     def run(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__sql)
 
     def delete(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__drop_sql)

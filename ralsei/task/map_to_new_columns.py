@@ -222,7 +222,7 @@ class MapToNewColumns(Task):
         )
 
     def run(self, conn: PsycopgConn) -> None:
-        pgconn = conn.pg()
+        pgconn = conn.pg
 
         with pgconn.cursor() as cursor:
             cursor.execute(self.__add_columns)
@@ -248,11 +248,11 @@ class MapToNewColumns(Task):
         ) and (
             not self.__commit_each
             # If this is a resumable task, check if inputs are empty
-            or conn.pg().execute(self.__select).fetchone() is None
+            or conn.pg.execute(self.__select).fetchone() is None
         )
 
     def delete(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__drop_columns)
 
 

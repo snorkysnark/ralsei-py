@@ -19,14 +19,12 @@ def table_exists(conn: PsycopgConn, table: Table) -> bool:
         True if table exists, False otherwise
     """
     return (
-        conn.pg()
-        .execute(
+        conn.pg.execute(
             """\
             SELECT 1 FROM information_schema.tables
             WHERE table_name = %(name)s AND table_schema = %(schema)s;""",
             {"name": table.name, "schema": table.schema or "public"},
-        )
-        .fetchone()
+        ).fetchone()
         is not None
     )
 
@@ -42,15 +40,13 @@ def column_exists(conn: PsycopgConn, table: Table, column: str) -> bool:
         True if column exists, False otherwise
     """
     return (
-        conn.pg()
-        .execute(
+        conn.pg.execute(
             """\
             SELECT 1 FROM information_schema.columns
             WHERE table_name = %(name)s AND table_schema = %(schema)s
             AND column_name = %(column)s;""",
             {"name": table.name, "schema": table.schema or "public", "column": column},
-        )
-        .fetchone()
+        ).fetchone()
         is not None
     )
 

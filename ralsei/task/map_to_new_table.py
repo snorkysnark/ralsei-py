@@ -299,11 +299,11 @@ class MapToNewTable(Task):
             not self.__select
             or not self.__add_is_done_column
             # If this is a resumable task, check if inputs are empty
-            or conn.pg().execute(self.__select).fetchone() is None
+            or conn.pg.execute(self.__select).fetchone() is None
         )
 
     def run(self, conn: PsycopgConn) -> None:
-        pgconn = conn.pg()
+        pgconn = conn.pg
 
         with pgconn.cursor() as cursor:
             cursor.execute(self.__create_table)
@@ -337,7 +337,7 @@ class MapToNewTable(Task):
                     output_cursor.execute(self.__insert, output_row)
 
     def delete(self, conn: PsycopgConn) -> None:
-        with conn.pg().cursor() as curs:
+        with conn.pg.cursor() as curs:
             curs.execute(self.__drop_table)
 
             if self.__drop_is_done_column:

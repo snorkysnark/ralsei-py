@@ -42,7 +42,7 @@ def test_map_table_jinja(conn: PsycopgConn):
         yield {"foo": foo * 2}
 
     table_source = Table("source_args")
-    conn.pg().execute(
+    conn.pg.execute(
         DEFAULT_RENDERER.render(
             """\
             CREATE TABLE {{table}}(
@@ -84,7 +84,7 @@ def test_map_table_resumable(engine: Engine):
     table_source = Table("source_args")
 
     with PsycopgConn(engine.connect()) as conn:
-        conn.pg().execute(
+        conn.pg.execute(
             DEFAULT_RENDERER.render(
                 """\
                 CREATE TABLE {{table}}(

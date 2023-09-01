@@ -17,13 +17,13 @@ def engine():
     _engine = sqlalchemy.create_engine(TEST_DB)
 
     with PsycopgConn(_engine.connect()) as conn:
-        conn.pg().execute(
+        conn.pg.execute(
             """
             DROP SCHEMA public CASCADE;
             CREATE SCHEMA public;
             """
         )
-        conn.pg().commit()
+        conn.pg.commit()
 
     return _engine
 
@@ -32,7 +32,7 @@ def engine():
 def conn():
     engine = sqlalchemy.create_engine(TEST_DB)
     with PsycopgConn(engine.connect()) as conn:
-        conn.pg().execute(
+        conn.pg.execute(
             """
             DROP SCHEMA public CASCADE;
             CREATE SCHEMA public;

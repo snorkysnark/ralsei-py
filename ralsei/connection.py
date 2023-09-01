@@ -3,8 +3,6 @@ import psycopg
 
 
 class PsycopgConn:
-    __slots__ = ("__sqlalchemy", "__pg")
-
     def __init__(self, conn: SqlalchemyConn) -> None:
         """
         A wrapper over [sqlalchemy.engine.Connection][]
@@ -14,12 +12,13 @@ class PsycopgConn:
             conn: sqlalchemy connection
         """
 
-        self.__sqlalchemy = conn
+        assert isinstance(
+            conn.connection.dbapi_connection, psycopg.Connection
+        ), "Connection is not from psycopg"
 
-        inner = conn.connection.dbapi_connection
-        assert isinstance(inner, psycopg.Connection), "Connection is not from psycopg"
-        self.__pg: psycopg.Connection = inner
+        self._sqlalchemy = conn
 
+    @property
     def sqlalchemy(self) -> SqlalchemyConn:
         """
         Returns:
@@ -28,11 +27,12 @@ class PsycopgConn:
         Example:
             Can be used for pandas interop:
             ```python
-            pd.read_sql_query("SELECT * FROM orgs", conn.sqlalchemy())
+            pd.read_sql_query("SELECT * FROM orgs", conn.sqlalchemy)
             ```
         """
-        return self.__sqlalchemy
+        return self._sqlalchemy
 
+    @property
     def pg(self) -> psycopg.Connection:
         """
         Returns:
@@ -44,13 +44,13 @@ class PsycopgConn:
             renderer.render(
                 "SELECT * FROM {{table}}",
                 {"table": Table("orgs", "dev")}
-            ).as_string(conn.pg())
+            ).as_string(conn.pg)
             ```
         """
-        return self.__pg
+        return self._sqlalchemy.connection.dbapi_connection  # type:ignore
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.sqlalchemy().close()
+        self.sqlalchemy.close()
