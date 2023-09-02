@@ -17,7 +17,6 @@ class Task:
         """Base Task class"""
         self.scripts = {}
 
-    @abstractmethod
     def render(self, renderer: RalseiRenderer) -> None:
         """
         Render your sql scripts here, like this:
@@ -30,6 +29,7 @@ class Task:
         Args:
             renderer: jinja sql renderer
         """
+        pass
 
     @abstractmethod
     def exists(self, conn: PsycopgConn) -> bool:
