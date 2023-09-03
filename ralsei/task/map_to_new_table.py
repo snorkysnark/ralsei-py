@@ -1,4 +1,4 @@
-from typing import Callable, Iterator, Optional
+from typing import Optional
 from psycopg.sql import Composed, Identifier
 from tqdm import tqdm
 
@@ -6,6 +6,7 @@ from .common import (
     Task,
     PsycopgConn,
     RalseiRenderer,
+    OneToMany,
     GeneratorBuilder,
     Table,
     ValueColumn,
@@ -42,7 +43,7 @@ class MapToNewTable(Task):
         self,
         table: Table,
         columns: list[str | ValueColumn],
-        fn: Callable[..., Iterator[dict]] | GeneratorBuilder,
+        fn: OneToMany | GeneratorBuilder,
         select: Optional[str] = None,
         source_table: Optional[Table] = None,
         is_done_column: Optional[str] = None,

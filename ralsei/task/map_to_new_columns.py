@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Optional
 
 from psycopg.sql import SQL, Composed, Identifier
 from tqdm import tqdm
@@ -7,6 +7,7 @@ from .common import (
     Task,
     PsycopgConn,
     RalseiRenderer,
+    OneToOne,
     FnBuilder,
     ValueColumn,
     IdColumn,
@@ -42,7 +43,7 @@ class MapToNewColumns(Task):
         select: str,
         table: Table,
         columns: list[ValueColumn],
-        fn: Callable[..., dict] | FnBuilder,
+        fn: OneToOne | FnBuilder,
         is_done_column: Optional[str] = None,
         id_fields: Optional[list[IdColumn]] = None,
         params: dict = {},
