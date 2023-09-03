@@ -1,6 +1,6 @@
 # Ralsei
 
-<img src="docs/logo.png" align="left" width="200">
+<img src="https://raw.githubusercontent.com/snorkysnark/ralsei-py/main/docs/logo.png" align="left" width="200">
 
 **Ralsei** is a Python framework for building modular
 data pipelines running inside the postgres database.
