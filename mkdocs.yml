@@ -60,6 +60,9 @@ nav:
   - Code Reference: reference/
   - Jinja-Psycopg Docs: https://snorkysnark.github.io/jinja-psycopg/
 
+repo_url: https://github.com/snorkysnark/ralsei-py
+repo_name: snorkysnark/ralsei-py
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
