@@ -29,10 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get Latest tag
-        id: previoustag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      - run: echo "version=${{ inputs.version || steps.previoustag.outputs.tag }}" >> $GITHUB_ENV
+      - name: Find last tag
+        run: echo "version=$(git for-each-ref --sort=-creatordate --count 1 --format='%(refname:short)' refs/tags/)" >> $GITHUB_ENV
 
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v3
