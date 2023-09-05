@@ -14,7 +14,7 @@ on:
       version:
         description: Override version
         type: string
-        required: true
+        required: false
 
 jobs:
   run-tests:
