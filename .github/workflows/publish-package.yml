@@ -23,6 +23,7 @@ jobs:
       id-token: write
 
     steps:
+      - uses: actions/checkout@v3
       - uses: ./.github/workflows/run-tests.yml
 
       - name: Install toml-cli
