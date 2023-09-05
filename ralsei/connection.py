@@ -6,6 +6,27 @@ import psycopg
 
 
 def create_connection_url(credentials: str) -> sqlalchemy.URL:
+    """
+    Creates sqlalchemy url from either a url or a json path,
+        **ensuring that the `psycopg` driver is used**
+
+    Args:
+        credentials: either a `postgres://` type URL or a json path
+
+            Json example:
+            ```json
+            {
+              "username": "username",
+              "password": "password",
+              "host": "localhost",
+              "port": 5432,
+              "database": "fsmno"
+            }
+            ```
+    Returns:
+        url for creating sqlalchemy engine
+    """
+
     if credentials.endswith(".json"):
         with Path(credentials).open() as file:
             creds_dict = json.load(file)
