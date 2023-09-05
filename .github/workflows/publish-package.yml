@@ -28,6 +28,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Get Latest tag
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - run: echo "version=${{ inputs.version || steps.previoustag.outputs.tag }}" >> $GITHUB_ENV
+
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v3
         with:
@@ -37,8 +43,8 @@ jobs:
 
       - name: Install toml-cli
         run: pip install toml-cli
-      - name: Set package version to ${{ inputs.version || github.ref_name }}
-        run: toml set --toml-path pyproject.toml project.version ${{ inputs.version || github.ref_name }}
+      - name: Set package version to ${{ env.version }}
+        run: toml set --toml-path pyproject.toml project.version ${{ env.version }}
 
       - if: "!inputs.testpypi"
         name: Publish package distributions to PyPI
