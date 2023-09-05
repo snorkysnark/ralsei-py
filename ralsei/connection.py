@@ -1,5 +1,26 @@
+import json
+from pathlib import Path
+import sqlalchemy
 from sqlalchemy.engine import Connection as SqlalchemyConn
 import psycopg
+
+
+def create_connection_url(credentials: str) -> sqlalchemy.URL:
+    if credentials.endswith(".json"):
+        with Path(credentials).open() as file:
+            creds_dict = json.load(file)
+            creds_dict["drivername"] = "postgresql+psycopg"
+            return sqlalchemy.URL.create(**creds_dict)
+    else:
+        url = sqlalchemy.make_url(credentials)
+        return sqlalchemy.URL.create(
+            "postgresql+psycopg",
+            url.username,
+            url.password,
+            url.host,
+            url.port,
+            url.database,
+        )
 
 
 class PsycopgConn:

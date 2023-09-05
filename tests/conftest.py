@@ -1,20 +1,25 @@
 import sys
+import os
 from pathlib import Path
 
 import pytest
 import sqlalchemy
 
-from ralsei.connection import PsycopgConn
+from ralsei.connection import PsycopgConn, create_connection_url
 
 # Helper module used in multiple tests
 sys.path.append(Path(__file__).parent.joinpath("common").__str__())
 
-TEST_DB = "postgresql+psycopg:///ralsei_test"
+
+def create_engine_from_env():
+    return sqlalchemy.create_engine(
+        create_connection_url(os.environ.get("POSTGRES_URL", "postgres:///ralsei_test"))
+    )
 
 
 @pytest.fixture
 def engine():
-    _engine = sqlalchemy.create_engine(TEST_DB)
+    _engine = create_engine_from_env()
 
     with PsycopgConn(_engine.connect()) as conn:
         conn.pg.execute(
@@ -30,7 +35,7 @@ def engine():
 
 @pytest.fixture
 def conn():
-    engine = sqlalchemy.create_engine(TEST_DB)
+    engine = create_engine_from_env()
     with PsycopgConn(engine.connect()) as conn:
         conn.pg.execute(
             """

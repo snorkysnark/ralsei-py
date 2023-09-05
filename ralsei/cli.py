@@ -1,30 +1,10 @@
 import argparse
 from argparse import ArgumentParser
 from typing import Callable, Optional
-from pathlib import Path
 import sqlalchemy
-import json
 
 from ralsei._pipeline import Pipeline, TaskDefinitions
-from ralsei.connection import PsycopgConn
-
-
-def create_connection_url(credentials: str) -> sqlalchemy.URL:
-    if credentials.endswith(".json"):
-        with Path(credentials).open() as file:
-            creds_dict = json.load(file)
-            creds_dict["drivername"] = "postgresql+psycopg"
-            return sqlalchemy.URL.create(**creds_dict)
-    else:
-        url = sqlalchemy.make_url(credentials)
-        return sqlalchemy.URL.create(
-            "postgresql+psycopg",
-            url.username,
-            url.password,
-            url.host,
-            url.port,
-            url.database,
-        )
+from ralsei.connection import PsycopgConn, create_connection_url
 
 
 class RalseiCli:

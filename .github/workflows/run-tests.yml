@@ -3,14 +3,22 @@ on:
   push:
     branches: [main]
     paths:
-      - "ralsei/**"
-      - "tests/**"
+      - .github/workflows/run-tests.yml
+      - ralsei/**
+      - tests/**
       - pyproject.toml
       - pdm.lock
   workflow_dispatch:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - name: Setup PDM
@@ -23,3 +31,5 @@ jobs:
         run: pdm install
       - name: Run Tests
         run: pdm run pytest ./tests
+        env:
+          POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
