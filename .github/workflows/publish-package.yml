@@ -14,7 +14,7 @@ on:
       version:
         description: Override version
         type: string
-        required: false
+        required: true
 
 jobs:
   run-tests:
@@ -28,12 +28,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-tags: true
-
-      - name: Find last tag
-        run: echo "version=$(git for-each-ref --sort=-creatordate --count 1 --format='%(refname:short)' refs/tags/)" >> $GITHUB_ENV
-
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v3
         with:
@@ -43,8 +37,8 @@ jobs:
 
       - name: Install toml-cli
         run: pip install toml-cli
-      - name: Set package version to ${{ env.version }}
-        run: toml set --toml-path pyproject.toml project.version ${{ env.version }}
+      - name: Set package version to ${{ inputs.version || github.ref_name }}
+        run: toml set --toml-path pyproject.toml project.version ${{ inputs.version || github.ref_name }}
 
       - if: "!inputs.testpypi"
         name: Publish package distributions to PyPI
