@@ -10,6 +10,7 @@ on:
       - pyproject.toml
       - pdm.lock
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   run-tests:
