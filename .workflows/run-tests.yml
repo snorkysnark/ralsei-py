@@ -1,0 +1,25 @@
+name: run-tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ralsei/**"
+      - "tests/**"
+      - pyproject.toml
+      - pdm.lock
+  workflow_dispatch:
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: 3.11
+          update-python: true
+          cache: true
+      - name: Install dependencies
+        run: pdm install
+      - name: Run Tests
+        run: pdm run pytest ./tests
