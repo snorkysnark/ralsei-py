@@ -9,7 +9,8 @@ It was built with use cases such as web scraping in mind,
 with the philosophy that all artifacts should be stored in the database:
 from downloaded html to the parsed results
 
-[Documentation](https://snorkysnark.github.io/ralsei-py/)
+[![PyPI - Version](https://img.shields.io/pypi/v/ralsei?style=for-the-badge&color=009a5c)](https://pypi.org/project/ralsei/)
+[![Docs - Status](https://img.shields.io/github/actions/workflow/status/snorkysnark/ralsei-py/publish-docs.yml?style=for-the-badge&label=docs&color=009a5c)](https://snorkysnark.github.io/ralsei-py/)
 
 ## Features
 
