@@ -25,5 +25,5 @@ jobs:
     needs: run-tests
     uses: ./.github/workflows/publish-package.yml
     with:
-      testpypi: ${{ inputs.testpypi }}
-      version: ${{ inputs.version || github.ref }}
+      testpypi: ${{ github.event == 'workflow_dispatch' && inputs.testpypi }}
+      version: ${{ github.event == 'push' && github.ref_name || inputs.version }}
