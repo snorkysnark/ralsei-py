@@ -17,8 +17,6 @@ from downloaded html to the parsed results
 
 ## Installation
 
-[![PyPI - Version](https://img.shields.io/pypi/v/ralsei?style=for-the-badge&color=009a5c){ align=right }](https://pypi.org/project/ralsei/)
-
 ```
 pip install ralsei
 ```
