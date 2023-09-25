@@ -64,17 +64,17 @@ class NamedTask:
     def run(self, conn: PsycopgConn):
         print("Running", self.name)
         self.task.run(conn)
-        conn.pg().commit()
+        conn.pg.commit()
 
     def delete(self, conn: PsycopgConn):
         print("Deleting", self.name)
         self.task.delete(conn)
-        conn.pg().commit()
+        conn.pg.commit()
 
     def __render_scripts(self, conn: PsycopgConn) -> str:
         return "\n\n".join(
             map(
-                lambda item: f"-- {item[0]}\n{item[1].as_string(conn.pg())}",
+                lambda item: f"-- {item[0]}\n{item[1].as_string(conn.pg)}",
                 self.task.scripts.items(),
             )
         )
