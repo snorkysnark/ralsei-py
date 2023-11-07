@@ -9,21 +9,22 @@ from ralsei.connection import PsycopgConn
 from ralsei.templates import Table
 
 
-def table_exists(conn: PsycopgConn, table: Table) -> bool:
+def table_exists(conn: PsycopgConn, table: Table, view: bool = False) -> bool:
     """
     Args:
         conn: db connection
         table: table name and schema
+        view: whether this is a VIEW instead of a TABLE
 
     Returns:
         True if table exists, False otherwise
     """
     return (
         conn.pg.execute(
-            """\
-            SELECT 1 FROM information_schema.tables
+            f"""\
+            SELECT 1 FROM information_schema.{'views' if view else 'tables'}
             WHERE table_name = %(name)s AND table_schema = %(schema)s;""",
-            {"name": table.name, "schema": table.schema or "public"},
+            {"name": table.name, "schema": table.schema or "public", "view": view},
         ).fetchone()
         is not None
     )
