@@ -6,7 +6,6 @@ from tqdm import tqdm
 from .common import (
     Task,
     PsycopgConn,
-    RalseiRenderer,
     OneToOne,
     FnBuilder,
     ValueColumn,
@@ -15,13 +14,13 @@ from .common import (
     ValueColumnRendered,
     merge_params,
     checks,
+    renderer,
 )
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 
 def make_column_statements(
     raw_list: list[ValueColumn],
-    renderer: RalseiRenderer,
     params: dict = {},
 ):
     columns_to_add: list[ValueColumnRendered] = []
@@ -148,11 +147,6 @@ class MapToNewColumns(Task):
 
         super().__init__()
 
-        self.__select_raw = select
-        self.__table = table
-        self.__columns_raw = columns
-        self.__cursor_factory = cursor_factory
-
         if is_done_column:
             columns.append(
                 ValueColumn(is_done_column, "BOOL DEFAULT FALSE", SQL("TRUE"))
@@ -178,16 +172,12 @@ class MapToNewColumns(Task):
         if id_fields is None:
             raise RuntimeError("Must provide id_fields if using is_done_column")
 
-        self.__id_fields = id_fields
-
-    def render(self, renderer: RalseiRenderer) -> None:
         self.scripts["Select"] = self.__select = renderer.render(
-            self.__select_raw, self.__jinja_params
+            select, self.__jinja_params
         )
 
         columns_to_add, update_statements = make_column_statements(
-            raw_list=self.__columns_raw,
-            renderer=renderer,
+            raw_list=columns,
             params=self.__jinja_params,
         )
 
@@ -196,7 +186,7 @@ class MapToNewColumns(Task):
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\\n') }};""",
             {
-                "table": self.__table,
+                "table": table,
                 "columns": map(lambda col: col.add(self.__commit_each), columns_to_add),
             },
         )
@@ -207,9 +197,9 @@ class MapToNewColumns(Task):
             WHERE
             {{ id_fields | sqljoin(' AND ') }};""",
             {
-                "table": self.__table,
+                "table": table,
                 "updates": update_statements,
-                "id_fields": self.__id_fields,
+                "id_fields": id_fields,
             },
         )
         self.scripts["Drop"] = self.__drop_columns = renderer.render(
@@ -217,10 +207,14 @@ class MapToNewColumns(Task):
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\\n') }};""",
             {
-                "table": self.__table,
+                "table": table,
                 "columns": map(lambda col: col.drop(True), columns_to_add),
             },
         )
+
+        self.__table = table
+        self.__columns = columns_to_add
+        self.__cursor_factory = cursor_factory
 
     def run(self, conn: PsycopgConn) -> None:
         pgconn = conn.pg
@@ -245,7 +239,7 @@ class MapToNewColumns(Task):
 
     def exists(self, conn: PsycopgConn) -> bool:
         return checks.columns_exist(
-            conn, self.__table, map(lambda col: col.name, self.__columns_raw)
+            conn, self.__table, map(lambda col: col.name, self.__columns)
         ) and (
             not self.__commit_each
             # If this is a resumable task, check if inputs are empty

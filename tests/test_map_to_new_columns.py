@@ -8,7 +8,7 @@ from ralsei import (
     FnBuilder,
 )
 from ralsei.connection import PsycopgConn
-from ralsei.renderer import DEFAULT_RENDERER
+from ralsei.renderer import renderer
 from sqlalchemy import Engine
 
 from common.db_helper import get_rows
@@ -20,7 +20,7 @@ def test_map_columns(conn: PsycopgConn):
 
     table = Table("test_map_columns")
     conn.pg.execute(
-        DEFAULT_RENDERER.render(
+        renderer.render(
             """\
             CREATE TABLE {{table}}(
                 id SERIAL PRIMARY KEY,
@@ -38,7 +38,6 @@ def test_map_columns(conn: PsycopgConn):
         columns=[ValueColumn("doubled", "INT")],
         fn=FnBuilder(double).pop_id_fields("id"),
     )
-    task.render(DEFAULT_RENDERER)
 
     task.run(conn)
     assert get_rows(conn, table, order_by=[Identifier("id")]) == [
@@ -64,7 +63,7 @@ def test_map_columns_resumable(engine: Engine):
     table = Table("test_map_columns_resumable")
     with PsycopgConn(engine.connect()) as conn:
         conn.pg.execute(
-            DEFAULT_RENDERER.render(
+            renderer.render(
                 """\
                 CREATE TABLE {{table}}(
                     id SERIAL PRIMARY KEY,
@@ -83,7 +82,6 @@ def test_map_columns_resumable(engine: Engine):
             fn=FnBuilder(failing).pop_id_fields("id"),
             is_done_column="__success",
         )
-        task.render(DEFAULT_RENDERER)
 
         with pytest.raises(RuntimeError):
             task.run(conn)

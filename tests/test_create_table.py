@@ -23,7 +23,6 @@ def test_create_table(conn: PsycopgConn):
         """,
         table=table,
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [(1, "a"), (2, "b")]
@@ -53,7 +52,6 @@ def test_create_table_jinja_args(conn: PsycopgConn, flag: bool, expected: list[T
         table=table,
         params={"flag": flag},
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == expected
@@ -74,7 +72,6 @@ def test_create_table_literal(conn: PsycopgConn):
         table=table,
         params={"foo": "Ralsei\ncute", "bar": 10},
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [("Ralsei\ncute", 10)]

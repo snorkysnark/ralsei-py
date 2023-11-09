@@ -4,9 +4,9 @@ from psycopg.sql import Identifier
 
 from ralsei import Table
 from ralsei.connection import PsycopgConn
-from ralsei.renderer import DEFAULT_RENDERER
+from ralsei.renderer import renderer
 
-_SELECT_TEMPLATE = DEFAULT_RENDERER.from_string(
+_SELECT_TEMPLATE = renderer.from_string(
     """\
     SELECT * FROM {{ table }}
     {%- if order_by %} ORDER BY {{ order_by | sqljoin(', ') }}{% endif %}"""

@@ -1,4 +1,11 @@
-from .common import Task, Table, RalseiRenderer, PsycopgConn, checks, merge_params
+from .common import (
+    Task,
+    Table,
+    PsycopgConn,
+    checks,
+    merge_params,
+    renderer,
+)
 
 
 class CreateTableSql(Task):
@@ -43,19 +50,16 @@ class CreateTableSql(Task):
 
         super().__init__()
 
-        self.__jinja_args = merge_params({"table": table, "view": view}, params)
-        self.__sql_raw = sql
-        self.__table = table
-        self.__is_view = view
+        jinja_args = merge_params({"table": table, "view": view}, params)
 
-    def render(self, renderer: RalseiRenderer) -> None:
-        self.scripts["Create"] = self.__sql = renderer.render(
-            self.__sql_raw, self.__jinja_args
-        )
+        self.scripts["Create"] = self.__sql = renderer.render(sql, jinja_args)
         self.scripts["Drop"] = self.__drop_sql = renderer.render(
             "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
-            self.__jinja_args,
+            jinja_args,
         )
+
+        self.__table = table
+        self.__is_view = view
 
     def exists(self, conn: PsycopgConn) -> bool:
         return checks.table_exists(conn, self.__table, self.__is_view)

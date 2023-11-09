@@ -5,7 +5,7 @@ from ralsei.map_fn import *
 from ralsei.templates import *
 from ralsei import checks as checks
 from ralsei.connection import PsycopgConn as PsycopgConn
-from ralsei.renderer import RalseiRenderer as RalseiRenderer
+from ralsei.renderer import RalseiRenderer as RalseiRenderer, renderer as renderer
 
 
 def merge_params(*dicts: dict) -> dict:

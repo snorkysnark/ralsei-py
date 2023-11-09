@@ -13,7 +13,6 @@ def prepare_table_task(table: Table):
         INSERT INTO {{ table }} VALUES (2), (5);""",
         table=table,
     )
-    task.render(RalseiRenderer())
     return task
 
 
@@ -28,7 +27,6 @@ def test_add_column(conn: PsycopgConn):
         table=table,
         columns=[Column("b", "INT"), Column("c", "TEXT")],
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [
@@ -54,7 +52,6 @@ def test_add_column_jinja_var(conn: PsycopgConn):
         UPDATE {{ table }} SET c = a || '-' || b;""",
         table=table,
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [
@@ -75,7 +72,6 @@ def test_column_template(conn: PsycopgConn):
         columns=[Column("b", "TEXT DEFAULT {{ default }}")],
         params={"default": "Hello"},
     )
-    task.render(RalseiRenderer())
 
     task.run(conn)
     assert get_rows(conn, table) == [(2, "Hello"), (5, "Hello")]

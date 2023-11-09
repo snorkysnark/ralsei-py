@@ -5,7 +5,6 @@ from tqdm import tqdm
 from .common import (
     Task,
     PsycopgConn,
-    RalseiRenderer,
     OneToMany,
     GeneratorBuilder,
     Table,
@@ -14,13 +13,12 @@ from .common import (
     ValueColumnRendered,
     checks,
     merge_params,
+    renderer,
 )
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
 
-def make_column_statements(
-    raw_list: list[str | ValueColumn], renderer: RalseiRenderer, params: dict = {}
-):
+def make_column_statements(raw_list: list[str | ValueColumn], params: dict = {}):
     table_definition: list[Composed] = []
     insert_columns: list[ValueColumnRendered] = []
 
@@ -194,15 +192,10 @@ class MapToNewTable(Task):
 
         super().__init__()
 
-        self.__table = table
-        self.__select_raw = select
-        self.__columns_raw = columns
-        self.__is_done_ident = Identifier(is_done_column) if is_done_column else None
-        self.__cursor_factory = cursor_factory
-
-        self.__jinja_params = merge_params(
+        is_done_ident = Identifier(is_done_column) if is_done_column else None
+        jinja_params = merge_params(
             params,
-            {"table": table, "source": source_table, "is_done": self.__is_done_ident},
+            {"table": table, "source": source_table, "is_done": is_done_ident},
         )
 
         if isinstance(fn, GeneratorBuilder):
@@ -231,26 +224,23 @@ class MapToNewTable(Task):
         self.__id_fields = id_fields
         self.__source_table = source_table
 
-    def render(self, renderer: RalseiRenderer) -> None:
-        if self.__select_raw:
+        if select:
             self.scripts["Select"] = self.__select = renderer.render(
-                self.__select_raw, self.__jinja_params
+                select, jinja_params
             )
         else:
             self.__select = None
 
-        table_definition, insert_columns = make_column_statements(
-            self.__columns_raw, renderer, self.__jinja_params
-        )
+        table_definition, insert_columns = make_column_statements(columns, jinja_params)
         self.scripts["Create table"] = self.__create_table = renderer.render(
             """\
             CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                 {{ definition | sqljoin(',\\n    ') }}
             );""",
             {
-                "table": self.__table,
+                "table": table,
                 "definition": table_definition,
-                "if_not_exists": self.__is_done_ident is not None,
+                "if_not_exists": is_done_ident is not None,
             },
         )
         self.scripts["Insert"] = self.__insert = renderer.render(
@@ -261,10 +251,10 @@ class MapToNewTable(Task):
             VALUES (
                 {{ columns | sqljoin(',\\n    ', attribute='value') }}
             );""",
-            {"table": self.__table, "columns": insert_columns},
+            {"table": table, "columns": insert_columns},
         )
         self.scripts["Drop table"] = self.__drop_table = renderer.render(
-            "DROP TABLE IF EXISTS {{ table }}", {"table": self.__table}
+            "DROP TABLE IF EXISTS {{ table }}", {"table": table}
         )
 
         if self.__id_fields:
@@ -272,7 +262,7 @@ class MapToNewTable(Task):
                 """\
                 ALTER TABLE {{ source }}
                 ADD COLUMN IF NOT EXISTS {{ is_done }} BOOL DEFAULT FALSE;""",
-                {"source": self.__source_table, "is_done": self.__is_done_ident},
+                {"source": self.__source_table, "is_done": is_done_ident},
             )
             self.scripts["Set marker"] = self.__set_is_done = renderer.render(
                 """UPDATE {{ source }}
@@ -280,7 +270,7 @@ class MapToNewTable(Task):
                 WHERE {{ id_fields | sqljoin(' AND ') }};""",
                 {
                     "source": self.__source_table,
-                    "is_done": self.__is_done_ident,
+                    "is_done": is_done_ident,
                     "id_fields": self.__id_fields,
                 },
             )
@@ -288,12 +278,15 @@ class MapToNewTable(Task):
                 """\
                 ALTER TABLE {{ source }}
                 DROP COLUMN IF EXISTS {{ is_done }};""",
-                {"source": self.__source_table, "is_done": self.__is_done_ident},
+                {"source": self.__source_table, "is_done": is_done_ident},
             )
         else:
             self.__add_is_done_column = None
             self.__set_is_done = None
             self.__drop_is_done_column = None
+
+        self.__table = table
+        self.__cursor_factory = cursor_factory
 
     def exists(self, conn: PsycopgConn) -> bool:
         return checks.table_exists(conn, self.__table) and (

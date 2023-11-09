@@ -22,7 +22,7 @@ def test_resolve():
         ],
         "full": ["group_ab", "task_c"],
     }
-    resolved = resolve_name("full", pipeline, RalseiRenderer())
+    resolved = resolve_name("full", pipeline)
     assert isinstance(resolved, Sequence)
 
     resolved_names = list(map(lambda task: task.name, resolved.tasks))

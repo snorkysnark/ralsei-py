@@ -5,9 +5,9 @@ from .common import (
     Table,
     Column,
     PsycopgConn,
-    RalseiRenderer,
     merge_params,
     checks,
+    renderer,
 )
 
 
@@ -53,17 +53,10 @@ class AddColumnsSql(Task):
 
         super().__init__()
 
-        self.__raw_sql = sql
-        self.__jinja_args = merge_params({"table": table}, params)
-        self.__raw_columns = columns
-        self.__table = table
+        jinja_args = merge_params({"table": table}, params)
 
-    def render(self, renderer: RalseiRenderer) -> None:
-        script_module = renderer.from_string(self.__raw_sql).make_module(
-            self.__jinja_args
-        )
+        script_module = renderer.from_string(sql).make_module(jinja_args)
 
-        columns = self.__raw_columns
         if columns is None:
             # Get columns variable from template: {% set columns = [...] %}
             columns = script_module.getattr("columns", None)
@@ -72,7 +65,7 @@ class AddColumnsSql(Task):
         self.__column_names = list(map(lambda col: col.name, columns))
 
         rendered_columns = list(
-            map(lambda col: col.render(renderer, self.__jinja_args), columns)
+            map(lambda col: col.render(renderer, jinja_args), columns)
         )
 
         self.scripts["Add columns"] = self.__add_columns = renderer.render(
@@ -80,7 +73,7 @@ class AddColumnsSql(Task):
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\n') }};""",
             merge_params(
-                self.__jinja_args,
+                jinja_args,
                 {"columns": map(lambda col: col.add(False), rendered_columns)},
             ),
         )
@@ -90,10 +83,12 @@ class AddColumnsSql(Task):
             ALTER TABLE {{ table }}
             {{ columns | sqljoin(',\n') }};""",
             merge_params(
-                self.__jinja_args,
+                jinja_args,
                 {"columns": map(lambda col: col.drop(True), rendered_columns)},
             ),
         )
+
+        self.__table = table
 
     def exists(self, conn: PsycopgConn) -> bool:
         return checks.columns_exist(conn, self.__table, self.__column_names)

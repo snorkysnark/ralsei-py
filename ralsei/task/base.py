@@ -2,7 +2,6 @@ from abc import abstractmethod
 from psycopg.sql import Composed
 
 from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
 
 
 class Task:
@@ -16,20 +15,6 @@ class Task:
     def __init__(self) -> None:
         """Base Task class"""
         self.scripts = {}
-
-    def render(self, renderer: RalseiRenderer) -> None:
-        """
-        Render your sql scripts here, like this:
-        ```python
-        self.scripts["Create table"] = self.__create_table = renderer.render(...)
-        ```
-
-        This methon runs before `run` and `delete`
-
-        Args:
-            renderer: jinja sql renderer
-        """
-        pass
 
     @abstractmethod
     def exists(self, conn: PsycopgConn) -> bool:

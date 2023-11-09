@@ -17,4 +17,4 @@ class RalseiRenderer(JinjaPsycopg):
         self._env.globals["Column"] = Column
 
 
-DEFAULT_RENDERER = RalseiRenderer()
+renderer = RalseiRenderer()

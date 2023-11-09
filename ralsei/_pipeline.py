@@ -11,7 +11,6 @@ import sys
 
 from ralsei.connection import PsycopgConn
 from ralsei.task import Task
-from ralsei.renderer import RalseiRenderer
 
 TaskDefinitions = MutableMapping[str, Task | list[str]]
 """
@@ -111,13 +110,10 @@ class Sequence:
             print(named_task.name)
 
 
-def resolve_name(
-    name: str, definitions: TaskDefinitions, renderer: RalseiRenderer
-) -> CliTask:
+def resolve_name(name: str, definitions: TaskDefinitions) -> CliTask:
     node = definitions[name]
 
     if isinstance(node, Task):
-        node.render(renderer)
         return NamedTask(name, node)
     else:
         name_stack = [*node]
@@ -127,7 +123,6 @@ def resolve_name(
             name = name_stack.pop()
             next_node = definitions[name]
             if isinstance(next_node, Task):
-                next_node.render(renderer)
                 subtasks.append(NamedTask(name, next_node))
             else:
                 name_stack += next_node
@@ -140,15 +135,13 @@ class Pipeline:
     def __init__(
         self,
         definitions: TaskDefinitions,
-        renderer: RalseiRenderer = RalseiRenderer(),
     ) -> None:
         # __full__ task describes the whole pipeline
         if "__full__" not in definitions:
             definitions["__full__"] = list(definitions.keys())
 
         self.__tasks = {
-            name: resolve_name(name, definitions, renderer)
-            for name in definitions.keys()
+            name: resolve_name(name, definitions) for name in definitions.keys()
         }
 
     def __getitem__(self, name: str) -> CliTask:

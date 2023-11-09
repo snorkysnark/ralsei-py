@@ -8,7 +8,8 @@ from ralsei import (
     GeneratorBuilder,
 )
 from ralsei.connection import PsycopgConn
-from ralsei.renderer import DEFAULT_RENDERER
+
+from ralsei.renderer import renderer
 from sqlalchemy import Engine
 
 from common.db_helper import get_rows, table_exists
@@ -29,7 +30,6 @@ def test_map_new_table_noselect(conn: PsycopgConn):
         ],
         fn=make_rows,
     )
-    task.render(DEFAULT_RENDERER)
 
     task.run(conn)
     assert get_rows(conn, table) == [(1, 1, "a"), (2, 2, "b")]
@@ -43,7 +43,7 @@ def test_map_table_jinja(conn: PsycopgConn):
 
     table_source = Table("source_args")
     conn.pg.execute(
-        DEFAULT_RENDERER.render(
+        renderer.render(
             """\
             CREATE TABLE {{table}}(
                 foo INT
@@ -67,7 +67,6 @@ def test_map_table_jinja(conn: PsycopgConn):
         fn=double,
         params={"year": 2015, "foo_type": SQL("SMALLINT")},
     )
-    task.render(DEFAULT_RENDERER)
 
     task.run(conn)
     assert get_rows(conn, table) == [(2015, 4), (2015, 10)]
@@ -85,7 +84,7 @@ def test_map_table_resumable(engine: Engine):
 
     with PsycopgConn(engine.connect()) as conn:
         conn.pg.execute(
-            DEFAULT_RENDERER.render(
+            renderer.render(
                 """\
                 CREATE TABLE {{table}}(
                     id SERIAL PRIMARY KEY,
@@ -106,7 +105,6 @@ def test_map_table_resumable(engine: Engine):
             is_done_column="__success",
             fn=GeneratorBuilder(failing).pop_id_fields("id"),
         )
-        task.render(DEFAULT_RENDERER)
 
         with pytest.raises(RuntimeError):
             task.run(conn)
