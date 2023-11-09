@@ -7,11 +7,10 @@ from ralsei import (
     ValueColumn,
     GeneratorBuilder,
 )
-from ralsei.connection import PsycopgConn
 
-from ralsei.renderer import renderer
 from sqlalchemy import Engine
 
+from ralsei.connection import PsycopgConn
 from common.db_helper import get_rows, table_exists
 
 
@@ -42,17 +41,15 @@ def test_map_table_jinja(conn: PsycopgConn):
         yield {"foo": foo * 2}
 
     table_source = Table("source_args")
-    conn.pg.execute(
-        renderer.render(
-            """\
-            CREATE TABLE {{table}}(
-                foo INT
-            );
-            INSERT INTO {{table}} VALUES
-            (2),
-            (5);""",
-            {"table": table_source},
-        )
+    conn.execute_template(
+        """\
+        CREATE TABLE {{table}}(
+            foo INT
+        );
+        INSERT INTO {{table}} VALUES
+        (2),
+        (5);""",
+        {"table": table_source},
     )
 
     table = Table("test_map_table_select")
@@ -83,17 +80,15 @@ def test_map_table_resumable(engine: Engine):
     table_source = Table("source_args")
 
     with PsycopgConn(engine.connect()) as conn:
-        conn.pg.execute(
-            renderer.render(
-                """\
-                CREATE TABLE {{table}}(
-                    id SERIAL PRIMARY KEY,
-                    val INT
-                );
-                INSERT INTO {{table}}(val) VALUES
-                (2),(5),(12);""",
-                {"table": table_source},
-            )
+        conn.execute_template(
+            """\
+            CREATE TABLE {{table}}(
+                id SERIAL PRIMARY KEY,
+                val INT
+            );
+            INSERT INTO {{table}}(val) VALUES
+            (2),(5),(12);""",
+            {"table": table_source},
         )
 
         table = Table("test_map_table_resumable")

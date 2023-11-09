@@ -1,6 +1,5 @@
 from ralsei.task import Task
 from ralsei._pipeline import Sequence, resolve_name
-from ralsei.renderer import RalseiRenderer
 
 
 class DummyTask(Task):

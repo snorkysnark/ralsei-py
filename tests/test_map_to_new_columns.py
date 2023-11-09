@@ -8,7 +8,6 @@ from ralsei import (
     FnBuilder,
 )
 from ralsei.connection import PsycopgConn
-from ralsei.renderer import renderer
 from sqlalchemy import Engine
 
 from common.db_helper import get_rows
@@ -19,17 +18,15 @@ def test_map_columns(conn: PsycopgConn):
         return {"doubled": val * 2}
 
     table = Table("test_map_columns")
-    conn.pg.execute(
-        renderer.render(
-            """\
-            CREATE TABLE {{table}}(
-                id SERIAL PRIMARY KEY,
-                val INT
-            );
-            INSERT INTO {{table}}(val) VALUES
-            (2),(5),(12);""",
-            {"table": table},
-        )
+    conn.execute_template(
+        """\
+        CREATE TABLE {{table}}(
+            id SERIAL PRIMARY KEY,
+            val INT
+        );
+        INSERT INTO {{table}}(val) VALUES
+        (2),(5),(12);""",
+        {"table": table},
     )
 
     task = MapToNewColumns(
@@ -62,17 +59,15 @@ def test_map_columns_resumable(engine: Engine):
 
     table = Table("test_map_columns_resumable")
     with PsycopgConn(engine.connect()) as conn:
-        conn.pg.execute(
-            renderer.render(
-                """\
-                CREATE TABLE {{table}}(
-                    id SERIAL PRIMARY KEY,
-                    val INT
-                );
-                INSERT INTO {{table}}(val) VALUES
-                (2),(5),(12);""",
-                {"table": table},
-            )
+        conn.execute_template(
+            """\
+            CREATE TABLE {{table}}(
+                id SERIAL PRIMARY KEY,
+                val INT
+            );
+            INSERT INTO {{table}}(val) VALUES
+            (2),(5),(12);""",
+            {"table": table},
         )
 
         task = MapToNewColumns(

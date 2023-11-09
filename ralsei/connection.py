@@ -3,6 +3,9 @@ from pathlib import Path
 import sqlalchemy
 from sqlalchemy.engine import Connection as SqlalchemyConn
 import psycopg
+from jinja_psycopg import SqlTemplate
+
+from .renderer import renderer
 
 
 def create_connection_url(credentials: str) -> sqlalchemy.URL:
@@ -90,6 +93,11 @@ class PsycopgConn:
             ```
         """
         return self._sqlalchemy.connection.dbapi_connection  # type:ignore
+
+    def execute_template(
+        self, template: str | SqlTemplate, jinja_params: dict, sql_params: dict = {}
+    ) -> psycopg.Cursor:
+        return self.pg.execute(renderer.render(template, jinja_params), sql_params)
 
     def __enter__(self):
         return self
