@@ -1,7 +1,6 @@
 from typing import Optional
 
 from psycopg.sql import SQL, Composed, Identifier
-from tqdm import tqdm
 
 from .common import (
     Task,
@@ -15,6 +14,7 @@ from .common import (
     merge_params,
     checks,
     renderer,
+    track,
 )
 from ralsei.cursor_factory import ClientCursorFactory, CursorFactory
 
@@ -227,8 +227,9 @@ class MapToNewColumns(Task):
         ) as input_cursor, pgconn.cursor() as output_cursor:
             input_cursor.execute(self.__select)
 
-            for input_row in tqdm(
+            for input_row in track(
                 input_cursor,
+                description="Task progress...",
                 total=input_cursor.rowcount if input_cursor.rowcount >= 0 else None,
             ):
                 output_row = self.fn(**input_row)

@@ -15,3 +15,4 @@ from .cli import RalseiCli as RalseiCli
 from ._pipeline import TaskDefinitions as TaskDefinitions
 from .map_fn import FnBuilder as FnBuilder, GeneratorBuilder as GeneratorBuilder
 from .cursor_factory import ServerCursorFactory as ServerCursorFactory
+from .console import *

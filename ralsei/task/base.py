@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from psycopg.sql import Composed
+from rich.syntax import Syntax
 
 from ralsei.connection import PsycopgConn
+from ralsei.console import console
 
 
 class Task:
@@ -45,3 +47,15 @@ class Task:
         Args:
             conn: db connection
         """
+
+    def redo(self, conn: PsycopgConn):
+        self.delete(conn)
+        self.run(conn)
+
+    def describe(self, conn: PsycopgConn):
+        for i, (name, script) in enumerate(self.scripts.items()):
+            console.print(f"[bold]{name}:")
+            console.print(Syntax(script.as_string(conn.pg), "sql"))
+
+            if i < len(self.scripts) - 1:
+                console.print()

@@ -3,14 +3,9 @@ Warning:
     This module is experimental and will change!
 """
 
-from dataclasses import dataclass
-from typing import MutableMapping, Protocol
-from rich.console import Console
-from rich.syntax import Syntax
-import sys
+from typing import MutableMapping
 
-from ralsei.connection import PsycopgConn
-from ralsei.task import Task
+from ralsei.task import Task, TaskSequence
 
 TaskDefinitions = MutableMapping[str, Task | list[str]]
 """
@@ -44,91 +39,25 @@ Example:
 """
 
 
-class CliTask(Protocol):
-    def run(self, conn: PsycopgConn) -> None:
-        ...
-
-    def delete(self, conn: PsycopgConn) -> None:
-        ...
-
-    def describe(self, conn: PsycopgConn) -> None:
-        ...
-
-
-@dataclass
-class NamedTask:
-    name: str
-    task: Task
-
-    def run(self, conn: PsycopgConn):
-        print("Running", self.name)
-        self.task.run(conn)
-        conn.pg.commit()
-
-    def delete(self, conn: PsycopgConn):
-        print("Deleting", self.name)
-        self.task.delete(conn)
-        conn.pg.commit()
-
-    def __render_scripts(self, conn: PsycopgConn) -> str:
-        return "\n\n".join(
-            map(
-                lambda item: f"-- {item[0]}\n{item[1].as_string(conn.pg)}",
-                self.task.scripts.items(),
-            )
-        )
-
-    def describe(self, conn: PsycopgConn):
-        sql = self.__render_scripts(conn)
-
-        if sys.stdout.isatty():
-            Console().print(Syntax(sql, "sql"))
-        else:
-            print(sql)
-
-
-@dataclass
-class Sequence:
-    tasks: list[NamedTask]
-
-    def run(self, conn: PsycopgConn):
-        for named_task in self.tasks:
-            if named_task.task.exists(conn):
-                print(f"Skipping {named_task.name}: already done")
-            else:
-                named_task.run(conn)
-
-    def delete(self, conn: PsycopgConn):
-        for named_task in reversed(self.tasks):
-            if not named_task.task.exists(conn):
-                print(f"Skipping {named_task.name}: does not exist")
-            else:
-                named_task.delete(conn)
-
-    def describe(self, conn: PsycopgConn):
-        for named_task in self.tasks:
-            print(named_task.name)
-
-
-def resolve_name(name: str, definitions: TaskDefinitions) -> CliTask:
+def resolve_name(name: str, definitions: TaskDefinitions) -> Task:
     node = definitions[name]
 
     if isinstance(node, Task):
-        return NamedTask(name, node)
+        return node
     else:
         name_stack = [*node]
-        subtasks = []
+        subtasks: list[tuple[str, Task]] = []
 
         while len(name_stack) > 0:
             name = name_stack.pop()
             next_node = definitions[name]
             if isinstance(next_node, Task):
-                subtasks.append(NamedTask(name, next_node))
+                subtasks.append((name, next_node))
             else:
                 name_stack += next_node
 
         subtasks.reverse()
-        return Sequence(subtasks)
+        return TaskSequence(subtasks)
 
 
 class Pipeline:
@@ -144,8 +73,8 @@ class Pipeline:
             name: resolve_name(name, definitions) for name in definitions.keys()
         }
 
-    def __getitem__(self, name: str) -> CliTask:
+    def __getitem__(self, name: str) -> Task:
         return self.__tasks[name]
 
 
-__all__ = ["Pipeline", "CliTask"]
+__all__ = ["Pipeline"]
