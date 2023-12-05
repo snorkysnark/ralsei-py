@@ -1,14 +1,34 @@
-import argparse
 from argparse import ArgumentParser
 from typing import Callable, Optional
 import sqlalchemy
 
 from ralsei._pipeline import Pipeline, TaskDefinitions
 from ralsei.connection import PsycopgConn, create_connection_url
+from ralsei.task import Task
+
+
+def _create_action(task_name: str, action_name: str, credentials: str):
+    def action(definitions: TaskDefinitions):
+        pipeline = Pipeline(definitions)
+        task = pipeline[task_name]
+
+        engine = sqlalchemy.create_engine(create_connection_url(credentials))
+        with engine.connect() as sqlalchemy_conn:
+            conn = PsycopgConn(sqlalchemy_conn)
+
+            actions: dict[str, Callable[[Task], None]] = {
+                "run": lambda task: task.run(conn),
+                "delete": lambda task: task.delete(conn),
+                "redo": lambda task: task.redo(conn),
+                "describe": lambda task: task.describe(conn),
+            }
+            actions[action_name](task)
+
+    return action
 
 
 class RalseiCli:
-    def __init__(self) -> None:
+    def __init__(self, default_credentials: Optional[str] = None) -> None:
         """
         Command line interface for running ralsei pipelines
         """
@@ -16,64 +36,39 @@ class RalseiCli:
         parser = ArgumentParser()
         parser.add_argument("task", help="Task name in the pipeline")
         parser.add_argument("action", choices=["run", "delete", "redo", "describe"])
-        parser.add_argument("--db", help="postgres:// url or .json file")
+        parser.add_argument(
+            "--db", help="postgres:// url or .json file", default=default_credentials
+        )
         self._argparser = parser
 
         custom_group = parser.add_argument_group("custom", "Custom arguments")
+        self._custom_group = custom_group
 
-        # Allows for better intellisense than using a wrapper method
-        self.add_argument = custom_group.add_argument
-        """
-        Mimics [argparse.ArgumentParser.add_argument][]
+    def add_argument(self, *args, **kwargs):
+        if (
+            not args
+            or len(args) == 1
+            and args[0][0] not in self._argparser.prefix_chars
+        ):
+            raise ValueError("Only keyword arguments are allowed")
 
-        ```
-        add_argument(
-            name or flags...
-            [, action][, nargs][, const][, default][, type]
-            [, choices][, required][, help][, metavar][, dest]
-        )
-        ```
-        """
+        self._custom_group.add_argument(*args, **kwargs)
+
+    def parse_args(self):
+        args = self._argparser.parse_args()
+        custom_args = {
+            action.dest: getattr(args, action.dest)
+            for action in self._custom_group._group_actions
+        }
+
+        return _create_action(args.task, args.action, args.db), custom_args
 
     def run(
         self,
-        task_tree: TaskDefinitions | Callable[[argparse.Namespace], TaskDefinitions],
-        credentials: Optional[str] = None,
+        create_tasks: Callable[..., TaskDefinitions],
     ):
-        """
-        Parse arguments and run the corresponding tasks
-
-        Args:
-            task_tree: a dictionary declaring the tasks
-                or a function that receives the cli arguments and creates said dictionary
-            credentials: either `postgres://` url or a path to json file
-        """
-
-        args = self._argparser.parse_args()
-
-        credentials = args.db or credentials
-        if not credentials:
-            raise ValueError("credentials not specified")
-
-        if isinstance(task_tree, Callable):
-            task_tree = task_tree(args)
-
-        pipeline = Pipeline(task_tree)
-        task = pipeline[args.task]
-
-        engine = sqlalchemy.create_engine(create_connection_url(credentials))
-        with engine.connect() as sqlalchemy_conn:
-            conn = PsycopgConn(sqlalchemy_conn)
-
-            if args.action == "run":
-                task.run(conn)
-            elif args.action == "delete":
-                task.delete(conn)
-            elif args.action == "redo":
-                task.delete(conn)
-                task.run(conn)
-            elif args.action == "describe":
-                task.describe(conn)
+        action, args = self.parse_args()
+        action(create_tasks(**args))
 
 
 __all__ = ["RalseiCli"]
