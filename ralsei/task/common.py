@@ -1,6 +1,6 @@
 """All the common imports for writing a task"""
 
-from .base import Task as Task
+from .base import TaskImpl as TaskImpl, TaskDef as TaskDef
 from ralsei.map_fn import *
 from ralsei.templates import *
 from ralsei import checks as checks
