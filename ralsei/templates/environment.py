@@ -1,7 +1,17 @@
-from typing import Any, Callable, Iterable, MutableMapping, Optional, Type, cast
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Type,
+    cast,
+)
 import textwrap
 import jinja2
 from jinja2 import Undefined, StrictUndefined
+from jinja2.environment import TemplateModule
 import itertools
 
 from .adapter import SqlAdapter
@@ -9,21 +19,41 @@ from .extensions import append_filter, SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
 
 
+def _render_split(chunks: Iterable[str]) -> list[str]:
+    return [
+        "".join(group)
+        for is_marker, group in itertools.groupby(
+            chunks, lambda x: type(x) is SplitMarker
+        )
+        if not is_marker
+    ]
+
+
+class SqlTemplateModule(TemplateModule):
+    def render(self) -> str:
+        return str(self)
+
+    def render_split(self) -> list[str]:
+        return _render_split(self._body_stream)
+
+
 class SqlTemplate(jinja2.Template):
     def render_split(self, *args: Any, **kwargs: Any) -> list[str]:
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
-            return [
-                "".join(group)
-                for is_marker, group in itertools.groupby(
-                    self.root_render_func(ctx), lambda x: type(x) is SplitMarker
-                )
-                if not is_marker
-            ]
-
+            return _render_split(self.root_render_func(ctx))
         except Exception:
             self.environment.handle_exception()
+
+    def make_module(
+        self,
+        vars: Optional[dict[str, Any]] = None,
+        shared: bool = False,
+        locals: Optional[Mapping[str, Any]] = None,
+    ) -> SqlTemplateModule:
+        ctx = self.new_context(vars, shared, locals)
+        return SqlTemplateModule(self, ctx)
 
 
 class SqlEnvironment(jinja2.Environment):
@@ -86,8 +116,8 @@ class SqlEnvironment(jinja2.Environment):
             ),
         )
 
-    def render(self, source: str, /, *args, **kwargs) -> str:
+    def render(self, source: str, /, *args: Any, **kwargs: Any) -> str:
         return self.from_string(source).render(*args, **kwargs)
 
-    def render_split(self, source: str, /, *args, **kwargs) -> list[str]:
+    def render_split(self, source: str, /, *args: Any, **kwargs: Any) -> list[str]:
         return self.from_string(source).render_split(*args, **kwargs)
