@@ -10,6 +10,7 @@ dependencies = [
     "jinja-psycopg>=0.1.3",
     "rich>=12.5.1",
     "sqlalchemy>=2.0.19",
+    "returns>=0.22.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

@@ -1,4 +1,4 @@
-from .common import Task, PsycopgConn
+from .common import Task, Context
 from ralsei.console import console, track
 
 
@@ -7,33 +7,33 @@ class TaskSequence(Task):
         super().__init__()
         self.__named_tasks = named_tasks
 
-    def run(self, conn: PsycopgConn) -> None:
+    def run(self, ctx: Context) -> None:
         for name, task in track(self.__named_tasks, description="Running tasks..."):
-            if task.exists(conn):
+            if task.exists(ctx):
                 console.print(f"Skipping [bold green]{name}[/bold green]: already done")
             else:
                 console.print(f"Running [bold green]{name}")
 
-                task.run(conn)
-                conn.pg.commit()
+                task.run(ctx)
+                ctx.connection.commit()
 
-    def delete(self, conn: PsycopgConn) -> None:
+    def delete(self, ctx: Context) -> None:
         for name, task in track(
             reversed(self.__named_tasks), description="Undoing tasks..."
         ):
-            if not task.exists(conn):
+            if not task.exists(ctx):
                 console.print(
                     f"Skipping [bold green]{name}[/bold green]: does not exist"
                 )
             else:
                 console.print(f"Deleting [bold green]{name}")
 
-                task.delete(conn)
-                conn.pg.commit()
+                task.delete(ctx)
+                ctx.connection.commit()
 
-    def exists(self, conn: PsycopgConn) -> bool:
+    def exists(self, ctx: Context) -> bool:
         for _, task in self.__named_tasks:
-            if not task.exists(conn):
+            if not task.exists(ctx):
                 return False
 
         return True

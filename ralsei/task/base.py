@@ -1,52 +1,36 @@
 from abc import ABC, abstractmethod
 from typing import Self, TypeVar
 
-from psycopg.sql import Composed
-from ralsei.console import console
-from rich.syntax import Syntax
+from ralsei.context import Context
 
 T = TypeVar("T")
 
-class TaskImpl[T](ABC):
-    scripts: dict[str, Composed]
-
-    def __new__(cls, this: T, ctx: RalseiContext) -> Self:
-        instance = super().__new__(cls)
-        instance.scripts = {}
-
-        return instance
-
+class Task(ABC):
     @abstractmethod
-    def __init__(self, this: T, ctx: RalseiContext) -> None:
+    def exists(self, ctx: Context) -> bool:
         ...
 
     @abstractmethod
-    def exists(self, ctx: RalseiContext) -> bool:
+    def run(self, ctx: Context) -> None:
         ...
 
     @abstractmethod
-    def run(self, ctx: RalseiContext) -> None:
+    def delete(self, ctx: Context) -> None:
         ...
 
-    @abstractmethod
-    def delete(self, ctx: RalseiContext) -> None:
-        ...
-
-    def redo(self, ctx: RalseiContext):
+    def redo(self, ctx: Context):
         self.delete(ctx)
         self.run(ctx)
 
-    def describe(self, ctx: RalseiContext):
-        for i, (name, script) in enumerate(self.scripts.items()):
-            console.print(f"[bold]{name}:")
-            console.print(Syntax(script.as_string(ctx.pg), "sql"))
 
-            if i < len(self.scripts) - 1:
-                console.print()
+class TaskImpl[T](Task):
+    @abstractmethod
+    def __init__(self, this: T, ctx: Context) -> None:
+        ...
 
 
 class TaskDef:
     Impl: type[TaskImpl[Self]]
 
-    def create(self, ctx: RalseiContext) -> TaskImpl[Self]:
+    def create(self, ctx: Context) -> TaskImpl[Self]:
         return self.Impl(self, ctx)

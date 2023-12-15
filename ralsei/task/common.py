@@ -1,11 +1,10 @@
 """All the common imports for writing a task"""
 
-from .base import TaskImpl as TaskImpl, TaskDef as TaskDef
+from .base import *
 from ralsei.map_fn import *
 from ralsei.templates import *
 from ralsei import checks as checks
-from ralsei.connection import PsycopgConn as PsycopgConn
-from ralsei.renderer import RalseiRenderer as RalseiRenderer, renderer as renderer
+from ralsei.context import Context as Context
 from ralsei.console import *
 
 

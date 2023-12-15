@@ -1,103 +1,78 @@
+from __future__ import annotations
+from dataclasses import dataclass
 from typing import Optional
 
 from .common import (
-    Task,
+    TaskDef,
+    TaskImpl,
     Table,
+    Renderable,
     Column,
-    PsycopgConn,
+    Context,
     merge_params,
     checks,
-    renderer,
 )
 
 
-class AddColumnsSql(Task):
-    def __init__(
-        self,
-        sql: str,
-        table: Table,
-        columns: Optional[list[Column]] = None,
-        params: dict = {},
-    ) -> None:
-        """
-        Adds the specified Columns to an existing Table
-        and runs the SQL script to fill them with data
+@dataclass
+class AddColumnsSql(TaskDef):
+    sql: str
+    table: Table
+    columns: Optional[list[Renderable[Column]]] = None
+    params: dict = {}
 
-        Args:
-            sql: sql template string
-            table: Table to add columns to
-            columns: these column definitions take precedence over those defined in the template
-            params: parameters passed to the jinja template
+    class Impl(TaskImpl):
+        def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
+            jinja_args = merge_params({"table": this.table}, this.params)
 
-        Template:
-            Environment variables: `table`, `**params`
+            template = ctx.jinja.from_string_script(this.sql)
+            script_module = template.module
 
-            Columns can be defined in the template itself,
-            using `{% set columns = [...] %}`
-
-        Example:
-            ```sql title="postprocess.sql"
-            {% set columns = [Column("name_upper", "TEXT")] %}
-
-            UPDATE {{table}}
-            SET name_upper = UPPER(name);
-            ```
-
-            ```python title="pipeline.py"
-            "postprocess": AddColumnsSql(
-                sql=Path("./postprocess.sql").read_text(),
-                table=TABLE_people,
-            )
-            ```
-        """
-
-        super().__init__()
-
-        jinja_args = merge_params({"table": table}, params)
-
-        script_module = renderer.from_string(sql).make_module(jinja_args)
-
-        if columns is None:
-            # Get columns variable from template: {% set columns = [...] %}
-            columns = script_module.getattr("columns", None)
+            columns = this.columns
             if columns is None:
-                raise ValueError("Columns not specified")
-        self.__column_names = list(map(lambda col: col.name, columns))
+                # Get columns variable from template: {% set columns = [...] %}
+                columns = getattr(script_module, "columns", None)
+                if columns is None:
+                    raise ValueError("Columns not specified")
 
-        rendered_columns = list(
-            map(lambda col: col.render(renderer, jinja_args), columns)
-        )
+            rendered_columns = list(
+                map(
+                    lambda col: col.render(ctx.jinja.inner, **jinja_args),
+                    columns,
+                )
+            )
+            self.__column_names = list(map(lambda col: col.name, rendered_columns))
 
-        self.scripts["Add columns"] = self.__add_columns = renderer.render(
-            """\
-            ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\n') }};""",
-            merge_params(
-                jinja_args,
-                {"columns": map(lambda col: col.add(False), rendered_columns)},
-            ),
-        )
-        self.scripts["Main"] = self.__sql = script_module.render()
-        self.scripts["Drop columns"] = self.__drop_columns = renderer.render(
-            """\
-            ALTER TABLE {{ table }}
-            {{ columns | sqljoin(',\n') }};""",
-            merge_params(
-                jinja_args,
-                {"columns": map(lambda col: col.drop(True), rendered_columns)},
-            ),
-        )
+            self.__add_columns = ctx.jinja.render(
+                """\
+                {% set sep = joiner(',\n') -%}
 
-        self.__table = table
+                ALTER TABLE {{ table }}
+                {% for column in columns -%}
+                {{ sep() }}ADD COLUMN {{ column.definition }}
+                {%- endfor %};""",
+                merge_params(jinja_args, {"columns": rendered_columns}),
+            )
+            self.__sql = template.render(**jinja_args)
+            self.__drop_columns = ctx.jinja.render(
+                """\
+                {% set sep = joiner(',\n') -%}
 
-    def exists(self, conn: PsycopgConn) -> bool:
-        return checks.columns_exist(conn, self.__table, self.__column_names)
+                ALTER TABLE {{ table }}
+                {% for column in columns -%}
+                {{ sep() }}DROP COLUMN {{ column.identifier }}
+                {%- endfor %};""",
+                merge_params(jinja_args, {"columns": rendered_columns}),
+            )
 
-    def run(self, conn: PsycopgConn) -> None:
-        with conn.pg.cursor() as curs:
-            curs.execute(self.__add_columns)
-            curs.execute(self.__sql)
+            self.__table = this.table
 
-    def delete(self, conn: PsycopgConn) -> None:
-        with conn.pg.cursor() as curs:
-            curs.execute(self.__drop_columns)
+        def exists(self, ctx: Context) -> bool:
+            return checks.columns_exist(ctx, self.__table, self.__column_names)
+
+        def run(self, ctx: Context) -> None:
+            ctx.connection.execute(self.__add_columns)
+            ctx.connection.executescript(self.__sql)
+
+        def delete(self, ctx: Context) -> None:
+            ctx.connection.execute(self.__drop_columns)

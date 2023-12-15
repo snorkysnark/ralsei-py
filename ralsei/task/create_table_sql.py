@@ -2,12 +2,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .common import (
+    Context,
+    Table,
     TaskImpl,
     TaskDef,
-    Table,
     checks,
-    merge_params,
-    renderer,
 )
 
 
@@ -19,27 +18,24 @@ class CreateTableSql(TaskDef):
     view: bool = False
 
     class Impl(TaskImpl):
-        def __init__(self, this: CreateTableSql, ctx: RalseiContext) -> None:
-            jinja_args = merge_params(
-                {"table": this.table, "view": this.view}, this.params
+        def __init__(self, this: CreateTableSql, ctx: Context) -> None:
+            self.__sql = ctx.jinja.render_script(
+                this.sql, table=this.table, view=this.view, **this.params
             )
-
-            self.scripts["Create"] = self.__sql = renderer.render(this.sql, jinja_args)
-            self.scripts["Drop"] = self.__drop_sql = renderer.render(
+            self.__drop_sql = ctx.jinja.render(
                 "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
-                jinja_args,
+                table=this.table,
+                view=this.view,
             )
 
             self.__table = this.table
             self.__is_view = this.view
 
-        def exists(self, ctx: RalseiContext) -> bool:
+        def exists(self, ctx: Context) -> bool:
             return checks.table_exists(ctx, self.__table, self.__is_view)
 
-        def run(self, ctx: RalseiContext) -> None:
-            with ctx.pg.cursor() as curs:
-                curs.execute(self.__sql)
+        def run(self, ctx: Context) -> None:
+            ctx.connection.executescript(self.__sql)
 
-        def delete(self, ctx: RalseiContext) -> None:
-            with ctx.pg.cursor() as curs:
-                curs.execute(self.__drop_sql)
+        def delete(self, ctx: Context) -> None:
+            ctx.connection.execute(self.__drop_sql)
