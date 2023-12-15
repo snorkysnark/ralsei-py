@@ -57,10 +57,13 @@ class SqlTemplate(jinja2.Template):
 
 
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, adapter: SqlAdapter):
+    def __init__(self, dialect: str, adapter: Optional[SqlAdapter] = None):
         super().__init__(undefined=StrictUndefined)
 
+        if not adapter:
+            adapter = SqlAdapter(dialect)
         self._adapter = adapter
+        self._dialect = dialect
 
         from .types import Sql, Column
 
@@ -97,7 +100,7 @@ class SqlEnvironment(jinja2.Environment):
         self.code_generator_class = SqlCodeGenerator
 
         self.filters = {"sqltyped": sqltyped, "sql": Sql, "join": join}
-        self.globals = {"joiner": joiner, "Column": Column}
+        self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect}
 
     @property
     def adapter(self) -> SqlAdapter:

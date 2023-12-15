@@ -2,7 +2,7 @@ from typing import Any, Iterable, Mapping, Optional
 import sqlalchemy
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
-from .templates import SqlalchemyEnvironment
+from .templates import SqlalchemyEnvironment, SqlEnvironment
 
 
 class Connection(sqlalchemy.Connection):
@@ -20,10 +20,14 @@ class Connection(sqlalchemy.Connection):
 
 class Context:
     def __init__(
-        self, connection: Connection, environment: SqlalchemyEnvironment
+        self,
+        connection: Connection,
+        environment: Optional[SqlalchemyEnvironment] = None,
     ) -> None:
         self._conn = connection
-        self._jinja = environment
+        self._jinja = environment or SqlalchemyEnvironment(
+            SqlEnvironment(connection.dialect.name)
+        )
 
     @property
     def connection(self):
@@ -50,5 +54,5 @@ class Context:
         bind_params: _CoreSingleExecuteParams,
     ):
         self.connection.executescript(
-            self.jinja.render_script(source, **template_params), bind_params
+            self.jinja.render_split(source, **template_params), bind_params
         )
