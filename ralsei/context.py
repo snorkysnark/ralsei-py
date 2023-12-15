@@ -37,6 +37,10 @@ class Context:
     def jinja(self):
         return self._jinja
 
+    @property
+    def dialect(self):
+        return self.connection.dialect.name
+
     def render_execute(
         self,
         source: str,
