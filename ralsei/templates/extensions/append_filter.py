@@ -34,4 +34,5 @@ def append_filter(filter: str) -> type[Extension]:
                 else:
                     yield token
 
+    AppendFilter.identifier += f":{filter}"
     return AppendFilter

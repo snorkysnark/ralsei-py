@@ -1,6 +1,12 @@
 from typing import Optional
 from jinja2.compiler import CodeGenerator, Frame, MacroRef
-from jinja2.nodes import Template
+from jinja2.nodes import Template, Expr, ExtensionAttribute
+
+
+def is_split_marker(node: Expr) -> bool:
+    return node == ExtensionAttribute(
+        "ralsei.templates.extensions.split_tag.SplitTag", "marker"
+    )
 
 
 class SqlCodeGenerator(CodeGenerator):
@@ -20,3 +26,15 @@ class SqlCodeGenerator(CodeGenerator):
             f" {macro_ref.accesses_kwargs!r}, {macro_ref.accesses_varargs!r},"
             f" {macro_ref.accesses_caller!r}, context.eval_ctx.autoescape)"
         )
+
+    def _output_child_pre(
+        self, node: Expr, frame: Frame, finalize: CodeGenerator._FinalizeInfo
+    ) -> None:
+        if not is_split_marker(node):
+            super()._output_child_pre(node, frame, finalize)
+
+    def _output_child_post(
+        self, node: Expr, frame: Frame, finalize: CodeGenerator._FinalizeInfo
+    ) -> None:
+        if not is_split_marker(node):
+            super()._output_child_post(node, frame, finalize)

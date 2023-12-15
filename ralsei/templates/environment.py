@@ -2,19 +2,28 @@ from typing import Any, Callable, Iterable, MutableMapping, Optional, Type, cast
 import textwrap
 import jinja2
 from jinja2 import Undefined, StrictUndefined
+import itertools
 
 from .adapter import SqlAdapter
-from .extension import append_filter
+from .extensions import append_filter, SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
-
-SPLIT_STR = "split_6879f248c0234078baf0eb7c0f2787a1"
 
 
 class SqlTemplate(jinja2.Template):
     def render_split(self, *args: Any, **kwargs: Any) -> list[str]:
-        from .types import Sql
+        ctx = self.new_context(dict(*args, **kwargs))
 
-        return super().render(*args, **kwargs, split=Sql(SPLIT_STR)).split(SPLIT_STR)
+        try:
+            return [
+                "".join(group)
+                for is_marker, group in itertools.groupby(
+                    self.root_render_func(ctx), lambda x: type(x) is SplitMarker
+                )
+                if not is_marker
+            ]
+
+        except Exception:
+            self.environment.handle_exception()
 
 
 class SqlEnvironment(jinja2.Environment):
@@ -52,6 +61,8 @@ class SqlEnvironment(jinja2.Environment):
             )
 
         self.add_extension(append_filter("sqltyped"))
+        self.add_extension(SplitTag)
+
         self.template_class = SqlTemplate
         self.code_generator_class = SqlCodeGenerator
 
