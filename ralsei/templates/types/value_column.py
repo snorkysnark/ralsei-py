@@ -19,7 +19,7 @@ class ValueColumn(Column):
         super().__init__(name, type)
         self.value = infer_value(name, value)
 
-    def render(self, env: SqlEnvironment, **params: Any) -> ValueColumnRendered:
+    def render(self, env: SqlEnvironment, /, **params: Any) -> ValueColumnRendered:
         return ValueColumnRendered(
             self.name, env.render(self.type_template, **params), self.value
         )
@@ -30,6 +30,7 @@ class ValueColumnRendered(ColumnRendered):
         super().__init__(name, type)
         self.value = infer_value(name, value)
 
+    @property
     def set_statement(self) -> ValueColumnSetStatement:
         return ValueColumnSetStatement(self)
 

@@ -7,10 +7,10 @@ T = TypeVar("T", covariant=True)
 
 
 class Renderable(Protocol[T]):
-    def render(self, env: SqlEnvironment, **params: Any) -> T:
+    def render(self, env: SqlEnvironment, /, **params: Any) -> T:
         ...
 
 
 class RendersToSelf:
-    def render(self, env: SqlEnvironment, **params: Any) -> Self:
+    def render(self, env: SqlEnvironment, /, **params: Any) -> Self:
         return self

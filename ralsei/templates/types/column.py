@@ -12,7 +12,7 @@ class Column:
         self.name = name
         self.type_template = type
 
-    def render(self, env: SqlEnvironment, **params: Any) -> ColumnRendered:
+    def render(self, env: SqlEnvironment, /, **params: Any) -> ColumnRendered:
         return ColumnRendered(self.name, env.render(self.type_template, **params))
 
 
