@@ -53,6 +53,10 @@ class SqlalchemyEnvironment:
     def adapter(self) -> SqlAdapter:
         return self.inner.adapter
 
+    @property
+    def dialect(self) -> str:
+        return self.inner.dialect
+
     def render(self, source: str, /, *args, **kwargs) -> TextClause:
         return text(self.inner.render(source, *args, **kwargs))
 

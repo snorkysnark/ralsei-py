@@ -106,6 +106,10 @@ class SqlEnvironment(jinja2.Environment):
     def adapter(self) -> SqlAdapter:
         return self._adapter
 
+    @property
+    def dialect(self) -> str:
+        return self._dialect
+
     def from_string(
         self,
         source: str,
