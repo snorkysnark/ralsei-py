@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Iterable, Mapping, Optional, Self
 import sqlalchemy
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
@@ -9,25 +9,48 @@ class Connection(sqlalchemy.Connection):
     def __init__(self, engine: sqlalchemy.Engine):
         super().__init__(engine)
 
+    def execute_text(
+        self, statement: str, parameters: Optional[_CoreAnyExecuteParams] = None
+    ) -> sqlalchemy.CursorResult[Any]:
+        return self.execute(sqlalchemy.text(statement), parameters)
+
+    def executescript_text(
+        self,
+        statements: Iterable[str],
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+    ):
+        for statement in statements:
+            self.execute(sqlalchemy.text(statement), parameters)
+
     def executescript(
         self,
         statements: Iterable[sqlalchemy.Executable],
-        bind_params: Optional[_CoreSingleExecuteParams] = None,
+        parameters: Optional[_CoreSingleExecuteParams] = None,
     ):
         for statement in statements:
-            self.execute(statement, bind_params)
+            self.execute(statement, parameters)
 
 
 class Context:
     def __init__(
         self,
-        connection: Connection,
+        connection_source: Connection | sqlalchemy.Engine,
         environment: Optional[SqlalchemyEnvironment] = None,
     ) -> None:
-        self._conn = connection
-        self._jinja = environment or SqlalchemyEnvironment(
-            SqlEnvironment(connection.dialect.name)
+        self._conn = (
+            Connection(connection_source)
+            if isinstance(connection_source, sqlalchemy.Engine)
+            else connection_source
         )
+        self._jinja = environment or SqlalchemyEnvironment(
+            SqlEnvironment(connection_source.dialect.name)
+        )
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
+        self.connection.close()
 
     @property
     def connection(self):
