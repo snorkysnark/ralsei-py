@@ -1,33 +1,29 @@
-from typing import Tuple
 import pytest
+from typing import Tuple
+from ralsei import Table, CreateTableSql, Context
+from ralsei.actions import table_exists
+from common.db_helper import get_rows
 
-from ralsei import Table, CreateTableSql
-from common.db_helper import get_rows, table_exists
-from ralsei.connection import PsycopgConn
-from ralsei.renderer import RalseiRenderer
 
-
-def test_create_table(conn: PsycopgConn):
+def test_create_table(ctx: Context):
     table = Table("test_create_table")
     task = CreateTableSql(
         sql="""
-        CREATE TABLE {{ table }}(
+        CREATE TABLE {{table}}(
             foo INT,
             bar TEXT
         );
-
-        INSERT INTO {{ table }} VALUES
+        {%-split-%}
+        INSERT INTO {{table}} VALUES
             (1, 'a'),
-            (2, 'b');
-        ;
-        """,
+            (2, 'b');""",
         table=table,
-    )
+    ).create(ctx)
 
-    task.run(conn)
-    assert get_rows(conn, table) == [(1, "a"), (2, "b")]
-    task.delete(conn)
-    assert not table_exists(conn, table)
+    task.run(ctx)
+    assert get_rows(ctx, table) == [(1, "a"), (2, "b")]
+    task.delete(ctx)
+    assert not table_exists(ctx, table)
 
 
 @pytest.mark.parametrize(
@@ -37,29 +33,27 @@ def test_create_table(conn: PsycopgConn):
         (False, []),
     ],
 )
-def test_create_table_jinja_args(conn: PsycopgConn, flag: bool, expected: list[Tuple]):
+def test_create_table_jinja_args(ctx: Context, flag: bool, expected: list[Tuple]):
     table = Table("test_create_table_jinja_args")
     task = CreateTableSql(
         sql="""
         CREATE TABLE {{ table }}(
             foo TEXT
         );
-
-        {% if flag %}
-            INSERT INTO {{ table }} VALUES ('bar');
-        {% endif %}
-        """,
+        {%- if flag -%}{%split-%}
+        INSERT INTO {{ table }} VALUES ('bar');
+        {%- endif %}""",
         table=table,
         params={"flag": flag},
-    )
+    ).create(ctx)
 
-    task.run(conn)
-    assert get_rows(conn, table) == expected
-    task.delete(conn)
-    assert not table_exists(conn, table)
+    task.run(ctx)
+    assert get_rows(ctx, table) == expected
+    task.delete(ctx)
+    assert not table_exists(ctx, table)
 
 
-def test_create_table_literal(conn: PsycopgConn):
+def test_create_table_literal(ctx: Context):
     table = Table("test_create_table_literal")
     task = CreateTableSql(
         sql="""
@@ -67,13 +61,13 @@ def test_create_table_literal(conn: PsycopgConn):
             foo TEXT,
             bar INT
         );
-        INSERT INTO {{ table }} VALUES ({{ foo }}, {{ bar }});
-        """,
+        {%-split-%}
+        INSERT INTO {{ table }} VALUES ({{ foo }}, {{ bar }});""",
         table=table,
         params={"foo": "Ralsei\ncute", "bar": 10},
-    )
+    ).create(ctx)
 
-    task.run(conn)
-    assert get_rows(conn, table) == [("Ralsei\ncute", 10)]
-    task.delete(conn)
-    assert not table_exists(conn, table)
+    task.run(ctx)
+    assert get_rows(ctx, table) == [("Ralsei\ncute", 10)]
+    task.delete(ctx)
+    assert not table_exists(ctx, table)
