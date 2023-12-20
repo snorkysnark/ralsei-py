@@ -6,3 +6,5 @@ __pypackages__/
 dist/
 site/
 console/
+
+ralsei_test.sqlite
