@@ -7,10 +7,9 @@ from .common import (
     TaskImpl,
     Table,
     Renderable,
-    Column,
+    ColumnRendered,
     Context,
-    merge_params,
-    checks,
+    actions,
 )
 
 
@@ -18,61 +17,45 @@ from .common import (
 class AddColumnsSql(TaskDef):
     sql: str
     table: Table
-    columns: Optional[list[Renderable[Column]]] = None
+    columns: Optional[list[Renderable[ColumnRendered]]] = None
     params: dict = {}
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
-            jinja_args = merge_params({"table": this.table}, this.params)
+            # jinja_args = merge_params({"table": this.table}, this.params)
 
-            template = ctx.jinja.from_string_script(this.sql)
-            script_module = template.module
+            template_module = ctx.jinja.from_string(this.sql).make_module(
+                {"table": this.table, **this.params}
+            )
 
-            columns = this.columns
+            columns: Optional[
+                list[Renderable[ColumnRendered]]
+            ] = this.columns or getattr(template_module, "columns", None)
             if columns is None:
-                # Get columns variable from template: {% set columns = [...] %}
-                columns = getattr(script_module, "columns", None)
-                if columns is None:
-                    raise ValueError("Columns not specified")
+                raise ValueError("Columns not specified")
 
-            rendered_columns = list(
-                map(
-                    lambda col: col.render(ctx.jinja.inner, **jinja_args),
-                    columns,
-                )
+            rendered_columns = [
+                col.render(ctx.jinja.inner, table=this.table, **this.params)
+                for col in columns
+            ]
+            self.__column_names = [col.name for col in rendered_columns]
+
+            self.__add_columns = actions.add_columns(
+                ctx.jinja, this.table, rendered_columns
             )
-            self.__column_names = list(map(lambda col: col.name, rendered_columns))
-
-            self.__add_columns = ctx.jinja.render(
-                """\
-                {% set sep = joiner(',\n') -%}
-
-                ALTER TABLE {{ table }}
-                {% for column in columns -%}
-                {{ sep() }}ADD COLUMN {{ column.definition }}
-                {%- endfor %};""",
-                merge_params(jinja_args, {"columns": rendered_columns}),
-            )
-            self.__sql = template.render(**jinja_args)
-            self.__drop_columns = ctx.jinja.render(
-                """\
-                {% set sep = joiner(',\n') -%}
-
-                ALTER TABLE {{ table }}
-                {% for column in columns -%}
-                {{ sep() }}DROP COLUMN {{ column.identifier }}
-                {%- endfor %};""",
-                merge_params(jinja_args, {"columns": rendered_columns}),
+            self.__sql = template_module.render_split()
+            self.__drop_columns = actions.drop_columns(
+                ctx.jinja, this.table, rendered_columns
             )
 
             self.__table = this.table
 
         def exists(self, ctx: Context) -> bool:
-            return checks.columns_exist(ctx, self.__table, self.__column_names)
+            return actions.columns_exist(ctx, self.__table, self.__column_names)
 
         def run(self, ctx: Context) -> None:
-            ctx.connection.execute(self.__add_columns)
+            self.__add_columns(ctx)
             ctx.connection.executescript(self.__sql)
 
         def delete(self, ctx: Context) -> None:
-            ctx.connection.execute(self.__drop_columns)
+            self.__drop_columns(ctx)

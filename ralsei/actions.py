@@ -74,7 +74,7 @@ def drop_columns(
             """\
             ALTER TABLE {{table}}
             DROP COLUMN {%if if_exists%}IF EXISTS {%endif-%}
-            {{column.definition}};""",
+            {{column.identifier}};""",
             table=table,
             column=column,
             if_exists=if_exists and env.dialect != "sqlite",

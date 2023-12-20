@@ -6,7 +6,7 @@ from .common import (
     Table,
     TaskImpl,
     TaskDef,
-    checks,
+    actions,
 )
 
 
@@ -19,7 +19,7 @@ class CreateTableSql(TaskDef):
 
     class Impl(TaskImpl):
         def __init__(self, this: CreateTableSql, ctx: Context) -> None:
-            self.__sql = ctx.jinja.render_script(
+            self.__sql = ctx.jinja.render_split(
                 this.sql, table=this.table, view=this.view, **this.params
             )
             self.__drop_sql = ctx.jinja.render(
@@ -29,10 +29,9 @@ class CreateTableSql(TaskDef):
             )
 
             self.__table = this.table
-            self.__is_view = this.view
 
         def exists(self, ctx: Context) -> bool:
-            return checks.table_exists(ctx, self.__table, self.__is_view)
+            return actions.table_exists(ctx, self.__table)
 
         def run(self, ctx: Context) -> None:
             ctx.connection.executescript(self.__sql)
