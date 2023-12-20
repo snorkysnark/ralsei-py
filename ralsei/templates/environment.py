@@ -65,7 +65,7 @@ class SqlEnvironment(jinja2.Environment):
         self._adapter = adapter
         self._dialect = dialect
 
-        from .types import Sql, Column
+        from .types import Sql, Column, Identifier
 
         def sqltyped(value: Any) -> str | Undefined:
             if isinstance(value, Undefined):
@@ -99,7 +99,12 @@ class SqlEnvironment(jinja2.Environment):
         self.template_class = SqlTemplate
         self.code_generator_class = SqlCodeGenerator
 
-        self.filters = {"sqltyped": sqltyped, "sql": Sql, "join": join}
+        self.filters = {
+            "sqltyped": sqltyped,
+            "sql": Sql,
+            "join": join,
+            "identifier": Identifier,
+        }
         self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect}
 
     @property
