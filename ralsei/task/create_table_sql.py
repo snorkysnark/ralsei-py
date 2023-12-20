@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .common import (
     Context,
@@ -14,7 +14,7 @@ from .common import (
 class CreateTableSql(TaskDef):
     sql: str
     table: Table
-    params: dict = {}
+    params: dict = field(default_factory=dict)
     view: bool = False
 
     class Impl(TaskImpl):

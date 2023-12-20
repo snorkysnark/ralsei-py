@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 from returns.maybe import Maybe
 
@@ -35,7 +35,7 @@ class MapToNewTable(TaskDef):
     source_table: Optional[Table] = None
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
-    params: dict = {}
+    params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, ctx: Context) -> None:

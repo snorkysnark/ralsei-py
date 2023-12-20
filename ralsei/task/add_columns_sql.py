@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from .common import (
@@ -18,7 +18,7 @@ class AddColumnsSql(TaskDef):
     sql: str
     table: Table
     columns: Optional[list[Renderable[ColumnRendered]]] = None
-    params: dict = {}
+    params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, ctx: Context) -> None:

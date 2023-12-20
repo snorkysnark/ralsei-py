@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Self, TypeVar
+from typing import Self, TypeVar, Generic
 
 from ralsei.context import Context
 
 T = TypeVar("T")
+
 
 class Task(ABC):
     @abstractmethod
@@ -23,7 +24,7 @@ class Task(ABC):
         self.run(ctx)
 
 
-class TaskImpl[T](Task):
+class TaskImpl(Task, Generic[T]):
     @abstractmethod
     def __init__(self, this: T, ctx: Context) -> None:
         ...
