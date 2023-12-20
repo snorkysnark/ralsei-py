@@ -41,6 +41,6 @@ T = TypeVar("T")
 
 def expect_optional(value: Optional[T], error_message: str) -> T:
     if value is None:
-        raise RuntimeError(error_message)
+        raise ValueError(error_message)
     else:
         return value

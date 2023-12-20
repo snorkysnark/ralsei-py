@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, cast
 
 from .common import (
     TaskDef,
@@ -15,22 +15,32 @@ from .common import (
 
 @dataclass
 class AddColumnsSql(TaskDef):
-    sql: str
+    sql: str | list[str]
     table: Table
     columns: Optional[list[Renderable[ColumnRendered]]] = None
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
-            # jinja_args = merge_params({"table": this.table}, this.params)
+            columns = this.columns
 
-            template_module = ctx.jinja.from_string(this.sql).make_module(
-                {"table": this.table, **this.params}
-            )
+            if isinstance(this.sql, str):
+                template_module = ctx.jinja.from_string(this.sql).make_module(
+                    {"table": this.table, **this.params}
+                )
+                if not columns:
+                    columns = cast(
+                        Optional[list[Renderable[ColumnRendered]]],
+                        getattr(template_module, "columns", None),
+                    )
 
-            columns: Optional[
-                list[Renderable[ColumnRendered]]
-            ] = this.columns or getattr(template_module, "columns", None)
+                self.__sql = template_module.render_split()
+            else:
+                self.__sql = [
+                    ctx.jinja.render(sql, table=this.table, **this.params)
+                    for sql in this.sql
+                ]
+
             if columns is None:
                 raise ValueError("Columns not specified")
 
@@ -43,7 +53,6 @@ class AddColumnsSql(TaskDef):
             self.__add_columns = actions.add_columns(
                 ctx.jinja, this.table, rendered_columns
             )
-            self.__sql = template_module.render_split()
             self.__drop_columns = actions.drop_columns(
                 ctx.jinja, this.table, rendered_columns
             )

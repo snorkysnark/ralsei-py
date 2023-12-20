@@ -12,16 +12,20 @@ from .common import (
 
 @dataclass
 class CreateTableSql(TaskDef):
-    sql: str
+    sql: str | list[str]
     table: Table
     params: dict = field(default_factory=dict)
     view: bool = False
 
     class Impl(TaskImpl):
         def __init__(self, this: CreateTableSql, ctx: Context) -> None:
-            self.__sql = ctx.jinja.render_split(
-                this.sql, table=this.table, view=this.view, **this.params
+            template_params = {"table": this.table, "view": this.view, **this.params}
+            self.__sql = (
+                ctx.jinja.render_split(this.sql, **template_params)
+                if isinstance(this.sql, str)
+                else [ctx.jinja.render(sql, **template_params) for sql in this.sql]
             )
+
             self.__drop_sql = ctx.jinja.render(
                 "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
                 table=this.table,

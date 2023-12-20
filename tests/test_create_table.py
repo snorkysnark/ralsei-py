@@ -8,15 +8,17 @@ from common.db_helper import get_rows
 def test_create_table(ctx: Context):
     table = Table("test_create_table")
     task = CreateTableSql(
-        sql="""
-        CREATE TABLE {{table}}(
-            foo INT,
-            bar TEXT
-        );
-        {%-split-%}
-        INSERT INTO {{table}} VALUES
+        sql=[
+            """\
+            CREATE TABLE {{table}}(
+                foo INT,
+                bar TEXT
+            );""",
+            """\
+            INSERT INTO {{table}} VALUES
             (1, 'a'),
             (2, 'b');""",
+        ],
         table=table,
     ).create(ctx)
 
