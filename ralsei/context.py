@@ -1,8 +1,30 @@
 from typing import Any, Iterable, Mapping, Optional, Self
 import sqlalchemy
+from sqlalchemy import event
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
 from .templates import SqlalchemyEnvironment, SqlEnvironment
+
+
+def create_engine(url: str) -> sqlalchemy.Engine:
+    engine = sqlalchemy.create_engine(url)
+
+    # Fix transactions in SQLite
+    # See: https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    if engine.dialect.name == "sqlite":
+
+        @event.listens_for(engine, "connect")
+        def do_connect(dbapi_connection, connection_record):
+            # disable pysqlite's emitting of the BEGIN statement entirely.
+            # also stops it from emitting COMMIT before any DDL.
+            dbapi_connection.isolation_level = None
+
+        @event.listens_for(engine, "begin")
+        def do_begin(conn):
+            # emit our own BEGIN
+            conn.exec_driver_sql("BEGIN")
+
+    return engine
 
 
 class Connection(sqlalchemy.Connection):
@@ -34,16 +56,18 @@ class Connection(sqlalchemy.Connection):
 class Context:
     def __init__(
         self,
-        connection_source: Connection | sqlalchemy.Engine,
+        connection_source: Connection | sqlalchemy.Engine | str,
         environment: Optional[SqlalchemyEnvironment] = None,
     ) -> None:
-        self._conn = (
-            Connection(connection_source)
-            if isinstance(connection_source, sqlalchemy.Engine)
-            else connection_source
-        )
+        if isinstance(connection_source, Connection):
+            self._conn = connection_source
+        elif isinstance(connection_source, sqlalchemy.Engine):
+            self._conn = Connection(connection_source)
+        else:
+            self._conn = Connection(create_engine(connection_source))
+
         self._jinja = environment or SqlalchemyEnvironment(
-            SqlEnvironment(connection_source.dialect.name)
+            SqlEnvironment(self.connection.dialect.name)
         )
 
     def __enter__(self) -> Self:
