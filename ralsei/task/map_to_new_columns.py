@@ -75,9 +75,9 @@ class MapToNewColumns(TaskDef):
             self.__update = ctx.jinja.render(
                 """\
                 UPDATE {{table}} SET
-                {{columns | sqljoin(',\\n', attribute='set_statement')}}
+                {{columns | join(',\\n', attribute='set_statement')}}
                 WHERE
-                {{id_fields | sqljoin(' AND ')}};""",
+                {{id_fields | join(' AND ')}};""",
                 table=this.table,
                 columns=columns_rendered,
                 id_fields=id_fields,
@@ -94,7 +94,9 @@ class MapToNewColumns(TaskDef):
         def run(self, ctx: Context) -> None:
             self.__add_columns(ctx)
 
-            for input_row in map(dict, ctx.connection.execute(self.__select)):
+            for input_row in map(
+                lambda row: row._asdict(), ctx.connection.execute(self.__select)
+            ):
                 ctx.connection.execute(self.__update, self.__fn(**input_row))
 
                 if self.__commit_each:
