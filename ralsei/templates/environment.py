@@ -15,7 +15,6 @@ from jinja2.environment import TemplateModule
 import itertools
 import sqlalchemy
 
-from .adapter import SqlAdapter
 from .extensions import append_filter, SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
 
@@ -74,25 +73,20 @@ class DialectInfo:
 
 
 class SqlEnvironment(jinja2.Environment):
-    def __init__(
-        self,
-        sqlalchemy_dialect: sqlalchemy.Dialect,
-        adapter: Optional[SqlAdapter] = None,
-    ):
+    def __init__(self, sqlalchemy_dialect: sqlalchemy.Dialect):
+        from .types import Sql, Column, Identifier
+        from .adapter import create_adapter_for_env
+
         super().__init__(undefined=StrictUndefined)
 
-        if not adapter:
-            adapter = SqlAdapter()
-        self._adapter = adapter
+        self._adapter = create_adapter_for_env(self)
         self._dialect = DialectInfo(sqlalchemy_dialect)
-
-        from .types import Sql, Column, Identifier
 
         def sqltyped(value: Any) -> str | Undefined:
             if isinstance(value, Undefined):
                 return value
 
-            return adapter.to_sql(value)
+            return self.adapter.to_sql(value)
 
         def joiner(sep: str = ", ") -> Callable[[], Sql]:
             inner = jinja2.utils.Joiner(sep)
@@ -106,7 +100,7 @@ class SqlEnvironment(jinja2.Environment):
             return Sql(
                 delimiter.join(
                     map(
-                        lambda value: adapter.to_sql(
+                        lambda value: self.adapter.to_sql(
                             getattr(value, attribute) if attribute else value
                         ),
                         values,
@@ -129,7 +123,7 @@ class SqlEnvironment(jinja2.Environment):
         self.globals = {"joiner": joiner, "Column": Column, "dialect": self._dialect}
 
     @property
-    def adapter(self) -> SqlAdapter:
+    def adapter(self):
         return self._adapter
 
     @property

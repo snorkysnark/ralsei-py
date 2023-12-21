@@ -1,21 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, TypeVar
+from .environment import SqlEnvironment
 import inspect
 
 T = TypeVar("T")
 
 
 class SqlAdapter:
-    def __init__(
-        self,
-        mapping: Optional[dict[type, Callable[[Any], str]]] = None,
-    ) -> None:
-        self._mapping = mapping or {
-            str: lambda value: "'{}'".format(value.replace("'", "''")),
-            int: str,
-            float: str,
-            ToSql: lambda value: value.to_sql(self),
-        }
+    def __init__(self) -> None:
+        self._mapping = {}
 
     def register_type(self, type_: type[T], to_sql: Callable[[T], str]):
         self._mapping[type_] = to_sql
@@ -36,5 +29,15 @@ class SqlAdapter:
 
 class ToSql(ABC):
     @abstractmethod
-    def to_sql(self, adapter: SqlAdapter) -> str:
+    def to_sql(self, env: SqlEnvironment) -> str:
         ...
+
+
+def create_adapter_for_env(env: SqlEnvironment):
+    adapter = SqlAdapter()
+    adapter.register_type(str, lambda value: "'{}'".format(value.replace("'", "''")))
+    adapter.register_type(int, str)
+    adapter.register_type(float, str)
+    adapter.register_type(ToSql, lambda value: value.to_sql(env))
+
+    return adapter

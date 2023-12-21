@@ -3,7 +3,7 @@ from typing import Any
 
 from .primitives import Identifier, Placeholder
 from .column import Column, ColumnRendered
-from ..adapter import ToSql, SqlAdapter
+from ..adapter import ToSql
 from ..environment import SqlEnvironment
 
 
@@ -39,8 +39,8 @@ class ValueColumnSetStatement(ToSql):
     def __init__(self, value_column: ValueColumnRendered) -> None:
         self.value_column = value_column
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
-        return adapter.format(
+    def to_sql(self, env: SqlEnvironment) -> str:
+        return env.adapter.format(
             "{} = {}", self.value_column.identifier, self.value_column.value
         )
 
@@ -54,8 +54,8 @@ class IdColumn(ToSql):
     def identifier(self) -> Identifier:
         return Identifier(self.name)
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
-        return adapter.format("{} = {}", self.identifier, self.value)
+    def to_sql(self, env: SqlEnvironment) -> str:
+        return env.adapter.format("{} = {}", self.identifier, self.value)
 
 
 __all__ = ["ValueColumn", "ValueColumnRendered", "ValueColumnSetStatement", "IdColumn"]

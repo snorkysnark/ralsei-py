@@ -3,7 +3,7 @@ from typing import Any
 
 from .renderable import RendersToSelf
 from .primitives import Sql, Identifier
-from ..adapter import SqlAdapter, ToSql
+from ..adapter import ToSql
 from ..environment import SqlEnvironment
 
 
@@ -34,8 +34,8 @@ class ColumnDefinition(ToSql):
     def __init__(self, column: ColumnRendered) -> None:
         self.column = column
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
-        return adapter.format("{} {}", self.column.identifier, self.column.type)
+    def to_sql(self, env: SqlEnvironment) -> str:
+        return env.adapter.format("{} {}", self.column.identifier, self.column.type)
 
 
 __all__ = ["Column", "ColumnRendered", "ColumnDefinition"]

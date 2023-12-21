@@ -89,7 +89,7 @@ class Context:
 
     @property
     def dialect(self):
-        return self.connection.dialect.name
+        return self.connection.dialect
 
     def render_execute(
         self,

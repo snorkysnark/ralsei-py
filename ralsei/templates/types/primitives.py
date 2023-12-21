@@ -1,15 +1,16 @@
 import re
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Optional
 
-from ..adapter import SqlAdapter, ToSql
+from ..adapter import ToSql
+from ..environment import SqlEnvironment
 
 
 @dataclass
 class Sql(ToSql):
     value: str
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
+    def to_sql(self, env: SqlEnvironment) -> str:
         return self.value
 
 
@@ -17,7 +18,7 @@ class Sql(ToSql):
 class Identifier(ToSql):
     value: str
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
+    def to_sql(self, env: SqlEnvironment) -> str:
         return '"{}"'.format(self.value.replace('"', '""'))
 
 
@@ -26,13 +27,12 @@ class Table(ToSql):
     name: str
     schema: Optional[str] = None
 
-    def __identifiers(self) -> Iterable[Identifier]:
-        if self.schema:
-            yield Identifier(self.schema)
-        yield Identifier(self.name)
-
-    def to_sql(self, adapter: SqlAdapter) -> str:
-        return ".".join(map(adapter.to_sql, self.__identifiers()))
+    def to_sql(self, env: SqlEnvironment) -> str:
+        return env.render(
+            "{{name | identifier}}{%if schema%}.{{schema | identifier}}{%endif%}",
+            name=self.name,
+            schema=self.schema,
+        )
 
 
 @dataclass
@@ -43,5 +43,5 @@ class Placeholder(ToSql):
         if not re.match(r"\w+", self.name):
             raise ValueError("Invalid placeholder name")
 
-    def to_sql(self, adapter: SqlAdapter) -> str:
+    def to_sql(self, env: SqlEnvironment) -> str:
         return f":{self.name}"
