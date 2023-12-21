@@ -49,8 +49,8 @@ class MapToNewTable(TaskDef):
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, ctx: Context) -> None:
-            self.__table = this.table
-            self.__fn = this.fn
+            self._table = this.table
+            self._fn = this.fn
 
             source_id_fields = (
                 SourceIdFields(
@@ -84,7 +84,7 @@ class MapToNewTable(TaskDef):
                 **this.params,
             }
 
-            self.__select = (
+            self._select = (
                 Maybe.from_optional(this.select)
                 .map(lambda sql: ctx.jinja.render(sql, **template_params))
                 .value_or(None)
@@ -101,7 +101,7 @@ class MapToNewTable(TaskDef):
                     insert_columns.append(rendered)
                     definitions.append(rendered.definition)
 
-            self.__create_table = ctx.jinja.render(
+            self._create_table = ctx.jinja.render(
                 """\
                 CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                     {{ definition | join(',\\n    ') }}
@@ -110,7 +110,7 @@ class MapToNewTable(TaskDef):
                 definition=definitions,
                 if_not_exists=this.is_done_column is not None,
             )
-            self.__insert = ctx.jinja.render(
+            self._insert = ctx.jinja.render(
                 """\
                 INSERT INTO {{ table }}(
                     {{ columns | join(',\\n    ', attribute='identifier') }}
@@ -121,11 +121,11 @@ class MapToNewTable(TaskDef):
                 table=this.table,
                 columns=insert_columns,
             )
-            self.__drop_table = ctx.jinja.render(
+            self._drop_table = ctx.jinja.render(
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
-            self.__source_id_scripts = (
+            self._source_id_scripts = (
                 SourceIdScripts(
                     actions.add_columns(
                         ctx.jinja,
@@ -154,36 +154,36 @@ class MapToNewTable(TaskDef):
             )
 
         def exists(self, ctx: Context) -> bool:
-            return actions.table_exists(ctx, self.__table)
+            return actions.table_exists(ctx, self._table)
 
         def run(self, ctx: Context) -> None:
-            ctx.connection.execute(self.__create_table)
-            if self.__source_id_scripts:
-                self.__source_id_scripts.add_marker(ctx)
+            ctx.connection.execute(self._create_table)
+            if self._source_id_scripts:
+                self._source_id_scripts.add_marker(ctx)
 
             def iter_input_rows():
-                if self.__select is not None:
+                if self._select is not None:
                     for input_row in map(
-                        lambda row: row._asdict(), ctx.connection.execute(self.__select)
+                        lambda row: row._asdict(), ctx.connection.execute(self._select)
                     ):
                         yield input_row
 
-                        if self.__source_id_scripts:
+                        if self._source_id_scripts:
                             ctx.connection.execute(
-                                self.__source_id_scripts.set_marker, input_row
+                                self._source_id_scripts.set_marker, input_row
                             )
                             ctx.connection.commit()
                 else:
                     yield {}
 
             for input_row in iter_input_rows():
-                for output_row in self.__fn(**input_row):
-                    ctx.connection.execute(self.__insert, output_row)
+                for output_row in self._fn(**input_row):
+                    ctx.connection.execute(self._insert, output_row)
 
         def delete(self, ctx: Context) -> None:
-            if self.__source_id_scripts:
-                self.__source_id_scripts.drop_marker(ctx)
-            ctx.connection.execute(self.__drop_table)
+            if self._source_id_scripts:
+                self._source_id_scripts.drop_marker(ctx)
+            ctx.connection.execute(self._drop_table)
 
 
 __all__ = ["MapToNewTable"]

@@ -20,25 +20,25 @@ class CreateTableSql(TaskDef):
     class Impl(TaskImpl):
         def __init__(self, this: CreateTableSql, ctx: Context) -> None:
             template_params = {"table": this.table, "view": this.view, **this.params}
-            self.__sql = (
+            self._sql = (
                 ctx.jinja.render_split(this.sql, **template_params)
                 if isinstance(this.sql, str)
                 else [ctx.jinja.render(sql, **template_params) for sql in this.sql]
             )
 
-            self.__drop_sql = ctx.jinja.render(
+            self._drop_sql = ctx.jinja.render(
                 "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
                 table=this.table,
                 view=this.view,
             )
 
-            self.__table = this.table
+            self._table = this.table
 
         def exists(self, ctx: Context) -> bool:
-            return actions.table_exists(ctx, self.__table)
+            return actions.table_exists(ctx, self._table)
 
         def run(self, ctx: Context) -> None:
-            ctx.connection.executescript(self.__sql)
+            ctx.connection.executescript(self._sql)
 
         def delete(self, ctx: Context) -> None:
-            ctx.connection.execute(self.__drop_sql)
+            ctx.connection.execute(self._drop_sql)

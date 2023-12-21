@@ -5,10 +5,10 @@ from ralsei.console import console, track
 class TaskSequence(Task):
     def __init__(self, named_tasks: list[tuple[str, Task]]) -> None:
         super().__init__()
-        self.__named_tasks = named_tasks
+        self._named_tasks = named_tasks
 
     def run(self, ctx: Context) -> None:
-        for name, task in track(self.__named_tasks, description="Running tasks..."):
+        for name, task in track(self._named_tasks, description="Running tasks..."):
             if task.exists(ctx):
                 console.print(f"Skipping [bold green]{name}[/bold green]: already done")
             else:
@@ -19,7 +19,7 @@ class TaskSequence(Task):
 
     def delete(self, ctx: Context) -> None:
         for name, task in track(
-            reversed(self.__named_tasks), description="Undoing tasks..."
+            reversed(self._named_tasks), description="Undoing tasks..."
         ):
             if not task.exists(ctx):
                 console.print(
@@ -32,7 +32,7 @@ class TaskSequence(Task):
                 ctx.connection.commit()
 
     def exists(self, ctx: Context) -> bool:
-        for _, task in self.__named_tasks:
+        for _, task in self._named_tasks:
             if not task.exists(ctx):
                 return False
 
@@ -40,4 +40,4 @@ class TaskSequence(Task):
 
     @property
     def named_tasks(self) -> list[tuple[str, Task]]:
-        return self.__named_tasks
+        return self._named_tasks

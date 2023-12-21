@@ -32,20 +32,20 @@ class MapToNewColumns(TaskDef):
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, ctx: Context) -> None:
-            self.__table = this.table
-            self.__fn = this.fn
+            self._table = this.table
+            self._fn = this.fn
 
             columns_rendered = [
                 column.render(ctx.jinja.inner, table=this.table, **this.params)
                 for column in this.columns
             ]
-            self.__column_names = [column.name for column in columns_rendered]
+            self._column_names = [column.name for column in columns_rendered]
 
             if this.is_done_column:
                 columns_rendered.append(
                     ValueColumnRendered(this.is_done_column, "BOOL DEFAULT FALSE", True)
                 )
-            self.__commit_each = bool(this.is_done_column)
+            self._commit_each = bool(this.is_done_column)
 
             id_fields = expect_optional(
                 this.id_fields
@@ -56,7 +56,7 @@ class MapToNewColumns(TaskDef):
                 ),
                 "Must provide id_fields if using is_done_column",
             )
-            self.__select = ctx.jinja.render(
+            self._select = ctx.jinja.render(
                 this.select,
                 table=this.table,
                 is_done=(
@@ -66,13 +66,13 @@ class MapToNewColumns(TaskDef):
                 ),
                 **this.params,
             )
-            self.__add_columns = actions.add_columns(
+            self._add_columns = actions.add_columns(
                 ctx.jinja,
                 this.table,
                 columns_rendered,
-                if_not_exists=self.__commit_each,
+                if_not_exists=self._commit_each,
             )
-            self.__update = ctx.jinja.render(
+            self._update = ctx.jinja.render(
                 """\
                 UPDATE {{table}} SET
                 {{columns | join(',\\n', attribute='set_statement')}}
@@ -82,25 +82,25 @@ class MapToNewColumns(TaskDef):
                 columns=columns_rendered,
                 id_fields=id_fields,
             )
-            self.__drop_columns = actions.drop_columns(
+            self._drop_columns = actions.drop_columns(
                 ctx.jinja,
                 this.table,
                 columns_rendered,
             )
 
         def exists(self, ctx: Context) -> bool:
-            return actions.columns_exist(ctx, self.__table, self.__column_names)
+            return actions.columns_exist(ctx, self._table, self._column_names)
 
         def run(self, ctx: Context) -> None:
-            self.__add_columns(ctx)
+            self._add_columns(ctx)
 
             for input_row in map(
-                lambda row: row._asdict(), ctx.connection.execute(self.__select)
+                lambda row: row._asdict(), ctx.connection.execute(self._select)
             ):
-                ctx.connection.execute(self.__update, self.__fn(**input_row))
+                ctx.connection.execute(self._update, self._fn(**input_row))
 
-                if self.__commit_each:
+                if self._commit_each:
                     ctx.connection.commit()
 
         def delete(self, ctx: Context) -> None:
-            self.__drop_columns(ctx)
+            self._drop_columns(ctx)
