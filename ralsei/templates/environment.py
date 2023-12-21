@@ -13,6 +13,7 @@ import jinja2
 from jinja2 import Undefined, StrictUndefined
 from jinja2.environment import TemplateModule
 import itertools
+import sqlalchemy
 
 from .adapter import SqlAdapter
 from .extensions import append_filter, SplitTag, SplitMarker
@@ -56,14 +57,34 @@ class SqlTemplate(jinja2.Template):
         return SqlTemplateModule(self, ctx)
 
 
+class DialectInfo:
+    def __init__(self, sqlalchemy_dialect: sqlalchemy.Dialect) -> None:
+        from .types import Sql
+
+        self.sqlalchemy = sqlalchemy_dialect
+        self.serial_primary_key = Sql(
+            "INTEGER PRIMARY KEY AUTOINCREMENT"
+            if sqlalchemy_dialect.name == "sqlite"
+            else "SERIAL PRIMARY KEY"
+        )
+
+    @property
+    def name(self):
+        return self.sqlalchemy.name
+
+
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, dialect: str, adapter: Optional[SqlAdapter] = None):
+    def __init__(
+        self,
+        sqlalchemy_dialect: sqlalchemy.Dialect,
+        adapter: Optional[SqlAdapter] = None,
+    ):
         super().__init__(undefined=StrictUndefined)
 
         if not adapter:
-            adapter = SqlAdapter(dialect)
+            adapter = SqlAdapter()
         self._adapter = adapter
-        self._dialect = dialect
+        self._dialect = DialectInfo(sqlalchemy_dialect)
 
         from .types import Sql, Column, Identifier
 
@@ -105,14 +126,14 @@ class SqlEnvironment(jinja2.Environment):
             "join": join,
             "identifier": Identifier,
         }
-        self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect}
+        self.globals = {"joiner": joiner, "Column": Column, "dialect": self._dialect}
 
     @property
     def adapter(self) -> SqlAdapter:
         return self._adapter
 
     @property
-    def dialect(self) -> str:
+    def dialect(self) -> DialectInfo:
         return self._dialect
 
     def from_string(

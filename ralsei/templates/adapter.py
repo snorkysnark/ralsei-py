@@ -7,7 +7,8 @@ T = TypeVar("T")
 
 class SqlAdapter:
     def __init__(
-        self, dialect: str, mapping: Optional[dict[type, Callable[[Any], str]]] = None
+        self,
+        mapping: Optional[dict[type, Callable[[Any], str]]] = None,
     ) -> None:
         self._mapping = mapping or {
             str: lambda value: "'{}'".format(value.replace("'", "''")),
@@ -15,11 +16,6 @@ class SqlAdapter:
             float: str,
             ToSql: lambda value: value.to_sql(self),
         }
-        self._dialect = dialect
-
-    @property
-    def dialect(self) -> str:
-        return self._dialect
 
     def register_type(self, type_: type[T], to_sql: Callable[[T], str]):
         self._mapping[type_] = to_sql

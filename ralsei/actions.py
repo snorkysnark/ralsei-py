@@ -41,12 +41,12 @@ def add_columns(
             {{column.definition}};""",
             table=table,
             column=column,
-            if_not_exists=if_not_exists and env.dialect != "sqlite",
+            if_not_exists=if_not_exists and env.dialect.name != "sqlite",
         )
         for column in columns
     ]
 
-    if if_not_exists and env.dialect == "sqlite":
+    if if_not_exists and env.dialect.name == "sqlite":
 
         def run_manual_if_not_exists(ctx: Context):
             existing = _get_column_names(ctx.connection, table)
@@ -77,12 +77,12 @@ def drop_columns(
             {{column.identifier}};""",
             table=table,
             column=column,
-            if_exists=if_exists and env.dialect != "sqlite",
+            if_exists=if_exists and env.dialect.name != "sqlite",
         )
         for column in columns
     ]
 
-    if if_exists and env.dialect == "sqlite":
+    if if_exists and env.dialect.name == "sqlite":
 
         def run_manual_if_exists(ctx: Context):
             existing = _get_column_names(ctx.connection, table)

@@ -4,15 +4,14 @@ from common.db_helper import get_rows
 
 
 def create_table(ctx: Context, table: Table):
-    ctx.render_execute(
-        """\
-        CREATE TABLE {{ table }}(
-            a INT
-        );""",
-        {"table": table},
-    )
-    ctx.render_execute(
-        "INSERT INTO {{ table }} VALUES (2), (5);",
+    ctx.render_executescript(
+        [
+            """\
+            CREATE TABLE {{ table }}(
+                a INT
+            );""",
+            "INSERT INTO {{ table }} VALUES (2), (5);",
+        ],
         {"table": table},
     )
 

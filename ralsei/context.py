@@ -52,6 +52,9 @@ class Connection(sqlalchemy.Connection):
         for statement in statements:
             self.execute(statement, parameters)
 
+    def __enter__(self) -> Self:
+        return self
+
 
 class Context:
     def __init__(
@@ -67,7 +70,7 @@ class Context:
             self._conn = Connection(create_engine(connection_source))
 
         self._jinja = environment or SqlalchemyEnvironment(
-            SqlEnvironment(self.connection.dialect.name)
+            SqlEnvironment(self.connection.dialect)
         )
 
     def __enter__(self) -> Self:
@@ -100,10 +103,15 @@ class Context:
 
     def render_executescript(
         self,
-        source: str,
-        template_params: Mapping[str, Any],
-        bind_params: _CoreSingleExecuteParams,
+        source: str | list[str],
+        template_params: Mapping[str, Any] = {},
+        bind_params: Optional[_CoreSingleExecuteParams] = None,
     ):
         self.connection.executescript(
-            self.jinja.render_split(source, **template_params), bind_params
+            self.jinja.render_split(source, **template_params)
+            if isinstance(source, str)
+            else [
+                self.jinja.render(statement, **template_params) for statement in source
+            ],
+            bind_params,
         )

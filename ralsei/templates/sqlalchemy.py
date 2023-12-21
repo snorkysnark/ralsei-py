@@ -1,7 +1,7 @@
 from typing import Any, Mapping, MutableMapping, Optional
 from sqlalchemy import TextClause, text
 
-from .environment import SqlEnvironment, SqlTemplate, SqlTemplateModule
+from .environment import SqlEnvironment, SqlTemplate, SqlTemplateModule, DialectInfo
 from .adapter import SqlAdapter
 
 
@@ -54,7 +54,7 @@ class SqlalchemyEnvironment:
         return self.inner.adapter
 
     @property
-    def dialect(self) -> str:
+    def dialect(self) -> DialectInfo:
         return self.inner.dialect
 
     def render(self, source: str, /, *args, **kwargs) -> TextClause:

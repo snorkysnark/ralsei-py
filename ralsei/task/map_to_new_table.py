@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Callable, Optional
 from returns.maybe import Maybe
+from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
@@ -14,16 +15,25 @@ from .common import (
     IdColumn,
     ValueColumnRendered,
     Identifier,
+    Sql,
+    ToSql,
     actions,
     expect_optional,
 )
 
 
 @dataclass
-class TableIdFields:
+class SourceIdFields:
     table: Table
     id_fields: list[IdColumn]
     is_done_column: ColumnRendered
+
+
+@dataclass
+class SourceIdScripts:
+    add_marker: Callable[[Context], None]
+    set_marker: TextClause
+    drop_marker: Callable[[Context], None]
 
 
 @dataclass
@@ -43,7 +53,7 @@ class MapToNewTable(TaskDef):
             self.__fn = this.fn
 
             source_id_fields = (
-                TableIdFields(
+                SourceIdFields(
                     expect_optional(
                         this.source_table,
                         "Must provide id_fields if using is_done_column",
@@ -80,10 +90,11 @@ class MapToNewTable(TaskDef):
                 .value_or(None)
             )
 
-            definitions, insert_columns = [], []
+            definitions: list[ToSql] = []
+            insert_columns: list[ValueColumnRendered] = []
             for column in this.columns:
                 if isinstance(column, str):
-                    rendered = ctx.jinja.render(column, **template_params)
+                    rendered = Sql(ctx.jinja.inner.render(column, **template_params))
                     definitions.append(rendered)
                 else:
                     rendered = column.render(ctx.jinja.inner, **template_params)
@@ -93,7 +104,7 @@ class MapToNewTable(TaskDef):
             self.__create_table = ctx.jinja.render(
                 """\
                 CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
-                    {{ definition | sqljoin(',\\n    ') }}
+                    {{ definition | join(',\\n    ') }}
                 );""",
                 table=this.table,
                 definition=definitions,
@@ -102,10 +113,10 @@ class MapToNewTable(TaskDef):
             self.__insert = ctx.jinja.render(
                 """\
                 INSERT INTO {{ table }}(
-                    {{ columns | sqljoin(',\\n    ', attribute='identifier') }}
+                    {{ columns | join(',\\n    ', attribute='identifier') }}
                 )
                 VALUES (
-                    {{ columns | sqljoin(',\\n    ', attribute='value') }}
+                    {{ columns | join(',\\n    ', attribute='value') }}
                 );""",
                 table=this.table,
                 columns=insert_columns,
@@ -114,44 +125,53 @@ class MapToNewTable(TaskDef):
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
-            if source_id_fields:
-                self.__add_marker = actions.add_columns(
-                    ctx.jinja,
-                    source_id_fields.table,
-                    [source_id_fields.is_done_column],
-                    if_not_exists=True,
-                )
-                self.__set_marker = ctx.jinja.render(
-                    """\
+            self.__source_id_scripts = (
+                SourceIdScripts(
+                    actions.add_columns(
+                        ctx.jinja,
+                        source_id_fields.table,
+                        [source_id_fields.is_done_column],
+                        if_not_exists=True,
+                    ),
+                    ctx.jinja.render(
+                        """\
                     UPDATE {{source}}
                     SET {{is_done}} = TRUE
-                    WHERE {{id_fields | sqljoin(' AND ')}};""",
-                    source=source_id_fields.table,
-                    is_done=source_id_fields.is_done_column.identifier,
-                    id_fields=source_id_fields.id_fields,
+                    WHERE {{id_fields | join(' AND ')}};""",
+                        source=source_id_fields.table,
+                        is_done=source_id_fields.is_done_column.identifier,
+                        id_fields=source_id_fields.id_fields,
+                    ),
+                    actions.drop_columns(
+                        ctx.jinja,
+                        source_id_fields.table,
+                        [source_id_fields.is_done_column],
+                        if_exists=True,
+                    ),
                 )
-                self.__drop_marker = actions.drop_columns(
-                    ctx.jinja,
-                    source_id_fields.table,
-                    [source_id_fields.is_done_column],
-                    if_exists=True,
-                )
+                if source_id_fields
+                else None
+            )
 
         def exists(self, ctx: Context) -> bool:
             return actions.table_exists(ctx, self.__table)
 
         def run(self, ctx: Context) -> None:
             ctx.connection.execute(self.__create_table)
-            if self.__add_marker:
-                self.__add_marker(ctx)
+            if self.__source_id_scripts:
+                self.__source_id_scripts.add_marker(ctx)
 
             def iter_input_rows():
                 if self.__select is not None:
-                    for input_row in map(dict, ctx.connection.execute(self.__select)):
+                    for input_row in map(
+                        lambda row: row._asdict(), ctx.connection.execute(self.__select)
+                    ):
                         yield input_row
 
-                        if self.__set_marker is not None:
-                            ctx.connection.execute(self.__set_marker, input_row)
+                        if self.__source_id_scripts:
+                            ctx.connection.execute(
+                                self.__source_id_scripts.set_marker, input_row
+                            )
                             ctx.connection.commit()
                 else:
                     yield {}
@@ -161,8 +181,8 @@ class MapToNewTable(TaskDef):
                     ctx.connection.execute(self.__insert, output_row)
 
         def delete(self, ctx: Context) -> None:
-            if self.__drop_marker:
-                self.__drop_marker(ctx)
+            if self.__source_id_scripts:
+                self.__source_id_scripts.drop_marker(ctx)
             ctx.connection.execute(self.__drop_table)
 
 
