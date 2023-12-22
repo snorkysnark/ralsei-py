@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional, cast
+from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
@@ -10,6 +11,7 @@ from .common import (
     ColumnRendered,
     Context,
     actions,
+    expect_optional,
 )
 
 
@@ -22,27 +24,29 @@ class AddColumnsSql(TaskDef):
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
-            columns = this.columns
-
-            if isinstance(this.sql, str):
-                template_module = ctx.jinja.from_string(this.sql).make_module(
-                    {"table": this.table, **this.params}
-                )
-                if not columns:
+            def render_script() -> (
+                tuple[list[TextClause], Optional[list[Renderable[ColumnRendered]]]]
+            ):
+                if isinstance(this.sql, str):
+                    template_module = ctx.jinja.from_string(this.sql).make_module(
+                        {"table": this.table, **this.params}
+                    )
                     columns = cast(
                         Optional[list[Renderable[ColumnRendered]]],
                         getattr(template_module, "columns", None),
                     )
 
-                self._sql = template_module.render_split()
-            else:
-                self._sql = [
-                    ctx.jinja.render(sql, table=this.table, **this.params)
-                    for sql in this.sql
-                ]
+                    return template_module.render_split(), columns
+                else:
+                    return [
+                        ctx.jinja.render(sql, table=this.table, **this.params)
+                        for sql in this.sql
+                    ], None
 
-            if columns is None:
-                raise ValueError("Columns not specified")
+            self._sql, template_columns = render_script()
+            columns = expect_optional(
+                this.columns or template_columns, "Columns not specified"
+            )
 
             rendered_columns = [
                 col.render(ctx.jinja.inner, table=this.table, **this.params)

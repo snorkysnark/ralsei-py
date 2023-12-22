@@ -23,14 +23,7 @@ from .common import (
 
 
 @dataclass
-class SourceIdFields:
-    table: Table
-    id_fields: list[IdColumn]
-    is_done_column: ColumnRendered
-
-
-@dataclass
-class SourceIdScripts:
+class MarkerScripts:
     add_marker: Callable[[Context], None]
     set_marker: TextClause
     drop_marker: Callable[[Context], None]
@@ -51,27 +44,6 @@ class MapToNewTable(TaskDef):
         def __init__(self, this: MapToNewTable, ctx: Context) -> None:
             self._table = this.table
             self._fn = this.fn
-
-            source_id_fields = (
-                SourceIdFields(
-                    expect_optional(
-                        this.source_table,
-                        "Must provide id_fields if using is_done_column",
-                    ),
-                    expect_optional(
-                        this.id_fields
-                        or (
-                            Maybe.from_optional(getattr(this.fn, "id_fields", None))
-                            .map(lambda names: [IdColumn(name) for name in names])
-                            .value_or(None)
-                        ),
-                        "Cannot create is_done_column when source_table is None",
-                    ),
-                    ColumnRendered(this.is_done_column, "BOOL DEFAULT FALSE"),
-                )
-                if this.is_done_column
-                else None
-            )
 
             template_params = {
                 "table": this.table,
@@ -125,41 +97,58 @@ class MapToNewTable(TaskDef):
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
-            self._source_id_scripts = (
-                SourceIdScripts(
-                    actions.add_columns(
-                        ctx.jinja,
-                        source_id_fields.table,
-                        [source_id_fields.is_done_column],
-                        if_not_exists=True,
-                    ),
-                    ctx.jinja.render(
-                        """\
-                    UPDATE {{source}}
-                    SET {{is_done}} = TRUE
-                    WHERE {{id_fields | join(' AND ')}};""",
-                        source=source_id_fields.table,
-                        is_done=source_id_fields.is_done_column.identifier,
-                        id_fields=source_id_fields.id_fields,
-                    ),
-                    actions.drop_columns(
-                        ctx.jinja,
-                        source_id_fields.table,
-                        [source_id_fields.is_done_column],
-                        if_exists=True,
-                    ),
-                )
-                if source_id_fields
-                else None
-            )
+            def create_marker_scripts():
+                if this.is_done_column:
+                    source_table = expect_optional(
+                        this.source_table,
+                        "Must provide id_fields if using is_done_column",
+                    )
+                    id_fields = expect_optional(
+                        this.id_fields
+                        or (
+                            Maybe.from_optional(getattr(this.fn, "id_fields", None))
+                            .map(lambda names: [IdColumn(name) for name in names])
+                            .value_or(None)
+                        ),
+                        "Cannot create is_done_column when source_table is None",
+                    )
+                    is_done_column = ColumnRendered(
+                        this.is_done_column, "BOOL DEFAULT FALSE"
+                    )
+
+                    return MarkerScripts(
+                        actions.add_columns(
+                            ctx.jinja,
+                            source_table,
+                            [is_done_column],
+                            if_not_exists=True,
+                        ),
+                        ctx.jinja.render(
+                            """\
+                        UPDATE {{source}}
+                        SET {{is_done}} = TRUE
+                        WHERE {{id_fields | join(' AND ')}};""",
+                            source=source_table,
+                            is_done=is_done_column.identifier,
+                            id_fields=id_fields,
+                        ),
+                        actions.drop_columns(
+                            ctx.jinja,
+                            source_table,
+                            [is_done_column],
+                            if_exists=True,
+                        ),
+                    )
+
+            self._marker_scripts = create_marker_scripts()
 
         def exists(self, ctx: Context) -> bool:
             return actions.table_exists(ctx, self._table)
 
         def run(self, ctx: Context) -> None:
             ctx.connection.execute(self._create_table)
-            if self._source_id_scripts:
-                self._source_id_scripts.add_marker(ctx)
+            if self._marker_scripts:
+                self._marker_scripts.add_marker(ctx)
 
             def iter_input_rows():
                 if self._select is not None:
@@ -168,9 +157,9 @@ class MapToNewTable(TaskDef):
                     ):
                         yield input_row
 
-                        if self._source_id_scripts:
+                        if self._marker_scripts:
                             ctx.connection.execute(
-                                self._source_id_scripts.set_marker, input_row
+                                self._marker_scripts.set_marker, input_row
                             )
                             ctx.connection.commit()
                 else:
@@ -181,8 +170,8 @@ class MapToNewTable(TaskDef):
                     ctx.connection.execute(self._insert, output_row)
 
         def delete(self, ctx: Context) -> None:
-            if self._source_id_scripts:
-                self._source_id_scripts.drop_marker(ctx)
+            if self._marker_scripts:
+                self._marker_scripts.drop_marker(ctx)
             ctx.connection.execute(self._drop_table)
 
 
