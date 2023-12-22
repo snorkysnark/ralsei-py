@@ -15,7 +15,7 @@ from jinja2.environment import TemplateModule
 import itertools
 import sqlalchemy
 
-from .extensions import append_filter, SplitTag, SplitMarker
+from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
 
 
@@ -82,7 +82,7 @@ class SqlEnvironment(jinja2.Environment):
         self._adapter = create_adapter_for_env(self)
         self._dialect = DialectInfo(sqlalchemy_dialect)
 
-        def sqltyped(value: Any) -> str | Undefined:
+        def finalize(value: Any) -> str | Undefined:
             if isinstance(value, Undefined):
                 return value
 
@@ -108,19 +108,18 @@ class SqlEnvironment(jinja2.Environment):
                 )
             )
 
-        self.add_extension(append_filter("sqltyped"))
-        self.add_extension(SplitTag)
-
+        self.finalize = finalize
         self.template_class = SqlTemplate
         self.code_generator_class = SqlCodeGenerator
 
         self.filters = {
-            "sqltyped": sqltyped,
             "sql": Sql,
             "join": join,
             "identifier": Identifier,
         }
         self.globals = {"joiner": joiner, "Column": Column, "dialect": self._dialect}
+
+        self.add_extension(SplitTag)
 
     @property
     def adapter(self):
