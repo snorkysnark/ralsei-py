@@ -34,7 +34,7 @@ class MapToNewColumns(TaskDef):
             self._fn = this.fn
 
             columns_rendered = [
-                column.render(ctx.jinja.inner, table=this.table, **this.params)
+                column.render(ctx.jinja.text, table=this.table, **this.params)
                 for column in this.columns
             ]
             self._column_names = [column.name for column in columns_rendered]

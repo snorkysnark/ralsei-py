@@ -1,27 +1,32 @@
 from typing import Any, Mapping, MutableMapping, Optional
 from sqlalchemy import TextClause, text
 
-from .environment import SqlEnvironment, SqlTemplate, SqlTemplateModule, DialectInfo
+from .environment import (
+    SqlEnvironment,
+    SqlTemplate,
+    SqlTemplateModule,
+    DialectInfo,
+)
 from .adapter import SqlAdapter
 
 
 class SqlalchemyTemplateModule:
     def __init__(self, inner: SqlTemplateModule) -> None:
-        self.inner = inner
+        self._inner = inner
 
     def render(self) -> TextClause:
-        return text(self.inner.render())
+        return text(self._inner.render())
 
     def render_split(self) -> list[TextClause]:
-        return list(map(text, self.inner.render_split()))
+        return list(map(text, self._inner.render_split()))
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self.inner, name)
+        return getattr(self._inner, name)
 
 
 class SqlalchemyTemplate:
     def __init__(self, inner: SqlTemplate) -> None:
-        self.inner = inner
+        self._inner = inner
 
     def make_module(
         self,
@@ -29,36 +34,40 @@ class SqlalchemyTemplate:
         shared: bool = False,
         locals: Optional[Mapping[str, Any]] = None,
     ) -> SqlalchemyTemplateModule:
-        return SqlalchemyTemplateModule(self.inner.make_module(vars, shared, locals))
+        return SqlalchemyTemplateModule(self._inner.make_module(vars, shared, locals))
 
     def render(self, *args: Any, **kwargs: Any) -> TextClause:
-        return text(self.inner.render(*args, **kwargs))
+        return text(self._inner.render(*args, **kwargs))
 
     def render_split(self, *args: Any, **kwargs: Any) -> list[TextClause]:
-        return list(map(text, self.inner.render_split(*args, **kwargs)))
+        return list(map(text, self._inner.render_split(*args, **kwargs)))
 
 
 class SqlalchemyEnvironment:
     def __init__(self, inner: SqlEnvironment) -> None:
-        self.inner = inner
+        self._inner = inner
+
+    @property
+    def text(self) -> SqlEnvironment:
+        return self._inner
 
     def from_string(
         self,
         source: str,
         globals: Optional[MutableMapping[str, Any]] = None,
     ) -> SqlalchemyTemplate:
-        return SqlalchemyTemplate(self.inner.from_string(source, globals))
+        return SqlalchemyTemplate(self._inner.from_string(source, globals))
 
     @property
     def adapter(self) -> SqlAdapter:
-        return self.inner.adapter
+        return self._inner.adapter
 
     @property
     def dialect(self) -> DialectInfo:
-        return self.inner.dialect
+        return self._inner.dialect
 
     def render(self, source: str, /, *args, **kwargs) -> TextClause:
-        return text(self.inner.render(source, *args, **kwargs))
+        return text(self._inner.render(source, *args, **kwargs))
 
     def render_split(self, source: str, /, *args, **kwargs) -> list[TextClause]:
-        return list(map(text, self.inner.render_split(source, *args, **kwargs)))
+        return list(map(text, self._inner.render_split(source, *args, **kwargs)))

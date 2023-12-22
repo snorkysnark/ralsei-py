@@ -66,10 +66,10 @@ class MapToNewTable(TaskDef):
             insert_columns: list[ValueColumnRendered] = []
             for column in this.columns:
                 if isinstance(column, str):
-                    rendered = Sql(ctx.jinja.inner.render(column, **template_params))
+                    rendered = Sql(ctx.jinja.text.render(column, **template_params))
                     definitions.append(rendered)
                 else:
-                    rendered = column.render(ctx.jinja.inner, **template_params)
+                    rendered = column.render(ctx.jinja.text, **template_params)
                     insert_columns.append(rendered)
                     definitions.append(rendered.definition)
 

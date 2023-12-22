@@ -48,7 +48,7 @@ class AddColumnsSql(TaskDef):
             )
 
             rendered_columns = [
-                col.render(ctx.jinja.inner, table=this.table, **this.params)
+                col.render(ctx.jinja.text, table=this.table, **this.params)
                 for col in columns
             ]
             self._column_names = [col.name for col in rendered_columns]
