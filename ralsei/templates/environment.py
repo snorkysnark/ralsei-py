@@ -7,16 +7,19 @@ from typing import (
     Optional,
     Type,
     cast,
+    TYPE_CHECKING,
 )
 import textwrap
 import jinja2
 from jinja2 import Undefined, StrictUndefined
 from jinja2.environment import TemplateModule
 import itertools
-import sqlalchemy
 
 from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
+
+if TYPE_CHECKING:
+    from .dialect import DialectInfo
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -56,31 +59,15 @@ class SqlTemplate(jinja2.Template):
         return SqlTemplateModule(self, ctx)
 
 
-class DialectInfo:
-    def __init__(self, sqlalchemy_dialect: sqlalchemy.Dialect) -> None:
-        from .types import Sql
-
-        self.sqlalchemy = sqlalchemy_dialect
-        self.serial_primary_key = Sql(
-            "INTEGER PRIMARY KEY AUTOINCREMENT"
-            if sqlalchemy_dialect.name == "sqlite"
-            else "SERIAL PRIMARY KEY"
-        )
-
-    @property
-    def name(self):
-        return self.sqlalchemy.name
-
-
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, sqlalchemy_dialect: sqlalchemy.Dialect):
+    def __init__(self, dialect_info: "DialectInfo"):
         from .types import Sql, Column, Identifier
         from .adapter import create_adapter_for_env
 
         super().__init__(undefined=StrictUndefined)
 
         self._adapter = create_adapter_for_env(self)
-        self._dialect = DialectInfo(sqlalchemy_dialect)
+        self._dialect = dialect_info
 
         def finalize(value: Any) -> str | Undefined:
             if isinstance(value, Undefined):
@@ -126,7 +113,7 @@ class SqlEnvironment(jinja2.Environment):
         return self._adapter
 
     @property
-    def dialect(self) -> DialectInfo:
+    def dialect(self) -> "DialectInfo":
         return self._dialect
 
     def from_string(

@@ -5,9 +5,9 @@ from .environment import (
     SqlEnvironment,
     SqlTemplate,
     SqlTemplateModule,
-    DialectInfo,
 )
 from .adapter import SqlAdapter
+from .dialect import DialectInfo
 
 
 class SqlalchemyTemplateModule:

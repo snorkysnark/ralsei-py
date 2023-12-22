@@ -4,14 +4,16 @@ import sqlalchemy
 from sqlalchemy import URL
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
-from .templates import SqlalchemyEnvironment, SqlEnvironment
+from .templates import SqlalchemyEnvironment, SqlEnvironment, DialectInfo
 from .connection import create_engine, Connection
 
 
 class EngineContext:
     def __init__(self, engine: sqlalchemy.Engine) -> None:
         self._engine = engine
-        self._jinja = SqlalchemyEnvironment(SqlEnvironment(engine.dialect))
+        self._jinja = SqlalchemyEnvironment(
+            SqlEnvironment(DialectInfo.from_sqlalchemy(engine.dialect))
+        )
 
     @staticmethod
     def create(url: str | URL, **kwargs) -> EngineContext:
