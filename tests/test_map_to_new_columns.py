@@ -1,6 +1,7 @@
 import pytest
 from ralsei import (
-    Context,
+    ConnectionContext,
+    EngineContext,
     Table,
     MapToNewColumns,
     ValueColumn,
@@ -12,7 +13,7 @@ from sqlalchemy import Engine
 from common.db_helper import get_rows
 
 
-def test_map_columns(ctx: Context):
+def test_map_columns(ctx: ConnectionContext):
     def double(val: int):
         return {"doubled": val * 2}
 
@@ -50,7 +51,7 @@ def test_map_columns(ctx: Context):
     ]
 
 
-def test_map_columns_resumable(engine: Engine):
+def test_map_columns_resumable(engine: EngineContext):
     def failing(val: int):
         if val < 10:
             return {"doubled": val * 2}
@@ -58,7 +59,7 @@ def test_map_columns_resumable(engine: Engine):
             raise RuntimeError()
 
     table = Table("test_map_columns_resumable")
-    with Context(engine) as ctx:
+    with engine.connect() as ctx:
         ctx.render_executescript(
             [
                 """\
@@ -82,7 +83,7 @@ def test_map_columns_resumable(engine: Engine):
         with pytest.raises(RuntimeError):
             task.run(ctx)
 
-    with Context(engine) as ctx:
+    with engine.connect() as ctx:
         assert get_rows(ctx, table, order_by=["id"]) == [
             (1, 2, 4, True),
             (2, 5, 10, True),

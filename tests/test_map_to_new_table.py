@@ -1,7 +1,8 @@
 import pytest
 from sqlalchemy import Engine
 from ralsei import (
-    Context,
+    ConnectionContext,
+    EngineContext,
     Table,
     MapToNewTable,
     ValueColumn,
@@ -14,7 +15,7 @@ from ralsei.actions import table_exists
 from common.db_helper import get_rows
 
 
-def test_map_new_table_noselect(ctx: Context):
+def test_map_new_table_noselect(ctx: ConnectionContext):
     def make_rows():
         yield {"foo": 1, "bar": "a"}
         yield {"foo": 2, "bar": "b"}
@@ -36,7 +37,7 @@ def test_map_new_table_noselect(ctx: Context):
     assert not table_exists(ctx, table)
 
 
-def test_map_table_jinja(ctx: Context):
+def test_map_table_jinja(ctx: ConnectionContext):
     def double(foo: int):
         yield {"foo": foo * 2}
 
@@ -71,7 +72,7 @@ def test_map_table_jinja(ctx: Context):
     assert not table_exists(ctx, table)
 
 
-def test_map_table_resumable(engine: Engine):
+def test_map_table_resumable(engine: EngineContext):
     def failing(val: int):
         yield {"doubled": val * 2}
         if val >= 10:
@@ -79,7 +80,7 @@ def test_map_table_resumable(engine: Engine):
 
     table_source = Table("source_args")
 
-    with Context(engine) as ctx:
+    with engine.connect() as ctx:
         ctx.render_executescript(
             [
                 """\
@@ -105,7 +106,7 @@ def test_map_table_resumable(engine: Engine):
         with pytest.raises(RuntimeError):
             task.run(ctx)
 
-    with Context(engine) as ctx:
+    with engine.connect() as ctx:
         assert get_rows(ctx, table) == [(4,), (10,)]
         assert get_rows(ctx, table_source, order_by=["id"]) == [
             (1, 2, True),

@@ -1,7 +1,7 @@
 from typing import Callable, Iterable
 from sqlalchemy import inspect
 
-from ralsei.context import Context, Connection
+from ralsei.context import ConnectionContext, Connection
 from ralsei.templates import Table, ColumnRendered, SqlalchemyEnvironment
 
 
@@ -14,11 +14,11 @@ def _get_column_names(conn: Connection, table: Table):
     )
 
 
-def table_exists(ctx: Context, table: Table) -> bool:
+def table_exists(ctx: ConnectionContext, table: Table) -> bool:
     return inspect(ctx.connection).has_table(table.name, table.schema)
 
 
-def columns_exist(ctx: Context, table: Table, columns: Iterable[str]) -> bool:
+def columns_exist(ctx: ConnectionContext, table: Table, columns: Iterable[str]) -> bool:
     existing = _get_column_names(ctx.connection, table)
 
     for column in columns:
@@ -32,7 +32,7 @@ def add_columns(
     table: Table,
     columns: Iterable[ColumnRendered],
     if_not_exists: bool = False,
-) -> Callable[[Context], None]:
+) -> Callable[[ConnectionContext], None]:
     statements = [
         env.render(
             """\
@@ -48,7 +48,7 @@ def add_columns(
 
     if if_not_exists and env.dialect.name == "sqlite":
 
-        def run_manual_if_not_exists(ctx: Context):
+        def run_manual_if_not_exists(ctx: ConnectionContext):
             existing = _get_column_names(ctx.connection, table)
             for column, statement in zip(columns, statements):
                 if not column.name in existing:
@@ -57,7 +57,7 @@ def add_columns(
         return run_manual_if_not_exists
     else:
 
-        def run(ctx: Context):
+        def run(ctx: ConnectionContext):
             ctx.connection.executescript(statements)
 
         return run
@@ -68,7 +68,7 @@ def drop_columns(
     table: Table,
     columns: Iterable[ColumnRendered],
     if_exists: bool = False,
-) -> Callable[[Context], None]:
+) -> Callable[[ConnectionContext], None]:
     statements = [
         env.render(
             """\
@@ -84,7 +84,7 @@ def drop_columns(
 
     if if_exists and env.dialect.name == "sqlite":
 
-        def run_manual_if_exists(ctx: Context):
+        def run_manual_if_exists(ctx: ConnectionContext):
             existing = _get_column_names(ctx.connection, table)
             for column, statement in zip(columns, statements):
                 if column.name in existing:
@@ -93,7 +93,7 @@ def drop_columns(
         return run_manual_if_exists
     else:
 
-        def run(ctx: Context):
+        def run(ctx: ConnectionContext):
             ctx.connection.executescript(statements)
 
         return run

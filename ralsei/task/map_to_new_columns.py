@@ -6,7 +6,7 @@ from returns.maybe import Maybe
 from .common import (
     TaskDef,
     TaskImpl,
-    Context,
+    ConnectionContext,
     OneToOne,
     ValueColumnBase,
     ValueColumnRendered,
@@ -29,7 +29,7 @@ class MapToNewColumns(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewColumns, ctx: Context) -> None:
+        def __init__(self, this: MapToNewColumns, ctx: ConnectionContext) -> None:
             self._table = this.table
             self._fn = this.fn
 
@@ -86,10 +86,10 @@ class MapToNewColumns(TaskDef):
                 columns_rendered,
             )
 
-        def exists(self, ctx: Context) -> bool:
+        def exists(self, ctx: ConnectionContext) -> bool:
             return actions.columns_exist(ctx, self._table, self._column_names)
 
-        def run(self, ctx: Context) -> None:
+        def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)
 
             for input_row in map(
@@ -100,5 +100,5 @@ class MapToNewColumns(TaskDef):
                 if self._commit_each:
                     ctx.connection.commit()
 
-        def delete(self, ctx: Context) -> None:
+        def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)

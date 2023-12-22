@@ -7,7 +7,7 @@ from sqlalchemy import TextClause
 from .common import (
     TaskDef,
     TaskImpl,
-    Context,
+    ConnectionContext,
     OneToMany,
     Table,
     IdColumn,
@@ -24,9 +24,9 @@ from .common import (
 
 @dataclass
 class MarkerScripts:
-    add_marker: Callable[[Context], None]
+    add_marker: Callable[[ConnectionContext], None]
     set_marker: TextClause
-    drop_marker: Callable[[Context], None]
+    drop_marker: Callable[[ConnectionContext], None]
 
 
 @dataclass
@@ -41,7 +41,7 @@ class MapToNewTable(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewTable, ctx: Context) -> None:
+        def __init__(self, this: MapToNewTable, ctx: ConnectionContext) -> None:
             self._table = this.table
             self._fn = this.fn
 
@@ -142,10 +142,10 @@ class MapToNewTable(TaskDef):
 
             self._marker_scripts = create_marker_scripts()
 
-        def exists(self, ctx: Context) -> bool:
+        def exists(self, ctx: ConnectionContext) -> bool:
             return actions.table_exists(ctx, self._table)
 
-        def run(self, ctx: Context) -> None:
+        def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._create_table)
             if self._marker_scripts:
                 self._marker_scripts.add_marker(ctx)
@@ -169,7 +169,7 @@ class MapToNewTable(TaskDef):
                 for output_row in self._fn(**input_row):
                     ctx.connection.execute(self._insert, output_row)
 
-        def delete(self, ctx: Context) -> None:
+        def delete(self, ctx: ConnectionContext) -> None:
             if self._marker_scripts:
                 self._marker_scripts.drop_marker(ctx)
             ctx.connection.execute(self._drop_table)

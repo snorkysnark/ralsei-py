@@ -1,9 +1,9 @@
-from ralsei import Context, Table, AddColumnsSql, Column
+from ralsei import ConnectionContext, Table, AddColumnsSql, Column
 
 from common.db_helper import get_rows
 
 
-def create_table(ctx: Context, table: Table):
+def create_table(ctx: ConnectionContext, table: Table):
     ctx.render_executescript(
         [
             """\
@@ -16,7 +16,7 @@ def create_table(ctx: Context, table: Table):
     )
 
 
-def test_add_columns(ctx: Context):
+def test_add_columns(ctx: ConnectionContext):
     table = Table("test_add_column")
     create_table(ctx, table)
 
@@ -38,7 +38,7 @@ def test_add_columns(ctx: Context):
     assert get_rows(ctx, table) == [(2,), (5,)]
 
 
-def test_add_columns_jinja_var(ctx: Context):
+def test_add_columns_jinja_var(ctx: ConnectionContext):
     table = Table("test_add_column")
     create_table(ctx, table)
 
@@ -64,7 +64,7 @@ def test_add_columns_jinja_var(ctx: Context):
     assert get_rows(ctx, table) == [(2,), (5,)]
 
 
-def test_column_template(ctx: Context):
+def test_column_template(ctx: ConnectionContext):
     table = Table("test_add_column")
     create_table(ctx, table)
 

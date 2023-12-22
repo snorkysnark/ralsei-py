@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .common import (
-    Context,
+    ConnectionContext,
     Table,
     TaskImpl,
     TaskDef,
@@ -18,7 +18,7 @@ class CreateTableSql(TaskDef):
     view: bool = False
 
     class Impl(TaskImpl):
-        def __init__(self, this: CreateTableSql, ctx: Context) -> None:
+        def __init__(self, this: CreateTableSql, ctx: ConnectionContext) -> None:
             template_params = {"table": this.table, "view": this.view, **this.params}
             self._sql = (
                 ctx.jinja.render_split(this.sql, **template_params)
@@ -34,11 +34,11 @@ class CreateTableSql(TaskDef):
 
             self._table = this.table
 
-        def exists(self, ctx: Context) -> bool:
+        def exists(self, ctx: ConnectionContext) -> bool:
             return actions.table_exists(ctx, self._table)
 
-        def run(self, ctx: Context) -> None:
+        def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.executescript(self._sql)
 
-        def delete(self, ctx: Context) -> None:
+        def delete(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._drop_sql)

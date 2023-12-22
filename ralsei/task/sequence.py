@@ -1,4 +1,4 @@
-from .common import Task, Context
+from .common import Task, ConnectionContext
 from ralsei.console import console, track
 
 
@@ -7,7 +7,7 @@ class TaskSequence(Task):
         super().__init__()
         self._named_tasks = named_tasks
 
-    def run(self, ctx: Context) -> None:
+    def run(self, ctx: ConnectionContext) -> None:
         for name, task in track(self._named_tasks, description="Running tasks..."):
             if task.exists(ctx):
                 console.print(f"Skipping [bold green]{name}[/bold green]: already done")
@@ -17,7 +17,7 @@ class TaskSequence(Task):
                 task.run(ctx)
                 ctx.connection.commit()
 
-    def delete(self, ctx: Context) -> None:
+    def delete(self, ctx: ConnectionContext) -> None:
         for name, task in track(
             reversed(self._named_tasks), description="Undoing tasks..."
         ):
@@ -31,7 +31,7 @@ class TaskSequence(Task):
                 task.delete(ctx)
                 ctx.connection.commit()
 
-    def exists(self, ctx: Context) -> bool:
+    def exists(self, ctx: ConnectionContext) -> bool:
         for _, task in self._named_tasks:
             if not task.exists(ctx):
                 return False

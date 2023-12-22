@@ -8,7 +8,7 @@ from .common import (
     TaskImpl,
     Table,
     ColumnBase,
-    Context,
+    ConnectionContext,
     actions,
     expect_optional,
 )
@@ -22,7 +22,7 @@ class AddColumnsSql(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
+        def __init__(self, this: AddColumnsSql, ctx: ConnectionContext) -> None:
             def render_script() -> (
                 tuple[list[TextClause], Optional[Sequence[ColumnBase]]]
             ):
@@ -62,12 +62,12 @@ class AddColumnsSql(TaskDef):
 
             self._table = this.table
 
-        def exists(self, ctx: Context) -> bool:
+        def exists(self, ctx: ConnectionContext) -> bool:
             return actions.columns_exist(ctx, self._table, self._column_names)
 
-        def run(self, ctx: Context) -> None:
+        def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)
             ctx.connection.executescript(self._sql)
 
-        def delete(self, ctx: Context) -> None:
+        def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)

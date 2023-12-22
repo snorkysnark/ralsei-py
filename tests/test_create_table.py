@@ -1,11 +1,11 @@
 import pytest
 from typing import Tuple
-from ralsei import Table, CreateTableSql, Context
+from ralsei import Table, CreateTableSql, ConnectionContext
 from ralsei.actions import table_exists
 from common.db_helper import get_rows
 
 
-def test_create_table(ctx: Context):
+def test_create_table(ctx: ConnectionContext):
     table = Table("test_create_table")
     task = CreateTableSql(
         sql=[
@@ -35,7 +35,9 @@ def test_create_table(ctx: Context):
         (False, []),
     ],
 )
-def test_create_table_jinja_args(ctx: Context, flag: bool, expected: list[Tuple]):
+def test_create_table_jinja_args(
+    ctx: ConnectionContext, flag: bool, expected: list[Tuple]
+):
     table = Table("test_create_table_jinja_args")
     task = CreateTableSql(
         sql="""
@@ -55,7 +57,7 @@ def test_create_table_jinja_args(ctx: Context, flag: bool, expected: list[Tuple]
     assert not table_exists(ctx, table)
 
 
-def test_create_table_literal(ctx: Context):
+def test_create_table_literal(ctx: ConnectionContext):
     table = Table("test_create_table_literal")
     task = CreateTableSql(
         sql="""

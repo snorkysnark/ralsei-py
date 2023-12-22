@@ -1,83 +1,40 @@
-from typing import Any, Iterable, Mapping, Optional, Self
+from __future__ import annotations
+from typing import Any, Mapping, Optional
 import sqlalchemy
-from sqlalchemy import event
+from sqlalchemy import URL
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
 from .templates import SqlalchemyEnvironment, SqlEnvironment
+from .connection import create_engine, Connection
 
 
-def create_engine(url: str) -> sqlalchemy.Engine:
-    engine = sqlalchemy.create_engine(url)
+class EngineContext:
+    def __init__(self, engine: sqlalchemy.Engine) -> None:
+        self._engine = engine
+        self._jinja = SqlalchemyEnvironment(SqlEnvironment(engine.dialect))
 
-    # Fix transactions in SQLite
-    # See: https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
-    if engine.dialect.name == "sqlite":
+    @staticmethod
+    def create(url: str | URL, **kwargs) -> EngineContext:
+        return EngineContext(create_engine(url, **kwargs))
 
-        @event.listens_for(engine, "connect")
-        def do_connect(dbapi_connection, connection_record):
-            # disable pysqlite's emitting of the BEGIN statement entirely.
-            # also stops it from emitting COMMIT before any DDL.
-            dbapi_connection.isolation_level = None
+    @property
+    def engine(self):
+        return self._engine
 
-        @event.listens_for(engine, "begin")
-        def do_begin(conn):
-            # emit our own BEGIN
-            conn.exec_driver_sql("BEGIN")
+    @property
+    def jinja(self):
+        return self._jinja
 
-    return engine
-
-
-class Connection(sqlalchemy.Connection):
-    def __init__(self, engine: sqlalchemy.Engine):
-        super().__init__(engine)
-
-    def execute_text(
-        self, statement: str, parameters: Optional[_CoreAnyExecuteParams] = None
-    ) -> sqlalchemy.CursorResult[Any]:
-        return self.execute(sqlalchemy.text(statement), parameters)
-
-    def executescript_text(
-        self,
-        statements: Iterable[str],
-        parameters: Optional[_CoreSingleExecuteParams] = None,
-    ):
-        for statement in statements:
-            self.execute(sqlalchemy.text(statement), parameters)
-
-    def executescript(
-        self,
-        statements: Iterable[sqlalchemy.Executable],
-        parameters: Optional[_CoreSingleExecuteParams] = None,
-    ):
-        for statement in statements:
-            self.execute(statement, parameters)
-
-    def __enter__(self) -> Self:
-        return self
+    def connect(self) -> ConnectionContext:
+        return ConnectionContext(Connection(self.engine), self.jinja)
 
 
-class Context:
+class ConnectionContext:
     def __init__(
-        self,
-        connection_source: Connection | sqlalchemy.Engine | str,
-        environment: Optional[SqlalchemyEnvironment] = None,
+        self, connection: Connection, environment: SqlalchemyEnvironment
     ) -> None:
-        if isinstance(connection_source, Connection):
-            self._conn = connection_source
-        elif isinstance(connection_source, sqlalchemy.Engine):
-            self._conn = Connection(connection_source)
-        else:
-            self._conn = Connection(create_engine(connection_source))
-
-        self._jinja = environment or SqlalchemyEnvironment(
-            SqlEnvironment(self.connection.dialect)
-        )
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
-        self.connection.close()
+        self._conn = connection
+        self._jinja = environment
 
     @property
     def connection(self):
@@ -86,10 +43,6 @@ class Context:
     @property
     def jinja(self):
         return self._jinja
-
-    @property
-    def dialect(self):
-        return self.connection.dialect
 
     def render_execute(
         self,
@@ -115,3 +68,9 @@ class Context:
             ],
             bind_params,
         )
+
+    def __enter__(self) -> ConnectionContext:
+        return self
+
+    def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
+        self.connection.close()
