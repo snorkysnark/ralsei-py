@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, TypeVar
+from typing import Any
+from abc import abstractmethod
 
-from .primitives import Identifier, Sql, Placeholder
-from .column import Column
+from .primitives import Identifier, Placeholder
+from .column import ColumnBase, Column, ColumnRendered
 from ..adapter import ToSql
 from ..environment import SqlEnvironment
 
@@ -14,21 +15,42 @@ def infer_value(name: str, value: Any = FROM_NAME) -> Any:
     return Placeholder(name) if value == FROM_NAME else value
 
 
-TYPE = TypeVar("TYPE", str, Sql)
-
-
-class ValueColumn(Column[TYPE]):
-    def __init__(self, name: str, type: TYPE, value: Any = FROM_NAME) -> None:
-        super().__init__(name, type)
+class ValueColumnBase(ColumnBase):
+    def __init__(self, name: str, value: Any = FROM_NAME) -> None:
+        super().__init__(name)
         self.value = infer_value(name, value)
 
     @property
     def set_statement(self) -> ValueColumnSetStatement:
         return ValueColumnSetStatement(self)
 
+    @abstractmethod
+    def render(self, env: SqlEnvironment, /, **params: Any) -> ValueColumnRendered:
+        ...
+
+
+class ValueColumn(Column, ValueColumnBase):
+    def __init__(self, name: str, type: str, value: Any = FROM_NAME) -> None:
+        Column.__init__(self, name, type)
+        ValueColumnBase.__init__(self, name, value)
+
+    def render(self, env: SqlEnvironment, /, **params: Any) -> ValueColumnRendered:
+        return ValueColumnRendered(
+            self.name, env.render(self._template, **params), self.value
+        )
+
+
+class ValueColumnRendered(ColumnRendered, ValueColumnBase):
+    def __init__(self, name: str, type: str, value: Any = FROM_NAME) -> None:
+        ColumnRendered.__init__(self, name, type)
+        ValueColumnBase.__init__(self, name, value)
+
+    def render(self, env: SqlEnvironment, /, **params: Any) -> ValueColumnRendered:
+        return self
+
 
 class ValueColumnSetStatement(ToSql):
-    def __init__(self, value_column: ValueColumn) -> None:
+    def __init__(self, value_column: ValueColumnBase) -> None:
         self.value_column = value_column
 
     def to_sql(self, env: SqlEnvironment) -> str:
@@ -48,6 +70,3 @@ class IdColumn(ToSql):
 
     def to_sql(self, env: SqlEnvironment) -> str:
         return env.adapter.format("{} = {}", self.identifier, self.value)
-
-
-__all__ = ["ValueColumn", "ValueColumnSetStatement", "IdColumn"]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
@@ -10,9 +10,9 @@ from .common import (
     Context,
     OneToMany,
     Table,
-    Renderable,
-    ColumnRendered,
     IdColumn,
+    ValueColumnBase,
+    ColumnRendered,
     ValueColumnRendered,
     Identifier,
     Sql,
@@ -32,7 +32,7 @@ class MarkerScripts:
 @dataclass
 class MapToNewTable(TaskDef):
     table: Table
-    columns: list[str | Renderable[ValueColumnRendered]]
+    columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
     select: Optional[str] = None
     source_table: Optional[Table] = None

@@ -1,14 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, cast
+from typing import Optional, Sequence, cast
 from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
     TaskImpl,
     Table,
-    Renderable,
-    ColumnRendered,
+    ColumnBase,
     Context,
     actions,
     expect_optional,
@@ -19,20 +18,20 @@ from .common import (
 class AddColumnsSql(TaskDef):
     sql: str | list[str]
     table: Table
-    columns: Optional[list[Renderable[ColumnRendered]]] = None
+    columns: Optional[Sequence[ColumnBase]] = None
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, ctx: Context) -> None:
             def render_script() -> (
-                tuple[list[TextClause], Optional[list[Renderable[ColumnRendered]]]]
+                tuple[list[TextClause], Optional[Sequence[ColumnBase]]]
             ):
                 if isinstance(this.sql, str):
                     template_module = ctx.jinja.from_string(this.sql).make_module(
                         {"table": this.table, **this.params}
                     )
                     columns = cast(
-                        Optional[list[Renderable[ColumnRendered]]],
+                        Optional[Sequence[ColumnBase]],
                         getattr(template_module, "columns", None),
                     )
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
-
+from typing import Optional, Sequence
 from returns.maybe import Maybe
 
 from .common import (
@@ -9,11 +8,10 @@ from .common import (
     TaskImpl,
     Context,
     OneToOne,
-    Renderable,
+    ValueColumnBase,
     ValueColumnRendered,
     IdColumn,
     Table,
-    ValueColumnRendered,
     Identifier,
     actions,
     expect_optional,
@@ -24,7 +22,7 @@ from .common import (
 class MapToNewColumns(TaskDef):
     select: str
     table: Table
-    columns: list[Renderable[ValueColumnRendered]]
+    columns: Sequence[ValueColumnBase]
     fn: OneToOne
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
