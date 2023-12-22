@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypeVar
 
-from .primitives import Identifier, Placeholder
-from .column import Column, ColumnRendered
+from .primitives import Identifier, Sql, Placeholder
+from .column import Column
 from ..adapter import ToSql
 from ..environment import SqlEnvironment
 
@@ -14,19 +14,11 @@ def infer_value(name: str, value: Any = FROM_NAME) -> Any:
     return Placeholder(name) if value == FROM_NAME else value
 
 
-class ValueColumn(Column):
-    def __init__(self, name: str, type: str, value: Any = FROM_NAME) -> None:
-        super().__init__(name, type)
-        self.value = infer_value(name, value)
-
-    def render(self, env: SqlEnvironment, /, **params: Any) -> ValueColumnRendered:
-        return ValueColumnRendered(
-            self.name, env.render(self.type_template, **params), self.value
-        )
+TYPE = TypeVar("TYPE", str, Sql)
 
 
-class ValueColumnRendered(ColumnRendered):
-    def __init__(self, name: str, type: str, value: Any = FROM_NAME) -> None:
+class ValueColumn(Column[TYPE]):
+    def __init__(self, name: str, type: TYPE, value: Any = FROM_NAME) -> None:
         super().__init__(name, type)
         self.value = infer_value(name, value)
 
@@ -36,7 +28,7 @@ class ValueColumnRendered(ColumnRendered):
 
 
 class ValueColumnSetStatement(ToSql):
-    def __init__(self, value_column: ValueColumnRendered) -> None:
+    def __init__(self, value_column: ValueColumn) -> None:
         self.value_column = value_column
 
     def to_sql(self, env: SqlEnvironment) -> str:
@@ -58,4 +50,4 @@ class IdColumn(ToSql):
         return env.adapter.format("{} = {}", self.identifier, self.value)
 
 
-__all__ = ["ValueColumn", "ValueColumnRendered", "ValueColumnSetStatement", "IdColumn"]
+__all__ = ["ValueColumn", "ValueColumnSetStatement", "IdColumn"]

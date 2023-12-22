@@ -1,25 +1,18 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, TypeVar, Generic, cast
 
-from .renderable import RendersToSelf
 from .primitives import Sql, Identifier
 from ..adapter import ToSql
 from ..environment import SqlEnvironment
 
 
-class Column:
-    def __init__(self, name: str, type: str) -> None:
+TYPE = TypeVar("TYPE", str, Sql)
+
+
+class Column(Generic[TYPE]):
+    def __init__(self, name: str, type: TYPE) -> None:
         self.name = name
-        self.type_template = type
-
-    def render(self, env: SqlEnvironment, /, **params: Any) -> ColumnRendered:
-        return ColumnRendered(self.name, env.render(self.type_template, **params))
-
-
-class ColumnRendered(RendersToSelf):
-    def __init__(self, name: str, type: str) -> None:
-        self.name = name
-        self.type = Sql(type)
+        self.type = type
 
     @property
     def identifier(self) -> Identifier:
@@ -27,15 +20,27 @@ class ColumnRendered(RendersToSelf):
 
     @property
     def definition(self) -> ColumnDefinition:
-        return ColumnDefinition(self)
+        if not isinstance(self.type, Sql):
+            raise RuntimeError(
+                "You must pre-render the column before requesting its definition"
+            )
+
+        return ColumnDefinition(cast(Column[Sql], self))
+
+    def render(self, env: SqlEnvironment, /, **params: Any) -> Column[Sql]:
+        return (
+            cast(Column[Sql], self)
+            if isinstance(self.type, Sql)
+            else Column(self.name, Sql(env.render(self.type, **params)))
+        )
 
 
 class ColumnDefinition(ToSql):
-    def __init__(self, column: ColumnRendered) -> None:
+    def __init__(self, column: Column[Sql]) -> None:
         self.column = column
 
     def to_sql(self, env: SqlEnvironment) -> str:
         return env.adapter.format("{} {}", self.column.identifier, self.column.type)
 
 
-__all__ = ["Column", "ColumnRendered", "ColumnDefinition"]
+__all__ = ["Column", "ColumnDefinition"]
