@@ -1,5 +1,4 @@
 import pytest
-from sqlalchemy import Engine
 from ralsei import (
     ConnectionContext,
     EngineContext,
@@ -29,7 +28,7 @@ def test_map_new_table_noselect(ctx: ConnectionContext):
             ValueColumn("bar", "TEXT"),
         ],
         fn=make_rows,
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [(1, 1, "a"), (2, 2, "b")]
@@ -64,7 +63,7 @@ def test_map_table_jinja(ctx: ConnectionContext):
         ],
         fn=double,
         params={"year": 2015, "foo_type": Sql("INT")},
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [(2015, 4), (2015, 10)]
@@ -101,7 +100,7 @@ def test_map_table_resumable(engine: EngineContext):
             columns=[ValueColumn("doubled", "INT")],
             is_done_column="__success",
             fn=compose(failing, pop_id_fields("id")),
-        ).create(ctx)
+        ).create(ctx.jinja)
 
         with pytest.raises(RuntimeError):
             task.run(ctx)

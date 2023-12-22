@@ -7,6 +7,7 @@ from sqlalchemy import TextClause
 from .common import (
     TaskDef,
     TaskImpl,
+    SqlalchemyEnvironment,
     ConnectionContext,
     OneToMany,
     Table,
@@ -41,7 +42,7 @@ class MapToNewTable(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewTable, ctx: ConnectionContext) -> None:
+        def __init__(self, this: MapToNewTable, env: SqlalchemyEnvironment) -> None:
             self._table = this.table
             self._fn = this.fn
 
@@ -58,7 +59,7 @@ class MapToNewTable(TaskDef):
 
             self._select = (
                 Maybe.from_optional(this.select)
-                .map(lambda sql: ctx.jinja.render(sql, **template_params))
+                .map(lambda sql: env.render(sql, **template_params))
                 .value_or(None)
             )
 
@@ -66,14 +67,14 @@ class MapToNewTable(TaskDef):
             insert_columns: list[ValueColumnRendered] = []
             for column in this.columns:
                 if isinstance(column, str):
-                    rendered = Sql(ctx.jinja.text.render(column, **template_params))
+                    rendered = Sql(env.text.render(column, **template_params))
                     definitions.append(rendered)
                 else:
-                    rendered = column.render(ctx.jinja.text, **template_params)
+                    rendered = column.render(env.text, **template_params)
                     insert_columns.append(rendered)
                     definitions.append(rendered.definition)
 
-            self._create_table = ctx.jinja.render(
+            self._create_table = env.render(
                 """\
                 CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                     {{ definition | join(',\\n    ') }}
@@ -82,7 +83,7 @@ class MapToNewTable(TaskDef):
                 definition=definitions,
                 if_not_exists=this.is_done_column is not None,
             )
-            self._insert = ctx.jinja.render(
+            self._insert = env.render(
                 """\
                 INSERT INTO {{ table }}(
                     {{ columns | join(',\\n    ', attribute='identifier') }}
@@ -93,7 +94,7 @@ class MapToNewTable(TaskDef):
                 table=this.table,
                 columns=insert_columns,
             )
-            self._drop_table = ctx.jinja.render(
+            self._drop_table = env.render(
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
@@ -118,22 +119,22 @@ class MapToNewTable(TaskDef):
 
                     return MarkerScripts(
                         actions.add_columns(
-                            ctx.jinja,
+                            env,
                             source_table,
                             [is_done_column],
                             if_not_exists=True,
                         ),
-                        ctx.jinja.render(
+                        env.render(
                             """\
-                        UPDATE {{source}}
-                        SET {{is_done}} = TRUE
-                        WHERE {{id_fields | join(' AND ')}};""",
+                            UPDATE {{source}}
+                            SET {{is_done}} = TRUE
+                            WHERE {{id_fields | join(' AND ')}};""",
                             source=source_table,
                             is_done=is_done_column.identifier,
                             id_fields=id_fields,
                         ),
                         actions.drop_columns(
-                            ctx.jinja,
+                            env,
                             source_table,
                             [is_done_column],
                             if_exists=True,

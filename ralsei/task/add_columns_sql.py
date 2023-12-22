@@ -8,6 +8,7 @@ from .common import (
     TaskImpl,
     Table,
     ColumnBase,
+    SqlalchemyEnvironment,
     ConnectionContext,
     actions,
     expect_optional,
@@ -22,12 +23,12 @@ class AddColumnsSql(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: AddColumnsSql, ctx: ConnectionContext) -> None:
+        def __init__(self, this: AddColumnsSql, env: SqlalchemyEnvironment) -> None:
             def render_script() -> (
                 tuple[list[TextClause], Optional[Sequence[ColumnBase]]]
             ):
                 if isinstance(this.sql, str):
-                    template_module = ctx.jinja.from_string(this.sql).make_module(
+                    template_module = env.from_string(this.sql).make_module(
                         {"table": this.table, **this.params}
                     )
                     columns = cast(
@@ -38,7 +39,7 @@ class AddColumnsSql(TaskDef):
                     return template_module.render_split(), columns
                 else:
                     return [
-                        ctx.jinja.render(sql, table=this.table, **this.params)
+                        env.render(sql, table=this.table, **this.params)
                         for sql in this.sql
                     ], None
 
@@ -48,17 +49,12 @@ class AddColumnsSql(TaskDef):
             )
 
             rendered_columns = [
-                col.render(ctx.jinja.text, table=this.table, **this.params)
-                for col in columns
+                col.render(env.text, table=this.table, **this.params) for col in columns
             ]
             self._column_names = [col.name for col in rendered_columns]
 
-            self._add_columns = actions.add_columns(
-                ctx.jinja, this.table, rendered_columns
-            )
-            self._drop_columns = actions.drop_columns(
-                ctx.jinja, this.table, rendered_columns
-            )
+            self._add_columns = actions.add_columns(env, this.table, rendered_columns)
+            self._drop_columns = actions.drop_columns(env, this.table, rendered_columns)
 
             self._table = this.table
 

@@ -27,7 +27,7 @@ def test_add_columns(ctx: ConnectionContext):
         ],
         table=table,
         columns=[Column("b", "INT"), Column("c", "TEXT")],
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [
@@ -53,7 +53,7 @@ def test_add_columns_jinja_var(ctx: ConnectionContext):
         {%-split-%}
         UPDATE {{ table }} SET c = a || '-' || b;""",
         table=table,
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [
@@ -73,7 +73,7 @@ def test_column_template(ctx: ConnectionContext):
         table=table,
         columns=[Column("b", "TEXT DEFAULT {{ default }}")],
         params={"default": "Hello"},
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [(2, "Hello"), (5, "Hello")]

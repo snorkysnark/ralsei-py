@@ -6,6 +6,7 @@ from returns.maybe import Maybe
 from .common import (
     TaskDef,
     TaskImpl,
+    SqlalchemyEnvironment,
     ConnectionContext,
     OneToOne,
     ValueColumnBase,
@@ -29,12 +30,12 @@ class MapToNewColumns(TaskDef):
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewColumns, ctx: ConnectionContext) -> None:
+        def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
             self._table = this.table
             self._fn = this.fn
 
             columns_rendered = [
-                column.render(ctx.jinja.text, table=this.table, **this.params)
+                column.render(env.text, table=this.table, **this.params)
                 for column in this.columns
             ]
             self._column_names = [column.name for column in columns_rendered]
@@ -54,7 +55,7 @@ class MapToNewColumns(TaskDef):
                 ),
                 "Must provide id_fields if using is_done_column",
             )
-            self._select = ctx.jinja.render(
+            self._select = env.render(
                 this.select,
                 table=this.table,
                 is_done=(
@@ -65,12 +66,12 @@ class MapToNewColumns(TaskDef):
                 **this.params,
             )
             self._add_columns = actions.add_columns(
-                ctx.jinja,
+                env,
                 this.table,
                 columns_rendered,
                 if_not_exists=self._commit_each,
             )
-            self._update = ctx.jinja.render(
+            self._update = env.render(
                 """\
                 UPDATE {{table}} SET
                 {{columns | join(',\\n', attribute='set_statement')}}
@@ -81,7 +82,7 @@ class MapToNewColumns(TaskDef):
                 id_fields=id_fields,
             )
             self._drop_columns = actions.drop_columns(
-                ctx.jinja,
+                env,
                 this.table,
                 columns_rendered,
             )

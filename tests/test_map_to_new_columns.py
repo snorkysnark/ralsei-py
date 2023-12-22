@@ -8,7 +8,6 @@ from ralsei import (
     compose_one,
     pop_id_fields,
 )
-from sqlalchemy import Engine
 
 from common.db_helper import get_rows
 
@@ -35,7 +34,7 @@ def test_map_columns(ctx: ConnectionContext):
         select="SELECT id, val FROM {{table}}",
         columns=[ValueColumn("doubled", "INT")],
         fn=compose_one(double, pop_id_fields("id")),
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table, order_by=["id"]) == [
@@ -78,7 +77,7 @@ def test_map_columns_resumable(engine: EngineContext):
             columns=[ValueColumn("doubled", "INT")],
             fn=compose_one(failing, pop_id_fields("id")),
             is_done_column="__success",
-        ).create(ctx)
+        ).create(ctx.jinja)
 
         with pytest.raises(RuntimeError):
             task.run(ctx)

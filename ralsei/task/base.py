@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Self, TypeVar, Generic
 
+from ralsei.templates import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
 
 T = TypeVar("T")
@@ -26,12 +27,12 @@ class Task(ABC):
 
 class TaskImpl(Task, Generic[T]):
     @abstractmethod
-    def __init__(self, this: T, ctx: ConnectionContext) -> None:
+    def __init__(self, this: T, env: SqlalchemyEnvironment) -> None:
         ...
 
 
 class TaskDef:
     Impl: type[TaskImpl[Self]]
 
-    def create(self, ctx: ConnectionContext) -> TaskImpl[Self]:
-        return self.Impl(self, ctx)
+    def create(self, env: SqlalchemyEnvironment) -> TaskImpl[Self]:
+        return self.Impl(self, env)

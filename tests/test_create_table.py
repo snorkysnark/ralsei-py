@@ -20,7 +20,7 @@ def test_create_table(ctx: ConnectionContext):
             (2, 'b');""",
         ],
         table=table,
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [(1, "a"), (2, "b")]
@@ -49,7 +49,7 @@ def test_create_table_jinja_args(
         {%- endif %}""",
         table=table,
         params={"flag": flag},
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == expected
@@ -69,7 +69,7 @@ def test_create_table_literal(ctx: ConnectionContext):
         INSERT INTO {{ table }} VALUES ({{ foo }}, {{ bar }});""",
         table=table,
         params={"foo": "Ralsei\ncute", "bar": 10},
-    ).create(ctx)
+    ).create(ctx.jinja)
 
     task.run(ctx)
     assert get_rows(ctx, table) == [("Ralsei\ncute", 10)]

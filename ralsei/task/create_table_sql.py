@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .common import (
+    SqlalchemyEnvironment,
     ConnectionContext,
     Table,
     TaskImpl,
@@ -18,15 +19,15 @@ class CreateTableSql(TaskDef):
     view: bool = False
 
     class Impl(TaskImpl):
-        def __init__(self, this: CreateTableSql, ctx: ConnectionContext) -> None:
+        def __init__(self, this: CreateTableSql, env: SqlalchemyEnvironment) -> None:
             template_params = {"table": this.table, "view": this.view, **this.params}
             self._sql = (
-                ctx.jinja.render_split(this.sql, **template_params)
+                env.render_split(this.sql, **template_params)
                 if isinstance(this.sql, str)
-                else [ctx.jinja.render(sql, **template_params) for sql in this.sql]
+                else [env.render(sql, **template_params) for sql in this.sql]
             )
 
-            self._drop_sql = ctx.jinja.render(
+            self._drop_sql = env.render(
                 "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
                 table=this.table,
                 view=this.view,
