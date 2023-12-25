@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import Any
 
 from .common import (
     SqlalchemyEnvironment,
@@ -34,6 +35,10 @@ class CreateTableSql(TaskDef):
             )
 
             self._table = this.table
+
+        @property
+        def output(self) -> Any:
+            return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
             return actions.table_exists(ctx, self._table)

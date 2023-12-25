@@ -1,12 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, Sequence, cast
+from typing import Any, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
     TaskImpl,
     Table,
+    OutputOf,
     ColumnBase,
     SqlalchemyEnvironment,
     ConnectionContext,
@@ -18,18 +19,20 @@ from .common import (
 @dataclass
 class AddColumnsSql(TaskDef):
     sql: str | list[str]
-    table: Table
+    table: Table | OutputOf
     columns: Optional[Sequence[ColumnBase]] = None
     params: dict = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, env: SqlalchemyEnvironment) -> None:
+            self._table = env.resolve(this.table)
+
             def render_script() -> (
                 tuple[list[TextClause], Optional[Sequence[ColumnBase]]]
             ):
                 if isinstance(this.sql, str):
                     template_module = env.from_string(this.sql).make_module(
-                        {"table": this.table, **this.params}
+                        {"table": self._table, **this.params}
                     )
                     columns = cast(
                         Optional[Sequence[ColumnBase]],
@@ -39,7 +42,7 @@ class AddColumnsSql(TaskDef):
                     return template_module.render_split(), columns
                 else:
                     return [
-                        env.render(sql, table=this.table, **this.params)
+                        env.render(sql, table=self._table, **this.params)
                         for sql in this.sql
                     ], None
 
@@ -49,14 +52,19 @@ class AddColumnsSql(TaskDef):
             )
 
             rendered_columns = [
-                col.render(env.text, table=this.table, **this.params) for col in columns
+                col.render(env.text, table=self._table, **this.params)
+                for col in columns
             ]
             self._column_names = [col.name for col in rendered_columns]
 
-            self._add_columns = actions.add_columns(env, this.table, rendered_columns)
-            self._drop_columns = actions.drop_columns(env, this.table, rendered_columns)
+            self._add_columns = actions.add_columns(env, self._table, rendered_columns)
+            self._drop_columns = actions.drop_columns(
+                env, self._table, rendered_columns
+            )
 
-            self._table = this.table
+        @property
+        def output(self) -> Any:
+            return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
             return actions.columns_exist(ctx, self._table, self._column_names)

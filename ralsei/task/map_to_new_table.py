@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Callable, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
@@ -11,6 +11,7 @@ from .common import (
     ConnectionContext,
     OneToMany,
     Table,
+    OutputOf,
     IdColumn,
     ValueColumnBase,
     ColumnRendered,
@@ -36,7 +37,7 @@ class MapToNewTable(TaskDef):
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
     select: Optional[str] = None
-    source_table: Optional[Table] = None
+    source_table: Optional[Table | OutputOf] = None
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)
@@ -46,9 +47,11 @@ class MapToNewTable(TaskDef):
             self._table = this.table
             self._fn = this.fn
 
+            source_table = env.resolve(this.source_table)
+
             template_params = {
                 "table": this.table,
-                "source": this.source_table,
+                "source": source_table,
                 "is_done": (
                     Maybe.from_optional(this.is_done_column)
                     .map(Identifier)
@@ -100,10 +103,11 @@ class MapToNewTable(TaskDef):
 
             def create_marker_scripts():
                 if this.is_done_column:
-                    source_table = expect_optional(
-                        this.source_table,
-                        "Must provide id_fields if using is_done_column",
-                    )
+                    if not source_table:
+                        raise ValueError(
+                            "Must provide id_fields if using is_done_column"
+                        )
+
                     id_fields = expect_optional(
                         this.id_fields
                         or (
@@ -142,6 +146,10 @@ class MapToNewTable(TaskDef):
                     )
 
             self._marker_scripts = create_marker_scripts()
+
+        @property
+        def output(self) -> Any:
+            return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
             return actions.table_exists(ctx, self._table)

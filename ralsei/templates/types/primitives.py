@@ -1,16 +1,18 @@
 import re
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from ..adapter import ToSql
-from ..environment import SqlEnvironment
+
+if TYPE_CHECKING:
+    from ..environment import SqlEnvironment
 
 
 @dataclass
 class Sql(ToSql):
     value: str
 
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return self.value
 
 
@@ -18,7 +20,7 @@ class Sql(ToSql):
 class Identifier(ToSql):
     value: str
 
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return '"{}"'.format(self.value.replace('"', '""'))
 
 
@@ -27,7 +29,7 @@ class Table(ToSql):
     name: str
     schema: Optional[str] = None
 
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return env.render(
             "{{name | identifier}}{%if schema%}.{{schema | identifier}}{%endif%}",
             name=self.name,
@@ -43,5 +45,5 @@ class Placeholder(ToSql):
         if not re.match(r"\w+", self.name):
             raise ValueError("Invalid placeholder name")
 
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return f":{self.name}"

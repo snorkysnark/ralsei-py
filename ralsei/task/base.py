@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Self, TypeVar, Generic
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Any, Self, TypeVar, Generic
 
 from ralsei.templates import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
@@ -8,6 +8,10 @@ T = TypeVar("T")
 
 
 class Task(ABC):
+    @abstractproperty
+    def output(self) -> Any:
+        ...
+
     @abstractmethod
     def exists(self, ctx: ConnectionContext) -> bool:
         ...

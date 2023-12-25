@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import (
     Any,
     Callable,
@@ -6,17 +7,21 @@ from typing import (
     MutableMapping,
     Optional,
     Type,
-    cast,
+    TypeVar,
     TYPE_CHECKING,
+    overload,
 )
 import textwrap
 import jinja2
-from jinja2 import Undefined, StrictUndefined
+from jinja2 import StrictUndefined
 from jinja2.environment import TemplateModule
+from jinja2.nodes import Template as TemplateNode
 import itertools
 
+from .sqlalchemy import SqlalchemyEnvironment
 from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
+from ralsei.resolver import DependencyResolver, OutputOf
 
 if TYPE_CHECKING:
     from .dialect import DialectInfo
@@ -59,6 +64,10 @@ class SqlTemplate(jinja2.Template):
         return SqlTemplateModule(self, ctx)
 
 
+T = TypeVar("T")
+TEMPLATE = TypeVar("TEMPLATE", bound=jinja2.Template)
+
+
 class SqlEnvironment(jinja2.Environment):
     def __init__(self, dialect_info: "DialectInfo"):
         from .types import Sql, Column, Identifier
@@ -66,14 +75,14 @@ class SqlEnvironment(jinja2.Environment):
 
         super().__init__(undefined=StrictUndefined)
 
+        self.dependency_resolver: Optional[DependencyResolver] = None
+
         self._adapter = create_adapter_for_env(self)
         self._dialect = dialect_info
+        self._sqlalchemy = SqlalchemyEnvironment(self)
 
-        def finalize(value: Any) -> str | Undefined:
-            if isinstance(value, Undefined):
-                return value
-
-            return self.adapter.to_sql(value)
+        def finalize(value: Any) -> str:
+            return self.adapter.to_sql(self.resolve(value))
 
         def joiner(sep: str = ", ") -> Callable[[], Sql]:
             inner = jinja2.utils.Joiner(sep)
@@ -104,7 +113,7 @@ class SqlEnvironment(jinja2.Environment):
             "join": join,
             "identifier": Identifier,
         }
-        self.globals = {"joiner": joiner, "Column": Column, "dialect": self._dialect}
+        self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect_info}
 
         self.add_extension(SplitTag)
 
@@ -116,17 +125,38 @@ class SqlEnvironment(jinja2.Environment):
     def dialect(self) -> "DialectInfo":
         return self._dialect
 
+    @property
+    def sqlalchemy(self) -> SqlalchemyEnvironment:
+        return self._sqlalchemy
+
+    @overload
     def from_string(
         self,
-        source: str,
+        source: str | TemplateNode,
         globals: Optional[MutableMapping[str, Any]] = None,
-        template_class: Optional[Type[SqlTemplate]] = None,
+        template_class: None = None,
     ) -> SqlTemplate:
-        return cast(
-            SqlTemplate,
-            super().from_string(
-                textwrap.dedent(source).strip(), globals, template_class
-            ),
+        ...
+
+    @overload
+    def from_string(
+        self,
+        source: str | TemplateNode,
+        globals: Optional[MutableMapping[str, Any]] = None,
+        template_class: Optional[Type[TEMPLATE]] = None,
+    ) -> TEMPLATE:
+        ...
+
+    def from_string(
+        self,
+        source: str | TemplateNode,
+        globals: Optional[MutableMapping[str, Any]] = None,
+        template_class: Optional[Type[jinja2.Template]] = None,
+    ) -> jinja2.Template:
+        return super().from_string(
+            textwrap.dedent(source).strip() if isinstance(source, str) else source,
+            globals,
+            template_class,
         )
 
     def render(self, source: str, /, *args: Any, **kwargs: Any) -> str:
@@ -134,3 +164,24 @@ class SqlEnvironment(jinja2.Environment):
 
     def render_split(self, source: str, /, *args: Any, **kwargs: Any) -> list[str]:
         return self.from_string(source).render_split(*args, **kwargs)
+
+    @overload
+    def resolve(self, value: T | OutputOf) -> T:
+        ...
+
+    @overload
+    def resolve(self, value: Any) -> Any:
+        ...
+
+    def resolve(self, value: Any) -> Any:
+        if not isinstance(value, OutputOf):
+            return value
+        elif self.dependency_resolver:
+            return self.dependency_resolver.resolve(self.sqlalchemy, value)
+        else:
+            raise RuntimeError(
+                "attempted to resolve dependency outside of dependency resolution context"
+            )
+
+    def getattr(self, obj: Any, attribute: str) -> Any:
+        return super().getattr(self.resolve(obj), attribute)

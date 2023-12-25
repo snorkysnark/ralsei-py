@@ -1,17 +1,29 @@
-from typing import Any, Mapping, MutableMapping, Optional
+from __future__ import annotations
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Mapping,
+    MutableMapping,
+    Optional,
+    TypeVar,
+    overload,
+)
 from sqlalchemy import TextClause, text
 
-from .environment import (
-    SqlEnvironment,
-    SqlTemplate,
-    SqlTemplateModule,
-)
 from .adapter import SqlAdapter
 from .dialect import DialectInfo
+from ralsei.resolver import DependencyResolver, OutputOf
+
+if TYPE_CHECKING:
+    from .environment import (
+        SqlEnvironment,
+        SqlTemplate,
+        SqlTemplateModule,
+    )
 
 
 class SqlalchemyTemplateModule:
-    def __init__(self, inner: SqlTemplateModule) -> None:
+    def __init__(self, inner: "SqlTemplateModule") -> None:
         self._inner = inner
 
     def render(self) -> TextClause:
@@ -25,7 +37,7 @@ class SqlalchemyTemplateModule:
 
 
 class SqlalchemyTemplate:
-    def __init__(self, inner: SqlTemplate) -> None:
+    def __init__(self, inner: "SqlTemplate") -> None:
         self._inner = inner
 
     def make_module(
@@ -43,12 +55,15 @@ class SqlalchemyTemplate:
         return list(map(text, self._inner.render_split(*args, **kwargs)))
 
 
+T = TypeVar("T")
+
+
 class SqlalchemyEnvironment:
-    def __init__(self, inner: SqlEnvironment) -> None:
+    def __init__(self, inner: "SqlEnvironment") -> None:
         self._inner = inner
 
     @property
-    def text(self) -> SqlEnvironment:
+    def text(self) -> "SqlEnvironment":
         return self._inner
 
     def from_string(
@@ -71,3 +86,22 @@ class SqlalchemyEnvironment:
 
     def render_split(self, source: str, /, *args, **kwargs) -> list[TextClause]:
         return list(map(text, self._inner.render_split(source, *args, **kwargs)))
+
+    @property
+    def dependency_resolver(self):
+        return self._inner.dependency_resolver
+
+    @dependency_resolver.setter
+    def dependency_resolver(self, value: Optional[DependencyResolver]):
+        self._inner.dependency_resolver = value
+
+    @overload
+    def resolve(self, value: T | OutputOf) -> T:
+        ...
+
+    @overload
+    def resolve(self, value: Any) -> Any:
+        ...
+
+    def resolve(self, value: Any) -> Any:
+        return self._inner.resolve(value)

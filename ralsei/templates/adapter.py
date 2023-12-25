@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, TypeVar
-from .environment import SqlEnvironment
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 import inspect
+
+if TYPE_CHECKING:
+    from .environment import SqlEnvironment
 
 T = TypeVar("T")
 
@@ -29,11 +31,11 @@ class SqlAdapter:
 
 class ToSql(ABC):
     @abstractmethod
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         ...
 
 
-def create_adapter_for_env(env: SqlEnvironment):
+def create_adapter_for_env(env: "SqlEnvironment"):
     adapter = SqlAdapter()
     adapter.register_type(str, lambda value: "'{}'".format(value.replace("'", "''")))
     adapter.register_type(int, str)

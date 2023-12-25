@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 from returns.maybe import Maybe
 
 from .common import (
@@ -13,6 +13,7 @@ from .common import (
     ValueColumnRendered,
     IdColumn,
     Table,
+    OutputOf,
     Identifier,
     actions,
     expect_optional,
@@ -22,7 +23,7 @@ from .common import (
 @dataclass
 class MapToNewColumns(TaskDef):
     select: str
-    table: Table
+    table: Table | OutputOf
     columns: Sequence[ValueColumnBase]
     fn: OneToOne
     is_done_column: Optional[str] = None
@@ -31,11 +32,11 @@ class MapToNewColumns(TaskDef):
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
-            self._table = this.table
+            self._table = env.resolve(this.table)
             self._fn = this.fn
 
             columns_rendered = [
-                column.render(env.text, table=this.table, **this.params)
+                column.render(env.text, table=self._table, **this.params)
                 for column in this.columns
             ]
             self._column_names = [column.name for column in columns_rendered]
@@ -57,7 +58,7 @@ class MapToNewColumns(TaskDef):
             )
             self._select = env.render(
                 this.select,
-                table=this.table,
+                table=self._table,
                 is_done=(
                     Maybe.from_optional(this.is_done_column)
                     .map(Identifier)
@@ -67,7 +68,7 @@ class MapToNewColumns(TaskDef):
             )
             self._add_columns = actions.add_columns(
                 env,
-                this.table,
+                self._table,
                 columns_rendered,
                 if_not_exists=self._commit_each,
             )
@@ -77,15 +78,19 @@ class MapToNewColumns(TaskDef):
                 {{columns | join(',\\n', attribute='set_statement')}}
                 WHERE
                 {{id_fields | join(' AND ')}};""",
-                table=this.table,
+                table=self._table,
                 columns=columns_rendered,
                 id_fields=id_fields,
             )
             self._drop_columns = actions.drop_columns(
                 env,
-                this.table,
+                self._table,
                 columns_rendered,
             )
+
+        @property
+        def output(self) -> Any:
+            return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
             return actions.columns_exist(ctx, self._table, self._column_names)

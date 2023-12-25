@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from abc import ABC, abstractmethod
 
 from .primitives import Sql, Identifier
 from ..adapter import ToSql
-from ..environment import SqlEnvironment
+
+if TYPE_CHECKING:
+    from ..environment import SqlEnvironment
 
 
 class ColumnBase(ABC):
@@ -16,7 +18,7 @@ class ColumnBase(ABC):
         return Identifier(self.name)
 
     @abstractmethod
-    def render(self, env: SqlEnvironment, /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         ...
 
 
@@ -25,7 +27,7 @@ class Column(ColumnBase):
         super().__init__(name)
         self._template = type
 
-    def render(self, env: SqlEnvironment, /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         return ColumnRendered(self.name, env.render(self._template, **params))
 
 
@@ -38,7 +40,7 @@ class ColumnRendered(ColumnBase):
     def definition(self):
         return ColumnDefinition(self)
 
-    def render(self, env: SqlEnvironment, /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         return self
 
 
@@ -46,5 +48,5 @@ class ColumnDefinition(ToSql):
     def __init__(self, column: ColumnRendered) -> None:
         self.column = column
 
-    def to_sql(self, env: SqlEnvironment) -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return env.adapter.format("{} {}", self.column.identifier, self.column.type)
