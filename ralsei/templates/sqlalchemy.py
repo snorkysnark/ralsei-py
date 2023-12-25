@@ -87,14 +87,6 @@ class SqlalchemyEnvironment:
     def render_split(self, source: str, /, *args, **kwargs) -> list[TextClause]:
         return list(map(text, self._inner.render_split(source, *args, **kwargs)))
 
-    @property
-    def dependency_resolver(self):
-        return self._inner.dependency_resolver
-
-    @dependency_resolver.setter
-    def dependency_resolver(self, value: Optional[DependencyResolver]):
-        self._inner.dependency_resolver = value
-
     @overload
     def resolve(self, value: T | OutputOf) -> T:
         ...
@@ -105,3 +97,6 @@ class SqlalchemyEnvironment:
 
     def resolve(self, value: Any) -> Any:
         return self._inner.resolve(value)
+
+    def with_resolver(self, resolver: DependencyResolver):
+        return self._inner.with_resolver(resolver)

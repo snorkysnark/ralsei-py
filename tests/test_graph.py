@@ -3,11 +3,12 @@ from ralsei import (
     Pipeline,
     MapToNewTable,
     Table,
+    TableSource,
     ValueColumn,
     MapToNewColumns,
-    OutputOf,
     compose_one,
     pop_id_fields,
+    add_to_input,
     AddColumnsSql,
     Column,
     CreateTableSql,
@@ -38,17 +39,17 @@ class TestPipeline(Pipeline):
                 fn=example_data,
             ),
             "description": MapToNewColumns(
-                table=OutputOf("aa"),
+                table=self.outputof("aa"),
                 select="SELECT id, aa, bb FROM {{table}}",
                 columns=[ValueColumn("description", "TEXT")],
                 fn=compose_one(create_description, pop_id_fields("id")),
             ),
             "sum": AddColumnsSql(
-                table=OutputOf("aa"),
+                table=self.outputof("aa"),
                 columns=[Column("sum", "INT")],
                 sql="""\
-                UPDATE {{table}}
-                SET sum = aa + LENGTH(bb)""",
+                    UPDATE {{table}}
+                    SET sum = aa + LENGTH(bb)""",
             ),
             "extras": CreateTableSql(
                 table=Table("extras"), sql="CREATE TABLE {{table}}()"
@@ -56,24 +57,24 @@ class TestPipeline(Pipeline):
             "grouped": CreateTableSql(
                 table=Table("grouped"),
                 sql="""\
-                CREATE TABLE {{table}}(
-                    len INT, 
-                    aa INT,
-                    bb TEXT,
-                    description TEXT
-                );
-                {%-split-%}
+                    CREATE TABLE {{table}}(
+                        len INT, 
+                        aa INT,
+                        bb TEXT,
+                        description TEXT
+                    );
+                    {%-split-%}
 
-                INSERT INTO {{table}}
-                SELECT sum, aa, bb, description FROM {{source}}
-                GROUP BY sum;
-                {%-split-%}
+                    INSERT INTO {{table}}
+                    SELECT sum, aa, bb, description FROM {{source}}
+                    GROUP BY sum;
+                    {%-split-%}
 
-                INSERT INTO {{table}}(description)
-                VALUES ({{ extras.name }});""",
+                    INSERT INTO {{table}}(description)
+                    VALUES ({{ extras.name }});""",
                 params={
-                    "source": OutputOf("description") + OutputOf("sum"),
-                    "extras": OutputOf("extras"),
+                    "source": self.outputof("description", "sum"),
+                    "extras": self.outputof("extras"),
                 },
             ),
         }
@@ -82,10 +83,97 @@ class TestPipeline(Pipeline):
 def test_graph(ctx: ConnectionContext):
     graph = TestPipeline().graph(ctx.jinja)
 
-    assert set(graph.tasks_by_name) == {"aa", "description", "sum", "grouped", "extras"}
+    assert set(graph.tasks) == {
+        ("aa",),
+        ("description",),
+        ("sum",),
+        ("grouped",),
+        ("extras",),
+    }
     assert dict(graph.relations) == {
-        "aa": {"description", "sum"},
-        "description": {"grouped"},
-        "sum": {"grouped"},
-        "extras": {"grouped"},
+        ("aa",): {("description",), ("sum",)},
+        ("description",): {("grouped",)},
+        ("sum",): {("grouped",)},
+        ("extras",): {("grouped",)},
+    }
+
+
+class ChildPipeline(Pipeline):
+    def __init__(self, source_tables: list[TableSource]) -> None:
+        self.source_tables = source_tables
+
+    def create_tasks(self):
+        return {
+            "join": CreateTableSql(
+                table=Table("joined"),
+                sql="""\
+                    CREATE TABLE {{table}}(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        value TEXT
+                    );
+                    {%-split-%}
+                    {%-set sep = joiner('\nUNION\n')-%}
+                    INSERT INTO {{table}}
+                    {%for source in sources-%}
+                    SELECT value FROM {{source}}
+                    {%-endfor%}
+                    """,
+                params={"sources": self.source_tables},
+            ),
+            "extend": MapToNewColumns(
+                table=self.outputof("join"),
+                select="SELECT id, value AS aa FROM {{table}}",
+                columns=[ValueColumn("description", "TEXT")],
+                fn=compose_one(
+                    create_description, pop_id_fields("id"), add_to_input(bb="TEXT")
+                ),
+            ),
+        }
+
+
+class RootPipeline(Pipeline):
+    def create_tasks(self):
+        return {
+            "aa": CreateTableSql(
+                table=Table("aa"),
+                sql="""\
+                    CREATE TABLE {{table}}(
+                        value TEXT
+                    );
+                    {%-split-%}
+                    INSERT INTO {{table}}
+                    VALUES ('foo');
+                    """,
+            ),
+            "bb": CreateTableSql(
+                table=Table("bb"),
+                sql="""\
+                    CREATE TABLE {{table}}(
+                        value TEXT
+                    );
+                    {%-split-%}
+                    INSERT INTO {{table}}
+                    VALUES ('bar');
+                    """,
+            ),
+            "child": ChildPipeline([self.outputof("aa"), self.outputof("bb")]),
+        }
+
+
+def test_graph_nested(ctx: ConnectionContext):
+    graph = RootPipeline().graph(ctx.jinja)
+    assert set(graph.tasks) == {
+        # fmt: off
+        ("aa",),
+        ("bb",),
+        ("child", "join",),
+        ("child", "extend",),
+        # fmt: on
+    }
+    assert dict(graph.relations) == {
+        # fmt: off
+        ("aa",): {("child", "join")},
+        ("bb",): {("child", "join",)},
+        ("child", "join",): {("child", "extend",)},
+        # fmt: on
     }

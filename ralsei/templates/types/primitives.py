@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from ..adapter import ToSql
+from ralsei.resolver import OutputOf
 
 if TYPE_CHECKING:
     from ..environment import SqlEnvironment
@@ -47,3 +48,6 @@ class Placeholder(ToSql):
 
     def to_sql(self, env: "SqlEnvironment") -> str:
         return f":{self.name}"
+
+
+TableSource = Table | OutputOf

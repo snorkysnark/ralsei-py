@@ -16,6 +16,7 @@ from jinja2 import StrictUndefined
 from jinja2.environment import TemplateModule
 from jinja2.nodes import Template as TemplateNode
 import itertools
+from contextlib import contextmanager
 
 from .types import Sql, Column, Identifier
 from .adapter import create_adapter_for_env
@@ -71,7 +72,7 @@ class SqlEnvironment(jinja2.Environment):
     def __init__(self, dialect_info: "DialectInfo"):
         super().__init__(undefined=StrictUndefined)
 
-        self.dependency_resolver: Optional[DependencyResolver] = None
+        self._dependency_resolver: Optional[DependencyResolver] = None
 
         self._adapter = create_adapter_for_env(self)
         self._dialect = dialect_info
@@ -112,6 +113,9 @@ class SqlEnvironment(jinja2.Environment):
         self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect_info}
 
         self.add_extension(SplitTag)
+
+    def __repr__(self) -> str:
+        return super().__repr__()
 
     @property
     def adapter(self):
@@ -172,8 +176,8 @@ class SqlEnvironment(jinja2.Environment):
     def resolve(self, value: Any) -> Any:
         if not isinstance(value, OutputOf):
             return value
-        elif self.dependency_resolver:
-            return self.dependency_resolver.resolve(self.sqlalchemy, value)
+        elif self._dependency_resolver:
+            return self._dependency_resolver.resolve(self.sqlalchemy, value)
         else:
             raise RuntimeError(
                 "attempted to resolve dependency outside of dependency resolution context"
@@ -181,3 +185,13 @@ class SqlEnvironment(jinja2.Environment):
 
     def getattr(self, obj: Any, attribute: str) -> Any:
         return super().getattr(self.resolve(obj), attribute)
+
+    @contextmanager
+    def with_resolver(self, resolver: DependencyResolver):
+        old_resolver = self._dependency_resolver
+        self._dependency_resolver = resolver
+
+        try:
+            yield
+        finally:
+            self._dependency_resolver = old_resolver

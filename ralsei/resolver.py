@@ -1,30 +1,29 @@
 from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Mapping, TYPE_CHECKING, Optional
-
+from typing import Any, TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from .task import Task, TaskDef
+    from .task import Task
     from .templates import SqlalchemyEnvironment
+    from .pipeline import Pipeline, FlattenedPipeline, TreePath
 
 
+@dataclass
 class OutputOf:
-    def __init__(self, *task_names: str) -> None:
-        if len(task_names) == 0:
+    pipeline: Pipeline
+    task_paths: list[TreePath]
+
+    def __post_init__(self):
+        if len(self.task_paths) == 0:
             raise ValueError("Must name at least one task")
-
-        self._task_names = set(task_names)
-
-    def __add__(self, other: OutputOf) -> OutputOf:
-        return OutputOf(*self._task_names.union(other._task_names))
 
 
 @dataclass
 class GraphBuilder:
-    defs_by_name: Mapping[str, "TaskDef"]
-    tasks_by_name: dict[str, "Task"] = field(default_factory=dict)
-    relations: defaultdict[str, set[str]] = field(
+    definition: FlattenedPipeline
+    tasks: dict["TreePath", "Task"] = field(default_factory=dict)
+    relations: defaultdict["TreePath", set["TreePath"]] = field(
         default_factory=lambda: defaultdict(set)
     )
 
@@ -33,41 +32,53 @@ class DependencyResolver:
     def __init__(
         self,
         graph: GraphBuilder,
-        parent_task_name: Optional[str] = None,
+        caller_path: Optional["TreePath"] = None,
     ) -> None:
         self._graph = graph
-        self._parent_task_name = parent_task_name
+        self._caller_path = caller_path
 
     @staticmethod
-    def from_defs(defs_by_name: Mapping[str, "TaskDef"]) -> DependencyResolver:
-        return DependencyResolver(GraphBuilder(defs_by_name))
+    def from_definition(definition: FlattenedPipeline) -> DependencyResolver:
+        return DependencyResolver(GraphBuilder(definition))
 
-    def sub_resolver(self, task_name: str) -> DependencyResolver:
-        return DependencyResolver(self._graph, task_name)
+    def sub_resolver(self, task_path: "TreePath") -> DependencyResolver:
+        return DependencyResolver(self._graph, task_path)
 
-    def resolve_name(self, env: "SqlalchemyEnvironment", task_name: str) -> "Task":
-        if self._parent_task_name:
-            self._graph.relations[task_name].add(self._parent_task_name)
+    def resolve_path(
+        self, env: "SqlalchemyEnvironment", task_path: "TreePath"
+    ) -> "Task":
+        if self._caller_path:
+            self._graph.relations[task_path].add(self._caller_path)
 
-        if cached_task := self._graph.tasks_by_name.get(task_name, None):
+        if cached_task := self._graph.tasks.get(task_path, None):
             return cached_task
 
-        old_resolver = env.dependency_resolver
-        env.dependency_resolver = self.sub_resolver(task_name)
-        try:
-            task = self._graph.defs_by_name[task_name].create(env)
-        finally:
-            env.dependency_resolver = old_resolver
+        with env.with_resolver(self.sub_resolver(task_path)):
+            task = self._graph.definition.task_definitions[task_path].task.create(env)
 
-        self._graph.tasks_by_name[task_name] = task
+        self._graph.tasks[task_path] = task
         return task
 
-    def resolve(self, env: "SqlalchemyEnvironment", outputof: OutputOf) -> Any:
-        task_names = iter(outputof._task_names)
-        first_output = self.resolve_name(env, next(task_names)).output
+    def resolve_relative_path(
+        self,
+        env: "SqlalchemyEnvironment",
+        pipeline: "Pipeline",
+        relative_path: "TreePath",
+    ) -> "Task":
+        return self.resolve_path(
+            env, (*self._graph.definition.pipeline_paths[pipeline], *relative_path)
+        )
 
-        for task_name in task_names:
-            output = self.resolve_name(env, task_name).output
+    def resolve(self, env: "SqlalchemyEnvironment", outputof: "OutputOf") -> Any:
+        task_paths = iter(outputof.task_paths)
+        first_output = self.resolve_relative_path(
+            env, outputof.pipeline, next(task_paths)
+        ).output
+
+        for task_path in task_paths:
+            output = self.resolve_relative_path(
+                env, outputof.pipeline, task_path
+            ).output
             if output != first_output:
                 raise RuntimeError(
                     f"Two different outputs passed into the same input: {output} != {first_output}"
