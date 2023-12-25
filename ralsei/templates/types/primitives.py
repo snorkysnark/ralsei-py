@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from ..adapter import ToSql
-from ralsei.resolver import OutputOf
+from ralsei.pipeline import OutputOf
 
 if TYPE_CHECKING:
     from ..environment import SqlEnvironment

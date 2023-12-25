@@ -24,7 +24,7 @@ from .sqlalchemy import SqlalchemyEnvironment
 from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
 from .dialect import DialectInfo
-from ..resolver import DependencyResolver, OutputOf
+from ..pipeline import DependencyResolver, OutputOf
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:

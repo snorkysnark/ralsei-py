@@ -1,19 +1,20 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping, Union
 
-from .task import TaskDef
-from .resolver import DependencyResolver, OutputOf
-from .templates import SqlalchemyEnvironment
+from .resolver import DependencyResolver
+from .dag import TreePath, DAG
 
-TreePath = tuple[str, ...]
+if TYPE_CHECKING:
+    from ..task import TaskDef
+    from ..templates import SqlalchemyEnvironment
 
 
 @dataclass
 class ScopedTaskDef:
     pipeline: Pipeline
-    task: TaskDef
+    task: "TaskDef"
 
 
 @dataclass
@@ -22,9 +23,19 @@ class FlattenedPipeline:
     pipeline_paths: dict[Pipeline, TreePath]
 
 
+@dataclass
+class OutputOf:
+    pipeline: Pipeline
+    task_paths: list[TreePath]
+
+    def __post_init__(self):
+        if len(self.task_paths) == 0:
+            raise ValueError("Must name at least one task")
+
+
 class Pipeline(ABC):
     @abstractmethod
-    def create_tasks(self) -> Mapping[str, TaskDef | Pipeline]:
+    def create_tasks(self) -> Mapping[str, Union["TaskDef", Pipeline]]:
         ...
 
     def outputof(self, *task_paths: str | TreePath) -> OutputOf:
@@ -62,11 +73,5 @@ class Pipeline(ABC):
 
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
-    def graph(self, env: SqlalchemyEnvironment):
-        flattened = self._flatten()
-
-        resolver = DependencyResolver.from_definition(flattened)
-        for task_path in flattened.task_definitions:
-            resolver.resolve_path(env, task_path)
-
-        return resolver._graph
+    def build_dag(self, env: "SqlalchemyEnvironment") -> DAG:
+        return DependencyResolver.from_definition(self._flatten()).build_dag(env)

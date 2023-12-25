@@ -3,27 +3,19 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING, Optional
 
+from .dag import TreePath, DAG
+
 if TYPE_CHECKING:
-    from .task import Task
-    from .templates import SqlalchemyEnvironment
-    from .pipeline import Pipeline, FlattenedPipeline, TreePath
-
-
-@dataclass
-class OutputOf:
-    pipeline: Pipeline
-    task_paths: list[TreePath]
-
-    def __post_init__(self):
-        if len(self.task_paths) == 0:
-            raise ValueError("Must name at least one task")
+    from ..task import Task
+    from ..templates import SqlalchemyEnvironment
+    from .pipeline import Pipeline, FlattenedPipeline, OutputOf
 
 
 @dataclass
 class GraphBuilder:
     definition: FlattenedPipeline
-    tasks: dict["TreePath", "Task"] = field(default_factory=dict)
-    relations: defaultdict["TreePath", set["TreePath"]] = field(
+    tasks: dict[TreePath, "Task"] = field(default_factory=dict)
+    relations: defaultdict[TreePath, set[TreePath]] = field(
         default_factory=lambda: defaultdict(set)
     )
 
@@ -32,7 +24,7 @@ class DependencyResolver:
     def __init__(
         self,
         graph: GraphBuilder,
-        caller_path: Optional["TreePath"] = None,
+        caller_path: Optional[TreePath] = None,
     ) -> None:
         self._graph = graph
         self._caller_path = caller_path
@@ -41,12 +33,10 @@ class DependencyResolver:
     def from_definition(definition: FlattenedPipeline) -> DependencyResolver:
         return DependencyResolver(GraphBuilder(definition))
 
-    def sub_resolver(self, task_path: "TreePath") -> DependencyResolver:
+    def sub_resolver(self, task_path: TreePath) -> DependencyResolver:
         return DependencyResolver(self._graph, task_path)
 
-    def resolve_path(
-        self, env: "SqlalchemyEnvironment", task_path: "TreePath"
-    ) -> "Task":
+    def resolve_path(self, env: "SqlalchemyEnvironment", task_path: TreePath) -> "Task":
         if self._caller_path:
             self._graph.relations[task_path].add(self._caller_path)
 
@@ -63,7 +53,7 @@ class DependencyResolver:
         self,
         env: "SqlalchemyEnvironment",
         pipeline: "Pipeline",
-        relative_path: "TreePath",
+        relative_path: TreePath,
     ) -> "Task":
         return self.resolve_path(
             env, (*self._graph.definition.pipeline_paths[pipeline], *relative_path)
@@ -86,4 +76,8 @@ class DependencyResolver:
 
         return first_output
 
-    __all__ = ["OutputOf", "DependencyResolver"]
+    def build_dag(self, env: "SqlalchemyEnvironment") -> DAG:
+        for task_path in self._graph.definition.task_definitions:
+            self.resolve_path(env, task_path)
+
+        return DAG(self._graph.tasks, dict(self._graph.relations))

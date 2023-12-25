@@ -81,20 +81,14 @@ class TestPipeline(Pipeline):
 
 
 def test_graph(ctx: ConnectionContext):
-    graph = TestPipeline().graph(ctx.jinja)
+    dag = TestPipeline().build_dag(ctx.jinja)
 
-    assert set(graph.tasks) == {
-        ("aa",),
-        ("description",),
-        ("sum",),
-        ("grouped",),
-        ("extras",),
-    }
-    assert dict(graph.relations) == {
-        ("aa",): {("description",), ("sum",)},
-        ("description",): {("grouped",)},
-        ("sum",): {("grouped",)},
-        ("extras",): {("grouped",)},
+    assert set(dag.tasks_str()) == {"aa", "description", "sum", "grouped", "extras"}
+    assert dag.relations_str() == {
+        "aa": {"description", "sum"},
+        "description": {"grouped"},
+        "sum": {"grouped"},
+        "extras": {"grouped"},
     }
 
 
@@ -161,19 +155,11 @@ class RootPipeline(Pipeline):
 
 
 def test_graph_nested(ctx: ConnectionContext):
-    graph = RootPipeline().graph(ctx.jinja)
-    assert set(graph.tasks) == {
-        # fmt: off
-        ("aa",),
-        ("bb",),
-        ("child", "join",),
-        ("child", "extend",),
-        # fmt: on
-    }
-    assert dict(graph.relations) == {
-        # fmt: off
-        ("aa",): {("child", "join")},
-        ("bb",): {("child", "join",)},
-        ("child", "join",): {("child", "extend",)},
-        # fmt: on
+    dag = RootPipeline().build_dag(ctx.jinja)
+
+    assert set(dag.tasks_str()) == {"aa", "bb", "child.join", "child.extend"}
+    assert dag.relations_str() == {
+        "aa": {"child.join"},
+        "bb": {"child.join"},
+        "child.join": {"child.extend"},
     }

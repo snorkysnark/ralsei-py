@@ -8,7 +8,6 @@ from ralsei.templates import *
 from ralsei import actions as actions
 from ralsei.context import ConnectionContext as ConnectionContext
 from ralsei.console import *
-from ralsei.resolver import OutputOf as OutputOf
 
 
 def merge_params(*dicts: dict) -> dict:
