@@ -20,25 +20,41 @@ class GraphBuilder:
     )
 
 
+class CyclicGraphError(Exception):
+    pass
+
+
+@dataclass
+class CallStack:
+    callers: set[TreePath] = field(default_factory=set)
+    last_caller: Optional[TreePath] = None
+
+    def push(self, task_path: TreePath) -> CallStack:
+        if task_path in self.callers:
+            raise CyclicGraphError(
+                f"Recursion detected during dependency resolution: {'.'.join(task_path)} occurred twice"
+            )
+
+        return CallStack({*self.callers, task_path}, task_path)
+
+
 class DependencyResolver:
     def __init__(
-        self,
-        graph: GraphBuilder,
-        caller_path: Optional[TreePath] = None,
+        self, graph: GraphBuilder, call_stack: Optional[CallStack] = None
     ) -> None:
         self._graph = graph
-        self._caller_path = caller_path
+        self._call_stack = call_stack or CallStack()
 
     @staticmethod
     def from_definition(definition: FlattenedPipeline) -> DependencyResolver:
         return DependencyResolver(GraphBuilder(definition))
 
     def sub_resolver(self, task_path: TreePath) -> DependencyResolver:
-        return DependencyResolver(self._graph, task_path)
+        return DependencyResolver(self._graph, self._call_stack.push(task_path))
 
     def resolve_path(self, env: "SqlalchemyEnvironment", task_path: TreePath) -> "Task":
-        if self._caller_path:
-            self._graph.relations[task_path].add(self._caller_path)
+        if last_caller := self._call_stack.last_caller:
+            self._graph.relations[task_path].add(last_caller)
 
         if cached_task := self._graph.tasks.get(task_path, None):
             return cached_task

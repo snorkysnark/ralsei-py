@@ -1,3 +1,4 @@
+import pytest
 from ralsei import (
     ConnectionContext,
     Pipeline,
@@ -12,6 +13,7 @@ from ralsei import (
     AddColumnsSql,
     Column,
     CreateTableSql,
+    CyclicGraphError,
 )
 
 
@@ -163,3 +165,30 @@ def test_graph_nested(ctx: ConnectionContext):
         "bb": {"child.join"},
         "child.join": {"child.extend"},
     }
+
+
+class RecursivePipeline(Pipeline):
+    def create_tasks(self):
+        return {
+            "task_a": CreateTableSql(
+                table=Table("table_a"),
+                sql="""\
+                CREATE TABLE {{table}}(
+                    field REFERENCES {{other}}
+                )""",
+                params={"other": self.outputof("task_b")},
+            ),
+            "task_b": CreateTableSql(
+                table=Table("table_b"),
+                sql="""\
+                CREATE TABLE {{table}}(
+                    field REFERENCES {{other}}
+                )""",
+                params={"other": self.outputof("task_a")},
+            ),
+        }
+
+
+def test_recursion(ctx: ConnectionContext):
+    with pytest.raises(CyclicGraphError):
+        RecursivePipeline().build_dag(ctx.jinja)
