@@ -11,7 +11,7 @@ from .common import (
     ConnectionContext,
     OneToMany,
     Table,
-    OutputOf,
+    TableSource,
     IdColumn,
     ValueColumnBase,
     ColumnRendered,
@@ -37,7 +37,7 @@ class MapToNewTable(TaskDef):
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
     select: Optional[str] = None
-    source_table: Optional[Table | OutputOf] = None
+    source_table: Optional[TableSource] = None
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)

@@ -10,6 +10,8 @@ from ralsei.context import ConnectionContext as ConnectionContext
 from ralsei.console import *
 from ralsei.resolver import OutputOf as OutputOf
 
+TableSource = Table | OutputOf
+
 
 def merge_params(*dicts: dict) -> dict:
     """

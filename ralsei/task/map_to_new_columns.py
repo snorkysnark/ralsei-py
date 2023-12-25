@@ -12,8 +12,7 @@ from .common import (
     ValueColumnBase,
     ValueColumnRendered,
     IdColumn,
-    Table,
-    OutputOf,
+    TableSource,
     Identifier,
     actions,
     expect_optional,
@@ -23,7 +22,7 @@ from .common import (
 @dataclass
 class MapToNewColumns(TaskDef):
     select: str
-    table: Table | OutputOf
+    table: TableSource
     columns: Sequence[ValueColumnBase]
     fn: OneToOne
     is_done_column: Optional[str] = None

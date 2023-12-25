@@ -6,8 +6,7 @@ from sqlalchemy import TextClause
 from .common import (
     TaskDef,
     TaskImpl,
-    Table,
-    OutputOf,
+    TableSource,
     ColumnBase,
     SqlalchemyEnvironment,
     ConnectionContext,
@@ -19,7 +18,7 @@ from .common import (
 @dataclass
 class AddColumnsSql(TaskDef):
     sql: str | list[str]
-    table: Table | OutputOf
+    table: TableSource
     columns: Optional[Sequence[ColumnBase]] = None
     params: dict = field(default_factory=dict)
 
