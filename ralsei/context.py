@@ -9,10 +9,15 @@ from .connection import create_engine, Connection
 
 
 class EngineContext:
-    def __init__(self, engine: sqlalchemy.Engine) -> None:
+    def __init__(
+        self,
+        engine: sqlalchemy.Engine,
+        environment: Optional[SqlalchemyEnvironment] = None,
+    ) -> None:
         self._engine = engine
-        self._jinja = SqlalchemyEnvironment(
-            SqlEnvironment(DialectInfo.from_sqlalchemy(engine.dialect))
+        self._jinja = (
+            environment
+            or SqlEnvironment(DialectInfo.from_sqlalchemy(engine.dialect)).sqlalchemy
         )
 
     @staticmethod
