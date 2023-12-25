@@ -8,7 +8,6 @@ from typing import (
     Optional,
     Type,
     TypeVar,
-    TYPE_CHECKING,
     overload,
 )
 import textwrap
@@ -18,13 +17,13 @@ from jinja2.environment import TemplateModule
 from jinja2.nodes import Template as TemplateNode
 import itertools
 
+from .types import Sql, Column, Identifier
+from .adapter import create_adapter_for_env
 from .sqlalchemy import SqlalchemyEnvironment
 from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
-from ralsei.resolver import DependencyResolver, OutputOf
-
-if TYPE_CHECKING:
-    from .dialect import DialectInfo
+from .dialect import DialectInfo
+from ..resolver import DependencyResolver, OutputOf
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -70,9 +69,6 @@ TEMPLATE = TypeVar("TEMPLATE", bound=jinja2.Template)
 
 class SqlEnvironment(jinja2.Environment):
     def __init__(self, dialect_info: "DialectInfo"):
-        from .types import Sql, Column, Identifier
-        from .adapter import create_adapter_for_env
-
         super().__init__(undefined=StrictUndefined)
 
         self.dependency_resolver: Optional[DependencyResolver] = None
