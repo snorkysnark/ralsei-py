@@ -3,4 +3,4 @@ from .resolver import (
     DependencyResolver as DependencyResolver,
     CyclicGraphError as CyclicGraphError,
 )
-from .dag import TreePath as TreePath, DAG as DAG
+from .dag import *

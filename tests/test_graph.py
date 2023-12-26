@@ -192,3 +192,17 @@ class RecursivePipeline(Pipeline):
 def test_recursion(ctx: ConnectionContext):
     with pytest.raises(CyclicGraphError):
         RecursivePipeline().build_dag(ctx.jinja)
+
+
+def test_topological_sort(ctx: ConnectionContext):
+    sorted = [
+        ".".join(named_task.path)
+        for named_task in RootPipeline().build_dag(ctx.jinja).topological_sort()
+    ]
+
+    assert sorted == ["aa", "bb", "child.join", "child.extend"] or sorted == [
+        "bb",
+        "aa",
+        "child.join",
+        "child.extend",
+    ]
