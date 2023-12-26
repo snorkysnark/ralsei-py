@@ -15,6 +15,10 @@ class NamedTask:
     path: TreePath
     task: "Task"
 
+    @property
+    def name_str(self):
+        return ".".join(self.path)
+
 
 @dataclass
 class TopologicalSort:
