@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import defaultdict
+from graphviz import Digraph
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -63,6 +64,20 @@ class DAG:
 
     def topological_sort(self) -> list[NamedTask]:
         return TopologicalSort(self).run()
+
+    def digraph(self) -> Digraph:
+        dot = Digraph()
+        dot.attr("node", shape="box")
+
+        for path in self.tasks:
+            path_str = ".".join(path)
+            dot.node(path_str, path_str)
+
+        for path_from, children in self.relations.items():
+            for path_to in children:
+                dot.edge(".".join(path_from), ".".join(path_to))
+
+        return dot
 
 
 __all__ = ["DAG", "TreePath", "NamedTask"]
