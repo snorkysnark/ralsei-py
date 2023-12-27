@@ -2,23 +2,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import defaultdict
 from graphviz import Digraph
-from typing import TYPE_CHECKING
+from typing import Self, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..task import Task
 
 
-TreePath = tuple[str, ...]
+class TreePath(tuple[str, ...]):
+    def __new__(cls, *args: str) -> Self:
+        return super().__new__(cls, args)
+
+    def __str__(self) -> str:
+        return ".".join(self)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({str(self)})"
 
 
 @dataclass
 class NamedTask:
     path: TreePath
     task: "Task"
-
-    @property
-    def name_str(self):
-        return ".".join(self.path)
 
 
 @dataclass
@@ -54,11 +58,11 @@ class DAG:
     relations: dict[TreePath, set[TreePath]]
 
     def tasks_str(self):
-        return {".".join(path): task for path, task in self.tasks.items()}
+        return {str(path): task for path, task in self.tasks.items()}
 
     def relations_str(self):
         return {
-            ".".join(parent): set(".".join(child) for child in children)
+            str(parent): set(str(child) for child in children)
             for parent, children in self.relations.items()
         }
 
@@ -70,12 +74,12 @@ class DAG:
         dot.attr("node", shape="box")
 
         for path in self.tasks:
-            path_str = ".".join(path)
+            path_str = str(path)
             dot.node(path_str, path_str)
 
         for path_from, children in self.relations.items():
             for path_to in children:
-                dot.edge(".".join(path_from), ".".join(path_to))
+                dot.edge(str(path_from), str(path_to))
 
         return dot
 

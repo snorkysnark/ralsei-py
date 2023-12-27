@@ -32,7 +32,7 @@ class CallStack:
     def push(self, task_path: TreePath) -> CallStack:
         if task_path in self.callers:
             raise CyclicGraphError(
-                f"Recursion detected during dependency resolution: {'.'.join(task_path)} occurred twice"
+                f"Recursion detected during dependency resolution: {task_path} occurred twice"
             )
 
         return CallStack({*self.callers, task_path}, task_path)
@@ -72,7 +72,8 @@ class DependencyResolver:
         relative_path: TreePath,
     ) -> "Task":
         return self.resolve_path(
-            env, (*self._graph.definition.pipeline_paths[pipeline], *relative_path)
+            env,
+            TreePath(*self._graph.definition.pipeline_paths[pipeline], *relative_path),
         )
 
     def resolve(self, env: "SqlalchemyEnvironment", outputof: "OutputOf") -> Any:

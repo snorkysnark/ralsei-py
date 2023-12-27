@@ -42,14 +42,14 @@ class Pipeline(ABC):
         return OutputOf(
             self,
             [
-                tuple(path.split(".")) if isinstance(path, str) else path
+                TreePath(*path.split(".")) if isinstance(path, str) else path
                 for path in task_paths
             ],
         )
 
     def _flatten(self) -> FlattenedPipeline:
         task_definitions: dict[TreePath, ScopedTaskDef] = {}
-        pipeline_to_path: dict[Pipeline, TreePath] = {self: tuple()}
+        pipeline_to_path: dict[Pipeline, TreePath] = {self: TreePath()}
 
         for name, value in self.create_tasks().items():
             if "." in name:
@@ -59,17 +59,17 @@ class Pipeline(ABC):
                 subtree = value._flatten()
 
                 for relative_path, definition in subtree.task_definitions.items():
-                    task_definitions[(name, *relative_path)] = definition
+                    task_definitions[TreePath(name, *relative_path)] = definition
 
                 for pipeline, relative_path in subtree.pipeline_paths.items():
                     if pipeline in pipeline_to_path:
                         raise ValueError(
                             "The same pipeline object cannot be used twice"
                         )
-                    pipeline_to_path[pipeline] = (name, *relative_path)
+                    pipeline_to_path[pipeline] = TreePath(name, *relative_path)
 
             else:
-                task_definitions[(name,)] = ScopedTaskDef(self, value)
+                task_definitions[TreePath(name)] = ScopedTaskDef(self, value)
 
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 

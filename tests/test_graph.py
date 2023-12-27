@@ -196,7 +196,7 @@ def test_recursion(ctx: ConnectionContext):
 
 def test_topological_sort(ctx: ConnectionContext):
     sorted = [
-        named_task.name_str
+        str(named_task.path)
         for named_task in RootPipeline().build_dag(ctx.jinja).topological_sort()
     ]
 
