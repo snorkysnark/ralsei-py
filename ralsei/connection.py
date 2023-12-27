@@ -4,13 +4,16 @@ from sqlalchemy import URL, event
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
 
-def _on_connect(dbapi_connection, connection_record):
+def _sqlite_on_connect(dbapi_connection, connection_record):
     # disable pysqlite's emitting of the BEGIN statement entirely.
     # also stops it from emitting COMMIT before any DDL.
     dbapi_connection.isolation_level = None
 
+    with dbapi_connection.cursor() as cursor:
+        cursor.execute("PRAGMA foreign_keys = 1")
 
-def _on_begin(conn):
+
+def _sqlite_on_begin(conn):
     # emit our own BEGIN
     conn.exec_driver_sql("BEGIN")
 
@@ -21,8 +24,8 @@ def create_engine(url: str | URL, **kwargs) -> sqlalchemy.Engine:
     # Fix transactions in SQLite
     # See: https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
     if engine.dialect.name == "sqlite":
-        event.listens_for(engine, "connect")(_on_connect)
-        event.listens_for(engine, "begin")(_on_begin)
+        event.listens_for(engine, "connect")(_sqlite_on_connect)
+        event.listens_for(engine, "begin")(_sqlite_on_begin)
 
     return engine
 
