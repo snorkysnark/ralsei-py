@@ -3,7 +3,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING, Optional
 
-from .dag import TreePath, DAG
+from .dag import DAG
+from .path import TreePath
 
 if TYPE_CHECKING:
     from ..task import Task

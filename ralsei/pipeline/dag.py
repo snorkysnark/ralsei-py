@@ -2,27 +2,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import defaultdict
 from graphviz import Digraph
-from typing import Self, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
+from .path import TreePath
+from .sequence import NamedTask, TaskSequence
 
 if TYPE_CHECKING:
     from ..task import Task
-
-
-class TreePath(tuple[str, ...]):
-    def __new__(cls, *args: str) -> Self:
-        return super().__new__(cls, args)
-
-    def __str__(self) -> str:
-        return ".".join(self)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({str(self)})"
-
-
-@dataclass
-class NamedTask:
-    path: TreePath
-    task: "Task"
 
 
 @dataclass
@@ -43,13 +29,13 @@ class TopologicalSort:
 
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
 
-    def run(self) -> list[NamedTask]:
+    def run(self) -> TaskSequence:
         for path in self.dag.tasks:
             if not self.visited[path]:
                 self.visit_recursive(path)
 
         self.stack.reverse()
-        return self.stack
+        return TaskSequence(self.stack)
 
 
 @dataclass
@@ -66,7 +52,7 @@ class DAG:
             for parent, children in self.relations.items()
         }
 
-    def topological_sort(self) -> list[NamedTask]:
+    def topological_sort(self) -> TaskSequence:
         return TopologicalSort(self).run()
 
     def digraph(self) -> Digraph:
