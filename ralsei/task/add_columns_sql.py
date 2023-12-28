@@ -1,11 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence, cast
+from typing import Any, Iterable, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
     TaskImpl,
+    SqlLike,
     TableSource,
     ColumnBase,
     SqlalchemyEnvironment,
@@ -74,3 +75,8 @@ class AddColumnsSql(TaskDef):
 
         def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)
+
+        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+            yield "Add columns", self._add_columns.statements
+            yield "Main", self._sql
+            yield "Drop columns", self._drop_columns.statements

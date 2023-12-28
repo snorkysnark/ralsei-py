@@ -1,12 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
 from .common import (
     TaskDef,
     TaskImpl,
+    SqlLike,
     SqlalchemyEnvironment,
     ConnectionContext,
     OneToMany,
@@ -26,9 +27,9 @@ from .common import (
 
 @dataclass
 class MarkerScripts:
-    add_marker: Callable[[ConnectionContext], None]
+    add_marker: actions.add_columns
     set_marker: TextClause
-    drop_marker: Callable[[ConnectionContext], None]
+    drop_marker: actions.drop_columns
 
 
 @dataclass
@@ -182,6 +183,17 @@ class MapToNewTable(TaskDef):
             if self._marker_scripts:
                 self._marker_scripts.drop_marker(ctx)
             ctx.connection.execute(self._drop_table)
+
+        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+            if self._marker_scripts:
+                yield "Add marker", self._marker_scripts.add_marker.statements
+            yield "Create table", self._create_table
+            yield "Insert", self._insert
+            if self._marker_scripts:
+                yield "Set marker", self._marker_scripts.set_marker
+            yield "Drop table", self._drop_table
+            if self._marker_scripts:
+                yield "Drop marker", self._marker_scripts.drop_marker.statements
 
 
 __all__ = ["MapToNewTable"]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterable
 
 from .common import (
     SqlalchemyEnvironment,
@@ -8,6 +8,7 @@ from .common import (
     Table,
     TaskImpl,
     TaskDef,
+    SqlLike,
     actions,
 )
 
@@ -48,3 +49,7 @@ class CreateTableSql(TaskDef):
 
         def delete(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._drop_sql)
+
+        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+            yield "Main", self._sql
+            yield "Drop table", self._drop_sql

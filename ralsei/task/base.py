@@ -1,13 +1,17 @@
-from abc import ABC, abstractmethod, abstractproperty
-from typing import Any, Self, TypeVar, Generic
+from abc import abstractmethod, abstractproperty
+from typing import Any, Iterable, Self, Self, TypeVar, Generic
+from sqlalchemy import TextClause
 
 from ralsei.templates import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
+from ralsei.runnable import Runnable
 
 T = TypeVar("T")
 
+SqlLike = TextClause | list[TextClause]
 
-class Task(ABC):
+
+class Task(Runnable):
     @abstractproperty
     def output(self) -> Any:
         ...
@@ -16,17 +20,8 @@ class Task(ABC):
     def exists(self, ctx: ConnectionContext) -> bool:
         ...
 
-    @abstractmethod
-    def run(self, ctx: ConnectionContext) -> None:
-        ...
-
-    @abstractmethod
-    def delete(self, ctx: ConnectionContext) -> None:
-        ...
-
-    def redo(self, ctx: ConnectionContext):
-        self.delete(ctx)
-        self.run(ctx)
+    def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+        return []
 
 
 class TaskImpl(Task, Generic[T]):

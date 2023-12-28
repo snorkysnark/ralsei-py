@@ -1,11 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
 from .common import (
     TaskDef,
     TaskImpl,
+    SqlLike,
     SqlalchemyEnvironment,
     ConnectionContext,
     OneToOne,
@@ -107,3 +108,9 @@ class MapToNewColumns(TaskDef):
 
         def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)
+
+        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+            yield "Add columns", self._add_columns.statements
+            yield "Select", self._select
+            yield "Update", self._update
+            yield "Drop columns", self._drop_columns.statements
