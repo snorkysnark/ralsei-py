@@ -1,19 +1,21 @@
-from typing import Any, Optional, Iterable, Self
+from typing import TYPE_CHECKING, Any, Optional, Iterable, Self
 import sqlalchemy
 from sqlalchemy import URL, event
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
+if TYPE_CHECKING:
+    import sqlite3
 
-def _sqlite_on_connect(dbapi_connection, connection_record):
+
+def _sqlite_on_connect(dbapi_connection: "sqlite3.Connection", connection_record):
     # disable pysqlite's emitting of the BEGIN statement entirely.
     # also stops it from emitting COMMIT before any DDL.
     dbapi_connection.isolation_level = None
 
-    with dbapi_connection.cursor() as cursor:
-        cursor.execute("PRAGMA foreign_keys = 1")
+    dbapi_connection.execute("PRAGMA foreign_keys = 1")
 
 
-def _sqlite_on_begin(conn):
+def _sqlite_on_begin(conn: sqlalchemy.Connection):
     # emit our own BEGIN
     conn.exec_driver_sql("BEGIN")
 
