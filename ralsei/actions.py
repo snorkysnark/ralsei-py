@@ -1,6 +1,5 @@
 from typing import Iterable
 from sqlalchemy import inspect
-from ralsei.connection import SqlLike
 
 from ralsei.context import ConnectionContext, Connection
 from ralsei.templates import Table, ColumnRendered, SqlalchemyEnvironment
