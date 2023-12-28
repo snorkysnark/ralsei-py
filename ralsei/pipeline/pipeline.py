@@ -42,7 +42,7 @@ class Pipeline(ABC):
         return OutputOf(
             self,
             [
-                TreePath(*path.split(".")) if isinstance(path, str) else path
+                TreePath.parse(path) if isinstance(path, str) else path
                 for path in task_paths
             ],
         )
