@@ -3,8 +3,8 @@
 .pdm-python
 __pypackages__/
 
-dist/
-site/
-console/
+/dist/
+/site/
+/console/
 
 ralsei_test.sqlite
