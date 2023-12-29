@@ -7,7 +7,7 @@ from ralsei.pipeline import Pipeline
 from ralsei.context import EngineContext
 from .typer_merge import TyperMerge
 
-POSITONAL_OPTIONAL_ARG_ERROR = """\
+POSITONAL_ARGS_ERROR = """\
 All pipeline constructor args must be annotated as Typer CLI Options.
 See: https://typer.tiangolo.com/tutorial/options/help/"""
 
@@ -28,7 +28,7 @@ class Ralsei:
             self._pipeline_constructor = lambda: pipeline_constructor
         else:
             if not check_only_optional_args(pipeline_constructor):
-                raise ValueError(POSITONAL_OPTIONAL_ARG_ERROR)
+                raise ValueError(POSITONAL_ARGS_ERROR)
 
             self._pipeline_constructor = pipeline_constructor
 
