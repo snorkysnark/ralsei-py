@@ -113,7 +113,13 @@ class SqlEnvironment(jinja2.Environment):
             "join": join,
             "identifier": Identifier,
         }
-        self.globals = {"joiner": joiner, "Column": Column, "dialect": dialect_info}
+        self.globals = {
+            "range": range,
+            "dict": dict,
+            "joiner": joiner,
+            "Column": Column,
+            "dialect": dialect_info,
+        }
 
         self.add_extension(SplitTag)
 
