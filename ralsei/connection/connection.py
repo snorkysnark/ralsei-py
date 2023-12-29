@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING, Any, Optional, Iterable, Self
 import sqlalchemy
 from sqlalchemy import URL, event
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
+from contextlib import AbstractContextManager
+
+from .length_hint import execute_with_length_hint
 
 if TYPE_CHECKING:
     import sqlite3
@@ -59,3 +62,11 @@ class Connection(sqlalchemy.Connection):
 
     def __enter__(self) -> Self:
         return self
+
+    def execute_with_length_hint(
+        self,
+        statement: sqlalchemy.Executable,
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+        yield_per: Optional[int] = None,
+    ) -> AbstractContextManager[Iterable[sqlalchemy.Row[Any]]]:
+        return execute_with_length_hint(self, statement, parameters, yield_per)

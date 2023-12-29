@@ -44,11 +44,11 @@ class ConnectionContext:
         self._jinja = environment
 
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         return self._conn
 
     @property
-    def jinja(self):
+    def jinja(self) -> SqlalchemyEnvironment:
         return self._jinja
 
     def render_execute(

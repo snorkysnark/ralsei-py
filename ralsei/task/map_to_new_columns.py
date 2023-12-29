@@ -17,6 +17,7 @@ from .common import (
     Identifier,
     actions,
     expect_optional,
+    track,
 )
 
 
@@ -29,11 +30,13 @@ class MapToNewColumns(TaskDef):
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)
+    yield_per: Optional[int] = None
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
             self._table = env.resolve(this.table)
             self._fn = this.fn
+            self._yield_per = this.yield_per
 
             columns_rendered = [
                 column.render(env.text, table=self._table, **this.params)
@@ -98,13 +101,17 @@ class MapToNewColumns(TaskDef):
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)
 
-            for input_row in map(
-                lambda row: row._asdict(), ctx.connection.execute(self._select)
-            ):
-                ctx.connection.execute(self._update, self._fn(**input_row))
+            with ctx.connection.execute_with_length_hint(
+                self._select, yield_per=self._yield_per
+            ) as result:
+                for input_row in map(
+                    lambda row: row._asdict(),
+                    track(result, description="Task progress..."),
+                ):
+                    ctx.connection.execute(self._update, self._fn(**input_row))
 
-                if self._commit_each:
-                    ctx.connection.commit()
+                    if self._commit_each:
+                        ctx.connection.commit()
 
         def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)

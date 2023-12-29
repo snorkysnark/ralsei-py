@@ -22,6 +22,7 @@ from .common import (
     ToSql,
     actions,
     expect_optional,
+    track,
 )
 
 
@@ -42,11 +43,13 @@ class MapToNewTable(TaskDef):
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)
+    yield_per: Optional[int] = None
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlalchemyEnvironment) -> None:
             self._table = this.table
             self._fn = this.fn
+            self._yield_per = this.yield_per
 
             source_table = env.resolve(this.source_table)
 
@@ -160,10 +163,13 @@ class MapToNewTable(TaskDef):
             if self._marker_scripts:
                 self._marker_scripts.add_marker(ctx)
 
-            def iter_input_rows():
-                if self._select is not None:
+            def iter_input_rows(select: TextClause):
+                with ctx.connection.execute_with_length_hint(
+                    select, yield_per=self._yield_per
+                ) as result:
                     for input_row in map(
-                        lambda row: row._asdict(), ctx.connection.execute(self._select)
+                        lambda row: row._asdict(),
+                        track(result, description="Task progress..."),
                     ):
                         yield input_row
 
@@ -172,10 +178,10 @@ class MapToNewTable(TaskDef):
                                 self._marker_scripts.set_marker, input_row
                             )
                             ctx.connection.commit()
-                else:
-                    yield {}
 
-            for input_row in iter_input_rows():
+            for input_row in (
+                Maybe.from_optional(self._select).map(iter_input_rows).value_or([{}])
+            ):
                 for output_row in self._fn(**input_row):
                     ctx.connection.execute(self._insert, output_row)
 
