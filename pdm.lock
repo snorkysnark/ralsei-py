@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:4202213f1d5752d88d0427b0c6f31955fe2d0cde4ef3bdf397d319935add7b18"
+content_hash = "sha256:3c91c08f1e7259337a685c15249b016bffeefd81c47e359fe604841f9592e4c4"
 
 [[package]]
 name = "babel"
@@ -253,15 +253,6 @@ summary = "Markdown URL utilities"
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
-]
-
-[[package]]
-name = "merge-args"
-version = "0.1.5"
-summary = "Merge signatures of two functions with Advanced Hackery."
-files = [
-    {file = "merge_args-0.1.5-py2.py3-none-any.whl", hash = "sha256:f296a2dd9156dd055e3f540f0fb5784b94933457a4e0e8d0031a763c26bf24a8"},
-    {file = "merge_args-0.1.5.tar.gz", hash = "sha256:ad37e6c4c7f1eadda5a0564b26ca7d56f8a37f232f5c5c46f9ef93d352757c23"},
 ]
 
 [[package]]
