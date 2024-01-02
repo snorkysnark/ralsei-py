@@ -1,12 +1,18 @@
 import click
+import typer
 from click.utils import _detect_program_name
 from rich_click import RichGroup, RichCommand, rich_config, RichHelpConfiguration
 from rich import traceback
-from typing import Callable, Sequence, overload
+from typing import Any, Callable, Self, Sequence, cast, overload
 
 from ralsei.pipeline import Pipeline
 from ralsei.context import EngineContext
 from ralsei.console import console
+
+
+POSITONAL_ARGS_ERROR = """\
+All pipeline constructor args must be annotated as Typer CLI Options.
+See: https://typer.tiangolo.com/tutorial/options/help/"""
 
 
 def extend_params(
@@ -40,7 +46,7 @@ class Ralsei:
     def __init__(
         self,
         pipeline_source: Callable[..., Pipeline],
-        custom_cli_options: list[click.Option] = [],
+        custom_cli_options: Sequence[click.Option] = [],
     ) -> None:
         ...
 
@@ -51,7 +57,7 @@ class Ralsei:
     def __init__(
         self,
         pipeline_source: Callable[..., Pipeline] | Pipeline,
-        custom_cli_options: list[click.Option] = [],
+        custom_cli_options: Sequence[click.Option] = [],
     ) -> None:
         if isinstance(pipeline_source, Pipeline):
             self._pipeline_constructor = lambda: pipeline_source
@@ -59,6 +65,19 @@ class Ralsei:
         else:
             self._pipeline_constructor = pipeline_source
             self._custom_cli_options = custom_cli_options
+
+    @classmethod
+    def from_typer(cls, typer_callable: Callable[..., Any]) -> Self:
+        typer_app = typer.Typer(add_help_option=False, add_completion=False)
+        typer_app.command()(typer_callable)
+        command = typer.main.get_command(typer_app)
+
+        assert command.callback, "Generated command is missing a callback"
+        for param in command.params:
+            if not isinstance(param, click.Option):
+                raise ValueError(POSITONAL_ARGS_ERROR)
+
+        return cls(command.callback, cast(Sequence[click.Option], command.params))
 
     def run(self):
         @rich_config(
