@@ -4,6 +4,7 @@ from click.utils import _detect_program_name
 from rich_click import RichGroup, RichCommand, rich_config, RichHelpConfiguration
 from rich import traceback
 from typing import Any, Callable, Self, Sequence, cast, overload
+import itertools
 
 from ralsei.pipeline import Pipeline
 from ralsei.context import EngineContext
@@ -14,11 +15,34 @@ All pipeline constructor args must be annotated as Typer CLI Options.
 See: https://typer.tiangolo.com/tutorial/options/help/"""
 
 
+def get_existing_names(params: Sequence[click.Parameter]) -> tuple[set[str], set[str]]:
+    existing_names = set()
+    existing_opts = set()
+    for param in params:
+        if param.name:
+            existing_names.add(param.name)
+        for opt in param.opts:
+            existing_opts.add(opt)
+        for opt in param.secondary_opts:
+            existing_opts.add(opt)
+
+    return existing_names, existing_opts
+
+
 def extend_params(
     extra_params: Sequence[click.Parameter],
 ) -> Callable[[click.Command], click.Command]:
     def decorator(cmd: click.Command) -> click.Command:
-        cmd.params.extend(extra_params)
+        existing_names, existing_opts = get_existing_names(cmd.params)
+        for param in extra_params:
+            if param.name and param.name in existing_names:
+                raise ValueError(f"parameter name {param.name} already occupied")
+            for opt in itertools.chain(param.opts, param.secondary_opts):
+                if opt in existing_opts:
+                    raise ValueError(f"option name {opt} already occupied")
+
+            cmd.params.append(param)
+
         return cmd
 
     return decorator
