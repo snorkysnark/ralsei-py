@@ -7,7 +7,6 @@ from typing import Any, Callable, Self, Sequence, cast, overload
 
 from ralsei.pipeline import Pipeline
 from ralsei.context import EngineContext
-from ralsei.console import console
 
 
 POSITONAL_ARGS_ERROR = """\
@@ -46,7 +45,6 @@ def build_cli(
     custom_options: Sequence[click.Option],
 ) -> click.Group:
     @rich_config(
-        console=console,
         help_config=RichHelpConfiguration(
             option_groups=create_option_group_settings(["run"], custom_options)
         ),
@@ -112,7 +110,7 @@ class Ralsei:
         return cls(command.callback, cast(Sequence[click.Option], command.params))
 
     def run(self):
-        traceback.install(console=console, show_locals=True)
+        traceback.install(show_locals=True)
         self.cli()
 
 
