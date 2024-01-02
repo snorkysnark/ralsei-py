@@ -41,6 +41,36 @@ def create_option_group_settings(
     }
 
 
+def build_cli(
+    pipeline_constructor: Callable[..., Pipeline],
+    custom_options: Sequence[click.Option],
+) -> click.Group:
+    @rich_config(
+        console=console,
+        help_config=RichHelpConfiguration(
+            option_groups=create_option_group_settings(["run"], custom_options)
+        ),
+    )
+    @click.group(
+        cls=RichGroup, context_settings=dict(help_option_names=["-h", "--help"])
+    )
+    def cli():
+        pass
+
+    @extend_params(custom_options)
+    @click.option("--db", "-d", help="sqlalchemy database url", required=True)
+    @cli.command("run", cls=RichCommand)
+    def run_cmd(db: str, *args, **kwargs):
+        pipeline = pipeline_constructor(*args, **kwargs)
+        engine = EngineContext.create(db)
+        dag = pipeline.build_dag(engine.jinja)
+
+        with engine.connect() as ctx:
+            dag.run(ctx)
+
+    return cli
+
+
 class Ralsei:
     @overload
     def __init__(
@@ -66,6 +96,8 @@ class Ralsei:
             self._pipeline_constructor = pipeline_source
             self._custom_cli_options = custom_cli_options
 
+        self.cli = build_cli(self._pipeline_constructor, self._custom_cli_options)
+
     @classmethod
     def from_typer(cls, typer_callable: Callable[..., Any]) -> Self:
         typer_app = typer.Typer(add_help_option=False, add_completion=False)
@@ -80,33 +112,8 @@ class Ralsei:
         return cls(command.callback, cast(Sequence[click.Option], command.params))
 
     def run(self):
-        @rich_config(
-            console=console,
-            help_config=RichHelpConfiguration(
-                option_groups=create_option_group_settings(
-                    ["run"], self._custom_cli_options
-                )
-            ),
-        )
-        @click.group(
-            cls=RichGroup, context_settings=dict(help_option_names=["-h", "--help"])
-        )
-        def cli():
-            pass
-
-        @extend_params(self._custom_cli_options)
-        @click.option("--db", "-d", help="sqlalchemy database url", required=True)
-        @cli.command("run", cls=RichCommand)
-        def run_cmd(db: str, *args, **kwargs):
-            pipeline = self._pipeline_constructor(*args, **kwargs)
-            engine = EngineContext.create(db)
-            dag = pipeline.build_dag(engine.jinja)
-
-            with engine.connect() as ctx:
-                dag.run(ctx)
-
         traceback.install(console=console, show_locals=True)
-        cli()
+        self.cli()
 
 
 __all__ = ["Ralsei"]
