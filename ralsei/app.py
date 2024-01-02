@@ -1,7 +1,5 @@
 import click
 import typer
-from click.utils import _detect_program_name
-from rich_click import RichGroup, RichCommand, rich_config, RichHelpConfiguration
 from rich import traceback
 from typing import Any, Callable, Self, Sequence, cast, overload
 import itertools
@@ -48,40 +46,17 @@ def extend_params(
     return decorator
 
 
-def create_option_group_settings(
-    command_names: list[str], custom_options: Sequence[click.Parameter]
-):
-    prog_name = _detect_program_name()
-
-    return {
-        f"{prog_name} {cmd}": [
-            {
-                "name": "Custom options",
-                "options": [param.opts[0] for param in custom_options if param.opts],
-            }
-        ]
-        for cmd in command_names
-    }
-
-
 def build_cli(
     pipeline_constructor: Callable[..., Pipeline],
     custom_options: Sequence[click.Option],
 ) -> click.Group:
-    @rich_config(
-        help_config=RichHelpConfiguration(
-            option_groups=create_option_group_settings(["run"], custom_options)
-        ),
-    )
-    @click.group(
-        cls=RichGroup, context_settings=dict(help_option_names=["-h", "--help"])
-    )
+    @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
     def cli():
         pass
 
     @extend_params(custom_options)
     @click.option("--db", "-d", help="sqlalchemy database url", required=True)
-    @cli.command("run", cls=RichCommand)
+    @cli.command("run")
     def run_cmd(db: str, *args, **kwargs):
         pipeline = pipeline_constructor(*args, **kwargs)
         engine = EngineContext.create(db)
