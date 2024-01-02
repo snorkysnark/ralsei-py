@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:3c91c08f1e7259337a685c15249b016bffeefd81c47e359fe604841f9592e4c4"
+content_hash = "sha256:743a5dbbb04a8b5708d65d27ba848ae353136bef66c9d5a4b7c69bb842111803"
 
 [[package]]
 name = "babel"
@@ -651,6 +651,21 @@ dependencies = [
 files = [
     {file = "rich-13.5.2-py3-none-any.whl", hash = "sha256:146a90b3b6b47cac4a73c12866a499e9817426423f57c5a66949c086191a8808"},
     {file = "rich-13.5.2.tar.gz", hash = "sha256:fb9d6c0a0f643c99eed3875b5377a184132ba9be4d61516a55273d3554d75a39"},
+]
+
+[[package]]
+name = "rich-click"
+version = "1.7.2"
+requires_python = ">=3.7"
+summary = "Format click help output nicely with rich"
+dependencies = [
+    "click>=7",
+    "rich>=10.7.0",
+    "typing-extensions",
+]
+files = [
+    {file = "rich-click-1.7.2.tar.gz", hash = "sha256:22f93439a3d65f4a04e07cd584f4d01d132d96899766af92ed287618156abbe2"},
+    {file = "rich_click-1.7.2-py3-none-any.whl", hash = "sha256:a42bcdcb8696c4ca7a3b1a39e1aba3d2cb64ad00690b4c022fdcb2cbccebc3fc"},
 ]
 
 [[package]]
