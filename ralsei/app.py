@@ -1,9 +1,9 @@
 import click
 from rich import traceback
-from typing import Callable, Sequence, overload
+from typing import Any, Callable, Optional, Sequence, overload
 import itertools
 
-from ralsei.pipeline import Pipeline
+from ralsei.pipeline import Pipeline, TreePath
 from ralsei.context import EngineContext
 
 
@@ -40,6 +40,23 @@ def extend_params(
     return decorator
 
 
+class TreePathType(click.ParamType):
+    name = "treepath"
+
+    def convert(
+        self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]
+    ) -> Any:
+        if isinstance(value, TreePath):
+            return value
+        elif isinstance(value, str):
+            return TreePath.parse(value)
+        else:
+            self.fail("Must be of type str or TreePath")
+
+
+TYPE_TREEPATH = TreePathType()
+
+
 def build_cli(
     pipeline_constructor: Callable[..., Pipeline],
     custom_options: Sequence[click.Option],
@@ -50,14 +67,22 @@ def build_cli(
 
     @extend_params(custom_options)
     @click.option("--db", "-d", help="sqlalchemy database url", required=True)
+    @click.option(
+        "--from",
+        "start_from",
+        help="run this task and its dependencies",
+        type=TYPE_TREEPATH,
+        multiple=True,
+    )
     @cli.command("run")
-    def run_cmd(db: str, *args, **kwargs):
+    def run_cmd(db: str, start_from: Optional[list[TreePath]], *args, **kwargs):
         pipeline = pipeline_constructor(*args, **kwargs)
         engine = EngineContext.create(db)
         dag = pipeline.build_dag(engine.jinja)
+        sequence = dag.topological_sort(start_from=start_from)
 
         with engine.connect() as ctx:
-            dag.run(ctx)
+            sequence.run(ctx)
 
     return cli
 

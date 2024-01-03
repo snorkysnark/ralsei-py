@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import defaultdict
 from graphviz import Digraph
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ralsei.context import ConnectionContext
 from .path import TreePath
@@ -30,8 +30,8 @@ class TopologicalSort:
 
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
 
-    def run(self) -> TaskSequence:
-        for path in self.dag.tasks:
+    def run(self, start_from: Optional[list[TreePath]] = None) -> TaskSequence:
+        for path in start_from or self.dag.tasks:
             if not self.visited[path]:
                 self._visit_recursive(path)
 
@@ -53,11 +53,10 @@ class DAG:
             for parent, children in self.relations.items()
         }
 
-    def topological_sort(self) -> TaskSequence:
-        return TopologicalSort(self).run()
-
-    def run(self, ctx: ConnectionContext):
-        self.topological_sort().run(ctx)
+    def topological_sort(
+        self, start_from: Optional[list[TreePath]] = None
+    ) -> TaskSequence:
+        return TopologicalSort(self).run(start_from)
 
     def digraph(self) -> Digraph:
         dot = Digraph()
