@@ -3,6 +3,7 @@
 .pdm-python
 __pypackages__/
 
+/docs/_build
 /dist/
 /site/
 /console/

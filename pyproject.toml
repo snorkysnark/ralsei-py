@@ -10,7 +10,6 @@ dependencies = [
     "sqlalchemy>=2.0.19",
     "returns>=0.22.0",
     "graphviz>=0.20.1",
-    "typer>=0.9.0",
     "click>=8.1.7",
 ]
 requires-python = ">=3.10"
@@ -21,11 +20,10 @@ license = {text = "MIT"}
 [tool.pdm.dev-dependencies]
 dev = [
     "pytest>=7.1.2",
-    "mkdocstrings[python]>=0.22.0",
-    "mkdocs-material>=9.2.3",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-literate-nav>=0.6.0",
     "psycopg2>=2.9.9",
+    "sphinx>=7.2.6",
+    "sphinx-autobuild>=2021.3.14",
+    "sphinx-immaterial>=0.11.10",
 ]
 
 [build-system]
