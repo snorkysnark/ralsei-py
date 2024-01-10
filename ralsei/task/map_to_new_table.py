@@ -109,7 +109,7 @@ class MapToNewTable(TaskDef):
                 if this.is_done_column:
                     if not source_table:
                         raise ValueError(
-                            "Must provide id_fields if using is_done_column"
+                            "Cannot create is_done_column when source_table is None"
                         )
 
                     id_fields = expect_optional(
@@ -119,7 +119,7 @@ class MapToNewTable(TaskDef):
                             .map(lambda names: [IdColumn(name) for name in names])
                             .value_or(None)
                         ),
-                        "Cannot create is_done_column when source_table is None",
+                        ValueError("Must provide id_fields if using is_done_column"),
                     )
                     is_done_column = ColumnRendered(
                         this.is_done_column, "BOOL DEFAULT FALSE"

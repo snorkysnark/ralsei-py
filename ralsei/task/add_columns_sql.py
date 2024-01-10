@@ -48,7 +48,7 @@ class AddColumnsSql(TaskDef):
 
             self._sql, template_columns = render_script()
             columns = expect_optional(
-                this.columns or template_columns, "Columns not specified"
+                this.columns or template_columns, ValueError("Columns not specified")
             )
 
             rendered_columns = [

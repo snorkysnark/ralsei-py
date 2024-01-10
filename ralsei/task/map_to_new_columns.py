@@ -57,7 +57,7 @@ class MapToNewColumns(TaskDef):
                     .map(lambda names: [IdColumn(name) for name in names])
                     .value_or(None)
                 ),
-                "Must provide id_fields if using is_done_column",
+                ValueError("Must provide id_fields if using is_done_column"),
             )
             self._select = env.render(
                 this.select,
