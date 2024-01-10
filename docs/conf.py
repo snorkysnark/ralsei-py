@@ -6,6 +6,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.joinpath("./extensions")))
+
 project = "ralsei"
 copyright = "2024, snorkysnark"
 author = "snorkysnark"
@@ -13,7 +18,12 @@ author = "snorkysnark"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx_immaterial", "sphinx.ext.autodoc"]
+extensions = [
+    "sphinx_immaterial",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "dataclass_signature_fix",
+]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -49,3 +59,6 @@ html_theme_options = {
 
 html_css_files = ["css/columns.css"]
 html_static_path = ["_static"]
+
+# -- autodoc -----------------------------------------------------------------
+autodoc_docstring_signature = False
