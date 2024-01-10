@@ -12,7 +12,7 @@ from .common import (
     ConnectionContext,
     OneToMany,
     Table,
-    TableSource,
+    ResolveLater,
     IdColumn,
     ValueColumnBase,
     ColumnRendered,
@@ -39,7 +39,7 @@ class MapToNewTable(TaskDef):
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
     select: Optional[str] = None
-    source_table: Optional[TableSource] = None
+    source_table: Optional[ResolveLater[Table]] = None
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)

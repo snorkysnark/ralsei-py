@@ -12,6 +12,8 @@ from sqlalchemy import TextClause, text
 
 from .adapter import SqlAdapter
 from .dialect import DialectInfo
+from ralsei.pipeline.resolver import DependencyResolver
+from ralsei.pipeline.outputof import ResolveLater
 
 if TYPE_CHECKING:
     from .environment import (
@@ -19,7 +21,6 @@ if TYPE_CHECKING:
         SqlTemplate,
         SqlTemplateModule,
     )
-    from ..pipeline import DependencyResolver, OutputOf
 
 
 class SqlalchemyTemplateModule:
@@ -88,7 +89,7 @@ class SqlalchemyEnvironment:
         return list(map(text, self._inner.render_split(source, *args, **kwargs)))
 
     @overload
-    def resolve(self, value: T | "OutputOf") -> T:
+    def resolve(self, value: ResolveLater[T]) -> T:
         ...
 
     @overload
@@ -98,5 +99,5 @@ class SqlalchemyEnvironment:
     def resolve(self, value: Any) -> Any:
         return self._inner.resolve(value)
 
-    def with_resolver(self, resolver: "DependencyResolver"):
+    def with_resolver(self, resolver: DependencyResolver):
         return self._inner.with_resolver(resolver)

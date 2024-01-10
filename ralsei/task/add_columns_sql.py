@@ -7,7 +7,8 @@ from .common import (
     TaskDef,
     TaskImpl,
     SqlLike,
-    TableSource,
+    Table,
+    ResolveLater,
     ColumnBase,
     SqlalchemyEnvironment,
     ConnectionContext,
@@ -19,7 +20,7 @@ from .common import (
 @dataclass
 class AddColumnsSql(TaskDef):
     sql: str | list[str]
-    table: TableSource
+    table: ResolveLater[Table]
     columns: Optional[Sequence[ColumnBase]] = None
     params: dict = field(default_factory=dict)
 

@@ -13,7 +13,8 @@ from .common import (
     ValueColumnBase,
     ValueColumnRendered,
     IdColumn,
-    TableSource,
+    Table,
+    ResolveLater,
     Identifier,
     actions,
     expect_optional,
@@ -24,7 +25,7 @@ from .common import (
 @dataclass
 class MapToNewColumns(TaskDef):
     select: str
-    table: TableSource
+    table: ResolveLater[Table]
     columns: Sequence[ValueColumnBase]
     fn: OneToOne
     is_done_column: Optional[str] = None

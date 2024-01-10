@@ -5,11 +5,12 @@ from typing import Any, TYPE_CHECKING, Optional
 
 from .dag import DAG
 from .path import TreePath
+from .outputof import OutputOf
 
 if TYPE_CHECKING:
     from ..task import Task
     from ..templates import SqlalchemyEnvironment
-    from .pipeline import Pipeline, FlattenedPipeline, OutputOf
+    from .pipeline import Pipeline, FlattenedPipeline
 
 
 @dataclass
@@ -77,7 +78,7 @@ class DependencyResolver:
             TreePath(*self._graph.definition.pipeline_paths[pipeline], *relative_path),
         )
 
-    def resolve(self, env: "SqlalchemyEnvironment", outputof: "OutputOf") -> Any:
+    def resolve(self, env: "SqlalchemyEnvironment", outputof: OutputOf) -> Any:
         task_paths = iter(outputof.task_paths)
         first_output = self.resolve_relative_path(
             env, outputof.pipeline, next(task_paths)

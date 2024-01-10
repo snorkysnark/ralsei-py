@@ -1,12 +1,11 @@
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional
 
 from ..adapter import ToSql
 
 if TYPE_CHECKING:
     from ..environment import SqlEnvironment
-    from ralsei.pipeline import OutputOf
 
 
 @dataclass
@@ -48,6 +47,3 @@ class Placeholder(ToSql):
 
     def to_sql(self, env: "SqlEnvironment") -> str:
         return f":{self.name}"
-
-
-TableSource = Union[Table, "OutputOf"]

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Iterable,
@@ -25,9 +24,8 @@ from .sqlalchemy import SqlalchemyEnvironment
 from .extensions import SplitTag, SplitMarker
 from .compiler import SqlCodeGenerator
 from .dialect import DialectInfo
-
-if TYPE_CHECKING:
-    from ..pipeline import DependencyResolver, OutputOf
+from ralsei.pipeline.resolver import DependencyResolver
+from ralsei.pipeline.outputof import OutputOf, ResolveLater
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -75,7 +73,7 @@ class SqlEnvironment(jinja2.Environment):
     def __init__(self, dialect_info: "DialectInfo"):
         super().__init__(undefined=StrictUndefined)
 
-        self._dependency_resolver: Optional["DependencyResolver"] = None
+        self._dependency_resolver: Optional[DependencyResolver] = None
 
         self._adapter = create_adapter_for_env(self)
         self._dialect = dialect_info
@@ -175,7 +173,7 @@ class SqlEnvironment(jinja2.Environment):
         return self.from_string(source).render_split(*args, **kwargs)
 
     @overload
-    def resolve(self, value: T | "OutputOf") -> T:
+    def resolve(self, value: ResolveLater[T]) -> T:
         ...
 
     @overload
@@ -183,8 +181,6 @@ class SqlEnvironment(jinja2.Environment):
         ...
 
     def resolve(self, value: Any) -> Any:
-        from ..pipeline import OutputOf
-
         if not isinstance(value, OutputOf):
             return value
         elif self._dependency_resolver:
@@ -198,7 +194,7 @@ class SqlEnvironment(jinja2.Environment):
         return super().getattr(self.resolve(obj), attribute)
 
     @contextmanager
-    def with_resolver(self, resolver: "DependencyResolver"):
+    def with_resolver(self, resolver: DependencyResolver):
         old_resolver = self._dependency_resolver
         self._dependency_resolver = resolver
 

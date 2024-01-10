@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Mapping, Union
 
 from .resolver import DependencyResolver
-from .dag import TreePath, DAG
+from .path import TreePath
+from .dag import DAG
+from .outputof import OutputOf
 
 if TYPE_CHECKING:
     from ..task import TaskDef
@@ -21,16 +23,6 @@ class ScopedTaskDef:
 class FlattenedPipeline:
     task_definitions: dict[TreePath, ScopedTaskDef]
     pipeline_paths: dict[Pipeline, TreePath]
-
-
-@dataclass
-class OutputOf:
-    pipeline: Pipeline
-    task_paths: list[TreePath]
-
-    def __post_init__(self):
-        if len(self.task_paths) == 0:
-            raise ValueError("Must name at least one task")
 
 
 class Pipeline(ABC):

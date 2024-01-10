@@ -4,7 +4,7 @@ from ralsei import (
     Pipeline,
     MapToNewTable,
     Table,
-    TableSource,
+    ResolveLater,
     ValueColumn,
     MapToNewColumns,
     compose_one,
@@ -95,7 +95,7 @@ def test_graph(ctx: ConnectionContext):
 
 
 class ChildPipeline(Pipeline):
-    def __init__(self, source_tables: list[TableSource]) -> None:
+    def __init__(self, source_tables: list[ResolveLater[Table]]) -> None:
         self.source_tables = source_tables
 
     def create_tasks(self):

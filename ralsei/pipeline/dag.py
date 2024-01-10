@@ -4,7 +4,6 @@ from collections import defaultdict
 from graphviz import Digraph
 from typing import TYPE_CHECKING, Optional
 
-from ralsei.context import ConnectionContext
 from .path import TreePath
 from .sequence import NamedTask, TaskSequence
 
@@ -73,4 +72,4 @@ class DAG:
         return dot
 
 
-__all__ = ["DAG", "TreePath", "NamedTask"]
+__all__ = ["DAG"]
