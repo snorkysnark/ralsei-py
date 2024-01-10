@@ -4,14 +4,6 @@ ralsei.task package
 Submodules
 ----------
 
-ralsei.task.add\_columns\_sql module
-------------------------------------
-
-.. automodule:: ralsei.task.add_columns_sql
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 ralsei.task.base module
 -----------------------
 
@@ -36,10 +28,10 @@ ralsei.task.create\_table\_sql module
    :undoc-members:
    :show-inheritance:
 
-ralsei.task.map\_to\_new\_columns module
-----------------------------------------
+ralsei.task.add\_columns\_sql module
+------------------------------------
 
-.. automodule:: ralsei.task.map_to_new_columns
+.. automodule:: ralsei.task.add_columns_sql
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,6 +40,14 @@ ralsei.task.map\_to\_new\_table module
 --------------------------------------
 
 .. automodule:: ralsei.task.map_to_new_table
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+ralsei.task.map\_to\_new\_columns module
+----------------------------------------
+
+.. automodule:: ralsei.task.map_to_new_columns
    :members:
    :undoc-members:
    :show-inheritance:
