@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from ralsei.context import ConnectionContext
 from ralsei.console import console, track
-from ralsei.runnable import Runnable
 
 from .path import TreePath
 
@@ -21,7 +20,7 @@ class NamedTask:
         return str(self.path)
 
 
-class TaskSequence(Runnable):
+class TaskSequence:
     def __init__(self, steps: list[NamedTask]) -> None:
         self.steps = steps
 

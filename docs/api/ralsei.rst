@@ -40,14 +40,6 @@ ralsei.context module
    :undoc-members:
    :show-inheritance:
 
-ralsei.runnable module
-----------------------
-
-.. automodule:: ralsei.runnable
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 ralsei.wrappers module
 ----------------------
 
