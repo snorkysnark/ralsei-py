@@ -62,8 +62,55 @@ html_static_path = ["_static"]
 # -- autodoc -----------------------------------------------------------------
 autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
+autodoc2_hidden_objects = ["inherited", "private"]
+autodoc2_replace_annotations = [
+    (
+        "ralsei.wrappers.OneToOne",
+        "collections.abc.Callable[..., dict[str, typing.Any]]",
+    ),
+    (
+        "ralsei.wrappers.OneToMany",
+        "collections.abc.Callable[..., collections.abc.Iterator[dict[str, typing.Any]]]",
+    ),
+    ("ralsei.graph.ResolveLater", "ralsei.graph.OutputOf | "),
+    (
+        "ralsei.task.base.SqlLike",
+        "sqlalchemy.sql.expression.TextClause | list[sqlalchemy.sql.expression.TextClause]",
+    ),
+    (
+        "sqlalchemy.TextClause",
+        "sqlalchemy.sql.expression.TextClause",
+    ),
+    (
+        "sqlalchemy.Executable",
+        "sqlalchemy.sql.expression.Executable",
+    ),
+    (
+        "sqlalchemy.CursorResult",
+        "sqlalchemy.engine.CursorResult",
+    ),
+    (
+        "sqlalchemy.Row",
+        "sqlalchemy.engine.Row",
+    ),
+    (
+        "sqlalchemy.Engine",
+        "sqlalchemy.engine.Engine",
+    ),
+    (
+        "sqlalchemy.URL",
+        "sqlalchemy.engine.URL",
+    ),
+]
+autodoc2_replace_bases = [
+    (
+        "sqlalchemy.Connection",
+        "sqlalchemy.engine.Connection",
+    ),
+]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
+    "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
 }

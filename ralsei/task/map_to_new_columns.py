@@ -6,7 +6,7 @@ from returns.maybe import Maybe
 from ralsei.console import track
 
 from .base import TaskImpl, TaskDef, SqlLike
-from ralsei.pipeline import ResolveLater
+from ralsei.graph import ResolveLater
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -69,7 +69,7 @@ class MapToNewColumns(TaskDef):
                 ),
                 **this.params,
             )
-            self._add_columns = db_actions.add_columns(
+            self._add_columns = db_actions.AddColumns(
                 env,
                 self._table,
                 columns_rendered,
@@ -85,7 +85,7 @@ class MapToNewColumns(TaskDef):
                 columns=columns_rendered,
                 id_fields=id_fields,
             )
-            self._drop_columns = db_actions.drop_columns(
+            self._drop_columns = db_actions.DropColumns(
                 env,
                 self._table,
                 columns_rendered,

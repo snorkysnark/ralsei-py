@@ -12,7 +12,7 @@ from .types import (
 from .context import ConnectionContext, EngineContext
 from .wrappers import *
 from .task import CreateTableSql, AddColumnsSql, MapToNewTable, MapToNewColumns
-from .pipeline import Pipeline, ResolveLater, CyclicGraphError
+from .graph import Pipeline, ResolveLater, CyclicGraphError
 from .app import Ralsei
 
 __all__ = [

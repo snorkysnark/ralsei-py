@@ -26,7 +26,7 @@ from ._compiler import SqlCodeGenerator
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
     from ralsei.dialect import DialectInfo
-    from ralsei.pipeline import DependencyResolver, ResolveLater
+    from ralsei.graph import DependencyResolver, ResolveLater
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -185,7 +185,7 @@ class SqlEnvironment(jinja2.Environment):
         ...
 
     def resolve(self, value: Any) -> Any:
-        from ralsei.pipeline import OutputOf
+        from ralsei.graph import OutputOf
 
         if not isinstance(value, OutputOf):
             return value

@@ -13,7 +13,7 @@ from sqlalchemy import TextClause, text
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
     from ralsei.dialect import DialectInfo
-    from ralsei.pipeline import DependencyResolver, ResolveLater
+    from ralsei.graph import DependencyResolver, ResolveLater
 
 if TYPE_CHECKING:
     from .environment import (

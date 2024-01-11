@@ -29,7 +29,7 @@ def columns_exist(ctx: ConnectionContext, table: Table, columns: Iterable[str]) 
     return True
 
 
-class add_columns:
+class AddColumns:
     def __init__(
         self,
         env: SqlalchemyEnvironment,
@@ -62,7 +62,7 @@ class add_columns:
             ctx.connection.executescript(self.statements)
 
 
-class drop_columns:
+class DropColumns:
     def __init__(
         self,
         env: SqlalchemyEnvironment,
@@ -70,7 +70,7 @@ class drop_columns:
         columns: Iterable[ColumnRendered],
         if_exists: bool = False,
     ) -> None:
-        self.statements = [
+        self.statements: list[TextClause] = [
             env.render(
                 """\
                 ALTER TABLE {{table}}
@@ -95,4 +95,4 @@ class drop_columns:
             ctx.connection.executescript(self.statements)
 
 
-__all__ = ["table_exists", "columns_exist", "add_columns", "drop_columns"]
+__all__ = ["table_exists", "columns_exist", "AddColumns", "DropColumns"]

@@ -3,7 +3,7 @@ from rich import traceback
 from typing import Any, Callable, Optional, Sequence, overload
 import itertools
 
-from ralsei.pipeline import Pipeline, TreePath
+from ralsei.graph import Pipeline, TreePath
 from ralsei.context import EngineContext
 
 

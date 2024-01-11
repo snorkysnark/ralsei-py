@@ -16,7 +16,7 @@ from ralsei.types import (
 )
 from ralsei.wrappers import OneToMany
 from ralsei import db_actions
-from ralsei.pipeline import ResolveLater
+from ralsei.graph import ResolveLater
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.sql_adapter import ToSql
 from ralsei.utils import expect_optional
@@ -27,9 +27,9 @@ from ralsei.console import track
 
 @dataclass
 class MarkerScripts:
-    add_marker: db_actions.add_columns
+    add_marker: db_actions.AddColumns
     set_marker: TextClause
-    drop_marker: db_actions.drop_columns
+    drop_marker: db_actions.DropColumns
 
 
 @dataclass
@@ -125,7 +125,7 @@ class MapToNewTable(TaskDef):
                     )
 
                     return MarkerScripts(
-                        db_actions.add_columns(
+                        db_actions.AddColumns(
                             env,
                             source_table,
                             [is_done_column],
@@ -140,7 +140,7 @@ class MapToNewTable(TaskDef):
                             is_done=is_done_column.identifier,
                             id_fields=id_fields,
                         ),
-                        db_actions.drop_columns(
+                        db_actions.DropColumns(
                             env,
                             source_table,
                             [is_done_column],

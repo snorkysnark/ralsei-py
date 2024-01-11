@@ -4,7 +4,7 @@ from typing import Any, Iterable, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
 from .base import TaskImpl, TaskDef, SqlLike
-from ralsei.pipeline import ResolveLater
+from ralsei.graph import ResolveLater
 from ralsei.types import Table, ColumnBase
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.utils import expect_optional
@@ -53,10 +53,10 @@ class AddColumnsSql(TaskDef):
             ]
             self._column_names = [col.name for col in rendered_columns]
 
-            self._add_columns = db_actions.add_columns(
+            self._add_columns = db_actions.AddColumns(
                 env, self._table, rendered_columns
             )
-            self._drop_columns = db_actions.drop_columns(
+            self._drop_columns = db_actions.DropColumns(
                 env, self._table, rendered_columns
             )
 

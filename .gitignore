@@ -4,6 +4,7 @@
 __pypackages__/
 
 /docs/_build
+/docs/apidocs
 /dist/
 /site/
 /console/
