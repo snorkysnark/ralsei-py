@@ -11,10 +11,42 @@ from ralsei import db_actions
 
 @dataclass
 class CreateTableSql(TaskDef):
+    """Runs a ``CREATE TABLE`` sql script
+
+    .. admonition:: Example
+
+        **unnest.sql**
+
+        .. code-block:: sql
+
+            CREATE TABLE {{table}}(
+                id SERIAL PRIMARY KEY,
+                name TEXT
+            );
+            {%-split-%}
+            INSERT INTO {{table}}(name)
+            SELECT json_array_elements_text(json->'names')
+            FROM {{sources}};
+
+        **pipeline.py**
+
+        .. code-block:: python
+
+            "unnest": CreateTableSql(
+                sql=Path("./unnest.sql").read_text(),
+                table=table_names,
+                params={"table": table_sources},
+            )
+    """
+
     sql: str | list[str]
+    """sql template string"""
     table: Table
+    """Table being created"""
     params: dict = field(default_factory=dict)
+    """parameters passed to the jinja template"""
     view: bool = False
+    """whether this is a ``VIEW`` instead of a ``TABLE``"""
 
     class Impl(TaskImpl):
         def __init__(self, this: CreateTableSql, env: SqlalchemyEnvironment) -> None:

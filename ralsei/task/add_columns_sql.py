@@ -14,10 +14,46 @@ from ralsei.context import ConnectionContext
 
 @dataclass
 class AddColumnsSql(TaskDef):
+    """Adds the specified Columns to an existing Table
+    and runs the SQL script to fill them with data
+
+    .. admonition:: Template
+
+        Environment variables: ``table``, ``**params``
+
+        Columns can be defined in the template itself,
+        using ``{% set columns = [...] %}``
+
+    .. admonition:: Example
+
+        **postprocess.sql**
+
+        .. code-block:: sql
+
+            {% set columns = [Column("name_upper", "TEXT")] -%}
+
+            UPDATE {{table}}
+            SET name_upper = UPPER(name);
+
+
+        **pipeline.py**
+
+        .. code-block:: python
+
+            "postprocess": AddColumnsSql(
+                sql=Path("./postprocess.sql").read_text(),
+                table=TABLE_people,
+            )
+    """
+
     sql: str | list[str]
+    """sql template string"""
     table: ResolveLater[Table]
+    """Table to add columns to"""
     columns: Optional[Sequence[ColumnBase]] = None
+    """these column definitions take precedence over those defined in the template"""
     params: dict = field(default_factory=dict)
+    """parameters passed to the jinja template"""
 
     class Impl(TaskImpl):
         def __init__(self, this: AddColumnsSql, env: SqlalchemyEnvironment) -> None:
