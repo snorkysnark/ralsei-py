@@ -1,8 +1,10 @@
 from typing import Iterable
 from sqlalchemy import inspect
+from sqlalchemy import TextClause
 
 from ralsei.context import ConnectionContext, Connection
-from ralsei.templates import Table, ColumnRendered, SqlalchemyEnvironment
+from ralsei.types import Table, ColumnRendered
+from ralsei.jinja import SqlalchemyEnvironment
 
 
 def _get_column_names(conn: Connection, table: Table):
@@ -35,7 +37,7 @@ class add_columns:
         columns: Iterable[ColumnRendered],
         if_not_exists: bool = False,
     ) -> None:
-        self.statements = [
+        self.statements: list[TextClause] = [
             env.render(
                 """\
             ALTER TABLE {{table}}

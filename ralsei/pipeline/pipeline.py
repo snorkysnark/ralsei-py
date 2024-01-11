@@ -9,8 +9,8 @@ from .dag import DAG
 from .outputof import OutputOf
 
 if TYPE_CHECKING:
-    from ..task import TaskDef
-    from ..templates import SqlalchemyEnvironment
+    from ralsei.task import TaskDef
+    from ralsei.jinja import SqlalchemyEnvironment
 
 
 @dataclass

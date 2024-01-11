@@ -2,10 +2,10 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ..adapter import ToSql
+from ralsei.sql_adapter import ToSql
 
 if TYPE_CHECKING:
-    from ..environment import SqlEnvironment
+    from ralsei.jinja.environment import SqlEnvironment
 
 
 @dataclass

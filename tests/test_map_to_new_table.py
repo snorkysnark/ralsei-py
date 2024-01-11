@@ -9,7 +9,7 @@ from ralsei import (
     compose,
     pop_id_fields,
 )
-from ralsei.actions import table_exists
+from ralsei.db_actions import table_exists
 
 from common.db_helper import get_rows
 

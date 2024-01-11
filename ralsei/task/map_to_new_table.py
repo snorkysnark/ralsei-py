@@ -4,33 +4,32 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
-from .common import (
-    TaskDef,
-    TaskImpl,
-    SqlLike,
-    SqlalchemyEnvironment,
-    ConnectionContext,
-    OneToMany,
+from .base import TaskDef, TaskImpl, SqlLike
+from ralsei.types import (
     Table,
-    ResolveLater,
-    IdColumn,
     ValueColumnBase,
-    ColumnRendered,
-    ValueColumnRendered,
+    IdColumn,
     Identifier,
+    ValueColumnRendered,
     Sql,
-    ToSql,
-    actions,
-    expect_optional,
-    track,
+    ColumnRendered,
 )
+from ralsei.wrappers import OneToMany
+from ralsei import db_actions
+from ralsei.pipeline import ResolveLater
+from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.sql_adapter import ToSql
+from ralsei.utils import expect_optional
+from ralsei import db_actions
+from ralsei.context import ConnectionContext
+from ralsei.console import track
 
 
 @dataclass
 class MarkerScripts:
-    add_marker: actions.add_columns
+    add_marker: db_actions.add_columns
     set_marker: TextClause
-    drop_marker: actions.drop_columns
+    drop_marker: db_actions.drop_columns
 
 
 @dataclass
@@ -126,7 +125,7 @@ class MapToNewTable(TaskDef):
                     )
 
                     return MarkerScripts(
-                        actions.add_columns(
+                        db_actions.add_columns(
                             env,
                             source_table,
                             [is_done_column],
@@ -141,7 +140,7 @@ class MapToNewTable(TaskDef):
                             is_done=is_done_column.identifier,
                             id_fields=id_fields,
                         ),
-                        actions.drop_columns(
+                        db_actions.drop_columns(
                             env,
                             source_table,
                             [is_done_column],
@@ -156,7 +155,7 @@ class MapToNewTable(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return actions.table_exists(ctx, self._table)
+            return db_actions.table_exists(ctx, self._table)
 
         def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._create_table)

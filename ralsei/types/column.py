@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING, Any
 from abc import ABC, abstractmethod
 
 from .primitives import Sql, Identifier
-from ..adapter import ToSql
+from ralsei.sql_adapter import ToSql
 
 if TYPE_CHECKING:
-    from ..environment import SqlEnvironment
+    from ralsei.jinja.environment import SqlEnvironment
 
 
 class ColumnBase(ABC):

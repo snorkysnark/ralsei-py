@@ -1,7 +1,7 @@
 import pytest
 from typing import Tuple
 from ralsei import Table, CreateTableSql, ConnectionContext
-from ralsei.actions import table_exists
+from ralsei.db_actions import table_exists
 from common.db_helper import get_rows
 
 

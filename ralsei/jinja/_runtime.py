@@ -1,7 +1,7 @@
 from typing import Any
 import jinja2.runtime
 
-from .types import Sql
+from ralsei.types import Sql
 
 
 class SqlMacro:

@@ -2,7 +2,7 @@ from __future__ import annotations
 import sqlalchemy
 from dataclasses import dataclass
 
-from .types import Sql
+from ralsei.types import Sql
 
 
 @dataclass()

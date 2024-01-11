@@ -3,23 +3,22 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
-from .common import (
-    TaskDef,
-    TaskImpl,
-    SqlLike,
-    SqlalchemyEnvironment,
-    ConnectionContext,
-    OneToOne,
-    ValueColumnBase,
-    ValueColumnRendered,
-    IdColumn,
+from ralsei.console import track
+
+from .base import TaskImpl, TaskDef, SqlLike
+from ralsei.pipeline import ResolveLater
+from ralsei.types import (
     Table,
-    ResolveLater,
+    ValueColumnBase,
+    IdColumn,
+    ValueColumnRendered,
     Identifier,
-    actions,
-    expect_optional,
-    track,
 )
+from ralsei.wrappers import OneToOne
+from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.utils import expect_optional
+from ralsei import db_actions
+from ralsei.context import ConnectionContext
 
 
 @dataclass
@@ -70,7 +69,7 @@ class MapToNewColumns(TaskDef):
                 ),
                 **this.params,
             )
-            self._add_columns = actions.add_columns(
+            self._add_columns = db_actions.add_columns(
                 env,
                 self._table,
                 columns_rendered,
@@ -86,7 +85,7 @@ class MapToNewColumns(TaskDef):
                 columns=columns_rendered,
                 id_fields=id_fields,
             )
-            self._drop_columns = actions.drop_columns(
+            self._drop_columns = db_actions.drop_columns(
                 env,
                 self._table,
                 columns_rendered,
@@ -97,7 +96,7 @@ class MapToNewColumns(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return actions.columns_exist(ctx, self._table, self._column_names)
+            return db_actions.columns_exist(ctx, self._table, self._column_names)
 
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)

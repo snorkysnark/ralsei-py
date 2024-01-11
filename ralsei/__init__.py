@@ -1,4 +1,4 @@
-from .templates import (
+from .types import (
     Sql,
     Identifier,
     Table,
@@ -9,9 +9,10 @@ from .templates import (
     ValueColumnRendered,
     IdColumn,
 )
+from .context import ConnectionContext, EngineContext
 from .wrappers import *
 from .task import CreateTableSql, AddColumnsSql, MapToNewTable, MapToNewColumns
-from .pipeline import Pipeline
+from .pipeline import Pipeline, ResolveLater, CyclicGraphError
 from .app import Ralsei
 
 __all__ = [
@@ -24,6 +25,8 @@ __all__ = [
     "ValueColumn",
     "ValueColumnRendered",
     "IdColumn",
+    "ConnectionContext",
+    "EngineContext",
     "OneToOne",
     "OneToMany",
     "into_many",
@@ -40,5 +43,7 @@ __all__ = [
     "MapToNewTable",
     "MapToNewColumns",
     "Pipeline",
+    "ResolveLater",
+    "CyclicGraphError",
     "Ralsei",
 ]

@@ -7,7 +7,9 @@ from ._runtime import SqlMacro
 
 
 def is_split_marker(node: Expr) -> bool:
-    return node == ExtensionAttribute(SplitTag.__qualname__, "marker")
+    return node == ExtensionAttribute(
+        f"{SplitTag.__module__}.{SplitTag.__name__}", "marker"
+    )
 
 
 class SqlCodeGenerator(CodeGenerator):

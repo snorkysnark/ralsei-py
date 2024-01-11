@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar
 import inspect
 
 if TYPE_CHECKING:
-    from .environment import SqlEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 T = TypeVar("T")
 

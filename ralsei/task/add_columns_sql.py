@@ -3,18 +3,13 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
-from .common import (
-    TaskDef,
-    TaskImpl,
-    SqlLike,
-    Table,
-    ResolveLater,
-    ColumnBase,
-    SqlalchemyEnvironment,
-    ConnectionContext,
-    actions,
-    expect_optional,
-)
+from .base import TaskImpl, TaskDef, SqlLike
+from ralsei.pipeline import ResolveLater
+from ralsei.types import Table, ColumnBase
+from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.utils import expect_optional
+from ralsei import db_actions
+from ralsei.context import ConnectionContext
 
 
 @dataclass
@@ -58,8 +53,10 @@ class AddColumnsSql(TaskDef):
             ]
             self._column_names = [col.name for col in rendered_columns]
 
-            self._add_columns = actions.add_columns(env, self._table, rendered_columns)
-            self._drop_columns = actions.drop_columns(
+            self._add_columns = db_actions.add_columns(
+                env, self._table, rendered_columns
+            )
+            self._drop_columns = db_actions.drop_columns(
                 env, self._table, rendered_columns
             )
 
@@ -68,7 +65,7 @@ class AddColumnsSql(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return actions.columns_exist(ctx, self._table, self._column_names)
+            return db_actions.columns_exist(ctx, self._table, self._column_names)
 
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)

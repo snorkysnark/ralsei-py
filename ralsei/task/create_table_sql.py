@@ -2,15 +2,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from .common import (
-    SqlalchemyEnvironment,
-    ConnectionContext,
-    Table,
-    TaskImpl,
-    TaskDef,
-    SqlLike,
-    actions,
-)
+from .base import TaskDef, TaskImpl, SqlLike
+from ralsei.types import Table
+from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.context import ConnectionContext
+from ralsei import db_actions
 
 
 @dataclass
@@ -42,7 +38,7 @@ class CreateTableSql(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return actions.table_exists(ctx, self._table)
+            return db_actions.table_exists(ctx, self._table)
 
         def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.executescript(self._sql)

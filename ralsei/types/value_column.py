@@ -4,10 +4,10 @@ from abc import abstractmethod
 
 from .primitives import Identifier, Placeholder
 from .column import ColumnBase, Column, ColumnRendered
-from ..adapter import ToSql
+from ralsei.sql_adapter import ToSql
 
 if TYPE_CHECKING:
-    from ..environment import SqlEnvironment
+    from ralsei.jinja.environment import SqlEnvironment
 
 
 FROM_NAME = object()

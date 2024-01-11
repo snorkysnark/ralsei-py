@@ -8,8 +8,8 @@ from .path import TreePath
 from .outputof import OutputOf
 
 if TYPE_CHECKING:
-    from ..task import Task
-    from ..templates import SqlalchemyEnvironment
+    from ralsei.task import Task
+    from ralsei.jinja import SqlalchemyEnvironment
     from .pipeline import Pipeline, FlattenedPipeline
 
 

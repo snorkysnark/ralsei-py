@@ -4,7 +4,8 @@ import sqlalchemy
 from sqlalchemy import URL
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
-from .templates import SqlalchemyEnvironment, SqlEnvironment, DialectInfo
+from .dialect import DialectInfo
+from .jinja import SqlalchemyEnvironment, SqlEnvironment
 from .connection import create_engine, Connection
 
 
