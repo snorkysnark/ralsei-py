@@ -100,3 +100,6 @@ class DependencyResolver:
             self.resolve_path(env, task_path)
 
         return DAG(self._graph.tasks, dict(self._graph.relations))
+
+
+__all__ = ["DependencyResolver", "CyclicGraphError"]

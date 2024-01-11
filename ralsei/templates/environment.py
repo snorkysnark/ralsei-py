@@ -21,8 +21,8 @@ from contextlib import contextmanager
 from .types import Sql, Column, Identifier
 from .adapter import create_adapter_for_env
 from .sqlalchemy import SqlalchemyEnvironment
-from .extensions import SplitTag, SplitMarker
-from .compiler import SqlCodeGenerator
+from ._extensions import SplitTag, SplitMarker
+from ._compiler import SqlCodeGenerator
 from .dialect import DialectInfo
 from ralsei.pipeline.resolver import DependencyResolver
 from ralsei.pipeline.outputof import OutputOf, ResolveLater
@@ -202,3 +202,6 @@ class SqlEnvironment(jinja2.Environment):
             yield
         finally:
             self._dependency_resolver = old_resolver
+
+
+__all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]

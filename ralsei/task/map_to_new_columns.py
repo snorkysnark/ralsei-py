@@ -122,3 +122,6 @@ class MapToNewColumns(TaskDef):
             yield "Select", self._select
             yield "Update", self._update
             yield "Drop columns", self._drop_columns.statements
+
+
+__all__ = ["MapToNewColumns"]

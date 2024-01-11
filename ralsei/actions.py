@@ -91,3 +91,6 @@ class drop_columns:
                     ctx.connection.execute(statement)
         else:
             ctx.connection.executescript(self.statements)
+
+
+__all__ = ["table_exists", "columns_exist", "add_columns", "drop_columns"]

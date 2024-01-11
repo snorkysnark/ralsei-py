@@ -101,3 +101,6 @@ class SqlalchemyEnvironment:
 
     def with_resolver(self, resolver: DependencyResolver):
         return self._inner.with_resolver(resolver)
+
+
+__all__ = ["SqlalchemyTemplateModule", "SqlalchemyTemplate", "SqlalchemyEnvironment"]

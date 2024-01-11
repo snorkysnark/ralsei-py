@@ -2,16 +2,17 @@ from typing import Optional
 from jinja2.compiler import CodeGenerator, Frame, MacroRef
 from jinja2.nodes import Template, Expr, ExtensionAttribute
 
+from ._extensions import SplitTag
+from ._runtime import SqlMacro
+
 
 def is_split_marker(node: Expr) -> bool:
-    return node == ExtensionAttribute(
-        "ralsei.templates.extensions.split_tag.SplitTag", "marker"
-    )
+    return node == ExtensionAttribute(SplitTag.__qualname__, "marker")
 
 
 class SqlCodeGenerator(CodeGenerator):
     def visit_Template(self, node: Template, frame: Optional[Frame] = None) -> None:
-        self.writeline("from ralsei.templates.runtime import SqlMacro")
+        self.writeline(f"from {SqlMacro.__module__} import {SqlMacro.__name__}")
 
         super().visit_Template(node, frame)
 
@@ -22,7 +23,7 @@ class SqlCodeGenerator(CodeGenerator):
         if len(macro_ref.node.args) == 1:
             arg_tuple += ","
         self.write(
-            f"SqlMacro(environment, macro, {name!r}, ({arg_tuple}),"
+            f"{SqlMacro.__name__}(environment, macro, {name!r}, ({arg_tuple}),"
             f" {macro_ref.accesses_kwargs!r}, {macro_ref.accesses_varargs!r},"
             f" {macro_ref.accesses_caller!r}, context.eval_ctx.autoescape)"
         )
@@ -38,3 +39,6 @@ class SqlCodeGenerator(CodeGenerator):
     ) -> None:
         if not is_split_marker(node):
             super()._output_child_post(node, frame, finalize)
+
+
+__all__ = ["SqlCodeGenerator"]

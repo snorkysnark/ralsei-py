@@ -50,3 +50,6 @@ class TaskSequence:
     def redo(self, ctx: "ConnectionContext"):
         self.delete(ctx)
         self.run(ctx)
+
+
+__all__ = ["NamedTask", "TaskSequence"]

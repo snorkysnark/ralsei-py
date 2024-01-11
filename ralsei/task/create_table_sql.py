@@ -53,3 +53,6 @@ class CreateTableSql(TaskDef):
         def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
             yield "Main", self._sql
             yield "Drop table", self._drop_sql
+
+
+__all__ = ["CreateTableSql"]

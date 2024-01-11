@@ -20,9 +20,8 @@ author = "snorkysnark"
 
 extensions = [
     "sphinx_immaterial",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "dataclass_signature_fix",
+    "autodoc2",
+    "sphinx.ext.intersphinx",
 ]
 
 templates_path = ["_templates"]
@@ -61,4 +60,10 @@ html_css_files = ["css/columns.css"]
 html_static_path = ["_static"]
 
 # -- autodoc -----------------------------------------------------------------
-autodoc_docstring_signature = False
+autodoc2_packages = ["../ralsei"]
+autodoc2_module_all_regexes = [r"ralsei\..*"]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
+}

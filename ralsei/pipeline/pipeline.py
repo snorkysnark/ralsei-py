@@ -67,3 +67,6 @@ class Pipeline(ABC):
 
     def build_dag(self, env: "SqlalchemyEnvironment") -> DAG:
         return DependencyResolver.from_definition(self._flatten()).build_dag(env)
+
+
+__all__ = ["ScopedTaskDef", "FlattenedPipeline", "Pipeline"]

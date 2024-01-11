@@ -24,3 +24,6 @@ class DialectInfo:
     @property
     def name(self):
         return self.sqlalchemy.name
+
+
+__all__ = ["DialectInfo"]

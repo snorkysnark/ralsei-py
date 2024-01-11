@@ -1,1 +1,3 @@
-from .main import Connection as Connection, create_engine as create_engine
+from .main import Connection, create_engine
+
+__all__ = ["Connection", "create_engine"]

@@ -10,3 +10,6 @@ class SqlMacro:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Sql:
         return Sql(self._inner(*args, **kwargs))
+
+
+__all__ = ["SqlMacro"]

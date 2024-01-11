@@ -81,3 +81,6 @@ class AddColumnsSql(TaskDef):
             yield "Add columns", self._add_columns.statements
             yield "Main", self._sql
             yield "Drop columns", self._drop_columns.statements
+
+
+__all__ = ["AddColumnsSql"]

@@ -43,3 +43,6 @@ def create_adapter_for_env(env: "SqlEnvironment"):
     adapter.register_type(ToSql, lambda value: value.to_sql(env))
 
     return adapter
+
+
+__all__ = ["SqlAdapter", "ToSql", "create_adapter_for_env"]

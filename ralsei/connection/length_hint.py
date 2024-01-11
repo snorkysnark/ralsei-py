@@ -45,3 +45,6 @@ def execute_with_length_hint(
         yield conn.execute(statement, parameters).all()
     else:
         yield _CountableCursorResult(conn.execute(statement, parameters))
+
+
+__all__ = ["execute_with_length_hint"]

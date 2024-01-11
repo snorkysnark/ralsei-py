@@ -1,12 +1,11 @@
 from typing import Iterable, Optional, Sequence, TypeVar
 from rich.progress import Progress
 from operator import length_hint
+from rich.console import Console
 
-from .console import console
-
+console = Console()
 
 T = TypeVar("T")
-
 PROGRESS = Progress(console=console, transient=True)
 
 
@@ -30,3 +29,6 @@ def track(
     PROGRESS.remove_task(task_id)
     if len(PROGRESS.tasks) == 0:
         PROGRESS.stop()
+
+
+__all__ = ["console", "track"]

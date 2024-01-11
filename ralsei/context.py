@@ -81,3 +81,6 @@ class ConnectionContext:
 
     def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
         self.connection.close()
+
+
+__all__ = ["EngineContext", "ConnectionContext"]

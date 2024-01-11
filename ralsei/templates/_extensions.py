@@ -14,3 +14,6 @@ class SplitTag(Extension):
     def parse(self, parser: Parser) -> Node | list[Node]:
         lineno = parser.stream.expect("name:split").lineno
         return Output([self.attr("marker")]).set_lineno(lineno)
+
+
+__all__ = ["SplitMarker", "SplitTag"]
