@@ -5,7 +5,7 @@ from returns.maybe import Maybe
 
 from ralsei.console import track
 
-from .base import TaskImpl, TaskDef, SqlLike
+from .base import TaskImpl, TaskDef
 from ralsei.graph import OutputOf
 from ralsei.types import (
     Table,
@@ -215,7 +215,7 @@ class MapToNewColumns(TaskDef):
         def delete(self, ctx: ConnectionContext) -> None:
             self._drop_columns(ctx)
 
-        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+        def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Add columns", self._add_columns.statements
             yield "Select", self._select
             yield "Update", self._update

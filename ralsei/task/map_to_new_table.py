@@ -4,7 +4,7 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
-from .base import TaskDef, TaskImpl, SqlLike
+from .base import TaskDef, TaskImpl
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -325,7 +325,7 @@ class MapToNewTable(TaskDef):
                 self._marker_scripts.drop_marker(ctx)
             ctx.connection.execute(self._drop_table)
 
-        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+        def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             if self._marker_scripts:
                 yield "Add marker", self._marker_scripts.add_marker.statements
             yield "Create table", self._create_table

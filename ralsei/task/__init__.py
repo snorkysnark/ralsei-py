@@ -5,7 +5,6 @@ from .map_to_new_table import MapToNewTable
 from .map_to_new_columns import MapToNewColumns
 
 __all__ = [
-    "SqlLike",
     "Task",
     "TaskImpl",
     "TaskDef",

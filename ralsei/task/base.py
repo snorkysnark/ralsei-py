@@ -1,13 +1,10 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
-from sqlalchemy import TextClause
 
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
 
 T = TypeVar("T")
-
-SqlLike = TextClause | list[TextClause]
 
 
 class Task(ABC):
@@ -38,7 +35,7 @@ class Task(ABC):
     def exists(self, ctx: ConnectionContext) -> bool:
         """Check if task has already been done"""
 
-    def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+    def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
         """
         Returns:
             pairs of (name, SQL statement)
@@ -67,4 +64,4 @@ class TaskDef:
         return self.Impl(self, env)
 
 
-__all__ = ["SqlLike", "Task", "TaskImpl", "TaskDef"]
+__all__ = ["Task", "TaskImpl", "TaskDef"]

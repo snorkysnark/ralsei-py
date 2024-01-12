@@ -70,7 +70,6 @@ autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_hidden_objects = ["inherited", "private"]
 autodoc2_hidden_regexes = [
-    r"ralsei\.task\.base\.SqlLike",
     r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
     r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
     r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
@@ -84,10 +83,6 @@ autodoc2_replace_annotations = [
     (
         "ralsei.wrappers.OneToMany",
         "collections.abc.Callable[..., collections.abc.Iterator[dict[str, typing.Any]]]",
-    ),
-    (
-        "ralsei.task.base.SqlLike",
-        "sqlalchemy.sql.expression.TextClause | list[sqlalchemy.sql.expression.TextClause]",
     ),
     (
         "sqlalchemy.TextClause",

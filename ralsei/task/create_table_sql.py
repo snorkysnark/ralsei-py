@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from .base import TaskDef, TaskImpl, SqlLike
+from .base import TaskDef, TaskImpl
 from ralsei.types import Table
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
@@ -83,7 +83,7 @@ class CreateTableSql(TaskDef):
         def delete(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._drop_sql)
 
-        def sql_scripts(self) -> Iterable[tuple[str, SqlLike]]:
+        def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Main", self._sql
             yield "Drop table", self._drop_sql
 
