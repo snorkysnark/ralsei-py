@@ -56,7 +56,7 @@ html_theme_options = {
     ]
 }
 
-html_css_files = ["css/columns.css"]
+html_css_files = ["css/columns.css", "css/fix-summary.css"]
 html_static_path = ["_static"]
 
 # -- autodoc -----------------------------------------------------------------
