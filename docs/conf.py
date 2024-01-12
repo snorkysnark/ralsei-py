@@ -59,10 +59,23 @@ html_theme_options = {
 html_css_files = ["css/columns.css", "css/fix-summary.css"]
 html_static_path = ["_static"]
 
+rst_prolog = """\
+.. |br| raw:: html
+
+      <br>
+"""
+
 # -- autodoc -----------------------------------------------------------------
 autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_hidden_objects = ["inherited", "private"]
+autodoc2_hidden_regexes = [
+    r"ralsei\.task\.base\.SqlLike",
+    r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
+    r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
+    r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
+    r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
+]
 autodoc2_replace_annotations = [
     (
         "ralsei.wrappers.OneToOne",
@@ -72,7 +85,6 @@ autodoc2_replace_annotations = [
         "ralsei.wrappers.OneToMany",
         "collections.abc.Callable[..., collections.abc.Iterator[dict[str, typing.Any]]]",
     ),
-    ("ralsei.graph.ResolveLater", "ralsei.graph.OutputOf | "),
     (
         "ralsei.task.base.SqlLike",
         "sqlalchemy.sql.expression.TextClause | list[sqlalchemy.sql.expression.TextClause]",
@@ -108,6 +120,11 @@ autodoc2_replace_bases = [
         "sqlalchemy.engine.Connection",
     ),
 ]
+autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]
+
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

@@ -13,7 +13,9 @@ from ralsei import db_actions
 class CreateTableSql(TaskDef):
     """Runs a ``CREATE TABLE`` sql script
 
-    .. admonition:: Example
+    Variables passed to the template: :py:attr:`~table`, :py:attr:`~view`, `**`:py:attr:`~params`
+
+    Example:
 
         **unnest.sql**
 
@@ -40,7 +42,10 @@ class CreateTableSql(TaskDef):
     """
 
     sql: str | list[str]
-    """sql template string"""
+    """Sql template strings
+
+    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
+    """
     table: Table
     """Table being created"""
     params: dict = field(default_factory=dict)

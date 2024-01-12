@@ -17,14 +17,10 @@ class AddColumnsSql(TaskDef):
     """Adds the specified Columns to an existing Table
     and runs the SQL script to fill them with data
 
-    .. admonition:: Template
+    Variables passed to the template: :py:attr:`~table`, `**`:py:attr:`~params` |br|
+    Columns can be defined in the template itself, using ``{% set columns = [...] %}``
 
-        Environment variables: ``table``, ``**params``
-
-        Columns can be defined in the template itself,
-        using ``{% set columns = [...] %}``
-
-    .. admonition:: Example
+    Example:
 
         **postprocess.sql**
 
@@ -47,9 +43,15 @@ class AddColumnsSql(TaskDef):
     """
 
     sql: str | list[str]
-    """sql template string"""
+    """Sql template strings
+
+    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
+    """
     table: Table | OutputOf
-    """Table to add columns to"""
+    """Table to add columns to
+
+    May be the output of another task
+    """
     columns: Optional[Sequence[ColumnBase]] = None
     """these column definitions take precedence over those defined in the template"""
     params: dict = field(default_factory=dict)

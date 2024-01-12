@@ -18,6 +18,8 @@ def infer_value(name: str, value: Any = FROM_NAME) -> Any:
 
 
 class ValueColumnBase(ColumnBase):
+    value: Any
+
     def __init__(self, name: str, value: Any = FROM_NAME) -> None:
         super().__init__(name)
         self.value = infer_value(name, value)
