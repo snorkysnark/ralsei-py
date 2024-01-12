@@ -1,9 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Mapping, Union
 
-from .resolver import DependencyResolver
+from ._resolver import DependencyResolver
+from ._flattened import ScopedTaskDef, FlattenedPipeline
 from .path import TreePath
 from .dag import DAG
 from .outputof import OutputOf
@@ -11,18 +11,6 @@ from .outputof import OutputOf
 if TYPE_CHECKING:
     from ralsei.task import TaskDef
     from ralsei.jinja import SqlalchemyEnvironment
-
-
-@dataclass
-class ScopedTaskDef:
-    pipeline: Pipeline
-    task: "TaskDef"
-
-
-@dataclass
-class FlattenedPipeline:
-    task_definitions: dict[TreePath, ScopedTaskDef]
-    pipeline_paths: dict[Pipeline, TreePath]
 
 
 class Pipeline(ABC):
@@ -69,4 +57,4 @@ class Pipeline(ABC):
         return DependencyResolver.from_definition(self._flatten()).build_dag(env)
 
 
-__all__ = ["ScopedTaskDef", "FlattenedPipeline", "Pipeline"]
+__all__ = ["Pipeline"]

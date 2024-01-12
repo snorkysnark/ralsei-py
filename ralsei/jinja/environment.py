@@ -17,7 +17,6 @@ from jinja2 import StrictUndefined
 from jinja2.environment import TemplateModule
 from jinja2.nodes import Template as TemplateNode
 import itertools
-from contextlib import contextmanager
 
 from .sqlalchemy import SqlalchemyEnvironment
 from ._extensions import SplitTag, SplitMarker
@@ -26,7 +25,7 @@ from ._compiler import SqlCodeGenerator
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
     from ralsei.dialect import DialectInfo
-    from ralsei.graph import DependencyResolver, OutputOf
+    from ralsei.graph import OutputOf
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -76,8 +75,6 @@ class SqlEnvironment(jinja2.Environment):
         from ralsei.sql_adapter import create_adapter_for_env
 
         super().__init__(undefined=StrictUndefined)
-
-        self._dependency_resolver: Optional["DependencyResolver"] = None
 
         self._adapter = create_adapter_for_env(self)
         self._dialect = dialect_info
@@ -176,38 +173,21 @@ class SqlEnvironment(jinja2.Environment):
     def render_split(self, source: str, /, *args: Any, **kwargs: Any) -> list[str]:
         return self.from_string(source).render_split(*args, **kwargs)
 
-    @overload
-    def resolve(self, value: T | OutputOf) -> T:
-        ...
-
-    @overload
-    def resolve(self, value: Any) -> Any:
-        ...
-
-    def resolve(self, value: Any) -> Any:
-        from ralsei.graph import OutputOf
-
-        if not isinstance(value, OutputOf):
-            return value
-        elif self._dependency_resolver:
-            return self._dependency_resolver.resolve(self.sqlalchemy, value)
-        else:
-            raise RuntimeError(
-                "attempted to resolve dependency outside of dependency resolution context"
-            )
-
     def getattr(self, obj: Any, attribute: str) -> Any:
         return super().getattr(self.resolve(obj), attribute)
 
-    @contextmanager
-    def with_resolver(self, resolver: "DependencyResolver"):
-        old_resolver = self._dependency_resolver
-        self._dependency_resolver = resolver
+    @overload
+    def resolve(self, value: T | "OutputOf") -> T:
+        ...
 
-        try:
-            yield
-        finally:
-            self._dependency_resolver = old_resolver
+    @overload
+    def resolve(self, value: Any) -> Any:
+        ...
+
+    def resolve(self, value: Any) -> Any:
+        from ralsei.graph import resolve
+
+        return resolve(self.sqlalchemy, value)
 
 
 __all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]

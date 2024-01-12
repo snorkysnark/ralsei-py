@@ -2,15 +2,19 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING, Optional
+from contextvars import ContextVar
 
 from .dag import DAG
 from .path import TreePath
 from .outputof import OutputOf
+from ._flattened import FlattenedPipeline
 
 if TYPE_CHECKING:
     from ralsei.task import Task
     from ralsei.jinja import SqlalchemyEnvironment
-    from .pipeline import Pipeline, FlattenedPipeline
+    from .pipeline import Pipeline
+
+RESOLVER_CONTEXT: ContextVar[DependencyResolver] = ContextVar("RESOLVER_CONTEXT")
 
 
 @dataclass
@@ -22,7 +26,7 @@ class GraphBuilder:
     )
 
 
-class CyclicGraphError(Exception):
+class CyclicGraphError(RuntimeError):
     pass
 
 
@@ -61,8 +65,11 @@ class DependencyResolver:
         if cached_task := self._graph.tasks.get(task_path, None):
             return cached_task
 
-        with env.with_resolver(self.sub_resolver(task_path)):
+        reset_token = RESOLVER_CONTEXT.set(self.sub_resolver(task_path))
+        try:
             task = self._graph.definition.task_definitions[task_path].task.create(env)
+        finally:
+            RESOLVER_CONTEXT.reset(reset_token)
 
         self._graph.tasks[task_path] = task
         return task
@@ -102,4 +109,4 @@ class DependencyResolver:
         return DAG(self._graph.tasks, dict(self._graph.relations))
 
 
-__all__ = ["DependencyResolver", "CyclicGraphError"]
+__all__ = ["RESOLVER_CONTEXT", "DependencyResolver", "CyclicGraphError"]

@@ -13,14 +13,12 @@ from sqlalchemy import TextClause, text
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
     from ralsei.dialect import DialectInfo
-    from ralsei.graph import DependencyResolver, OutputOf
-
-if TYPE_CHECKING:
     from .environment import (
         SqlEnvironment,
         SqlTemplate,
         SqlTemplateModule,
     )
+    from ralsei.graph import OutputOf
 
 
 class SqlalchemyTemplateModule:
@@ -89,7 +87,7 @@ class SqlalchemyEnvironment:
         return list(map(text, self._inner.render_split(source, *args, **kwargs)))
 
     @overload
-    def resolve(self, value: T | OutputOf) -> T:
+    def resolve(self, value: T | "OutputOf") -> T:
         ...
 
     @overload
@@ -97,10 +95,9 @@ class SqlalchemyEnvironment:
         ...
 
     def resolve(self, value: Any) -> Any:
-        return self._inner.resolve(value)
+        from ralsei.graph import resolve
 
-    def with_resolver(self, resolver: "DependencyResolver"):
-        return self._inner.with_resolver(resolver)
+        return resolve(self, value)
 
 
 __all__ = ["SqlalchemyTemplateModule", "SqlalchemyTemplate", "SqlalchemyEnvironment"]
