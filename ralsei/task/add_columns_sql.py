@@ -4,7 +4,7 @@ from typing import Any, Iterable, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
 from .base import TaskImpl, TaskDef, SqlLike
-from ralsei.graph import ResolveLater
+from ralsei.graph import OutputOf
 from ralsei.types import Table, ColumnBase
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.utils import expect_optional
@@ -48,7 +48,7 @@ class AddColumnsSql(TaskDef):
 
     sql: str | list[str]
     """sql template string"""
-    table: ResolveLater[Table]
+    table: Table | OutputOf
     """Table to add columns to"""
     columns: Optional[Sequence[ColumnBase]] = None
     """these column definitions take precedence over those defined in the template"""

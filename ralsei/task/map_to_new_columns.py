@@ -6,7 +6,7 @@ from returns.maybe import Maybe
 from ralsei.console import track
 
 from .base import TaskImpl, TaskDef, SqlLike
-from ralsei.graph import ResolveLater
+from ralsei.graph import OutputOf
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -24,7 +24,7 @@ from ralsei.context import ConnectionContext
 @dataclass
 class MapToNewColumns(TaskDef):
     select: str
-    table: ResolveLater[Table]
+    table: Table | OutputOf
     columns: Sequence[ValueColumnBase]
     fn: OneToOne
     is_done_column: Optional[str] = None

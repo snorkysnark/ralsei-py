@@ -5,7 +5,7 @@ from .resolver import (
 )
 from .dag import DAG
 from .path import TreePath
-from .outputof import OutputOf, ResolveLater
+from .outputof import OutputOf
 
 __all__ = [
     "Pipeline",
@@ -14,5 +14,4 @@ __all__ = [
     "DAG",
     "TreePath",
     "OutputOf",
-    "ResolveLater",
 ]

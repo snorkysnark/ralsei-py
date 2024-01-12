@@ -13,7 +13,7 @@ from sqlalchemy import TextClause, text
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
     from ralsei.dialect import DialectInfo
-    from ralsei.graph import DependencyResolver, ResolveLater
+    from ralsei.graph import DependencyResolver, OutputOf
 
 if TYPE_CHECKING:
     from .environment import (
@@ -89,7 +89,7 @@ class SqlalchemyEnvironment:
         return list(map(text, self._inner.render_split(source, *args, **kwargs)))
 
     @overload
-    def resolve(self, value: "ResolveLater[T]") -> T:
+    def resolve(self, value: T | OutputOf) -> T:
         ...
 
     @overload

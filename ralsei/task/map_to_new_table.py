@@ -16,7 +16,7 @@ from ralsei.types import (
 )
 from ralsei.wrappers import OneToMany
 from ralsei import db_actions
-from ralsei.graph import ResolveLater
+from ralsei.graph import OutputOf
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.sql_adapter import ToSql
 from ralsei.utils import expect_optional
@@ -38,7 +38,7 @@ class MapToNewTable(TaskDef):
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
     select: Optional[str] = None
-    source_table: Optional[ResolveLater[Table]] = None
+    source_table: Optional[Table | OutputOf] = None
     is_done_column: Optional[str] = None
     id_fields: Optional[list[IdColumn]] = None
     params: dict = field(default_factory=dict)
