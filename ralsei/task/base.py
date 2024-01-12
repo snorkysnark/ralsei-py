@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
+from sqlalchemy import TextClause
 
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
@@ -36,9 +37,14 @@ class Task(ABC):
         """Check if task has already been done"""
 
     def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
-        """
+        """Get named SQL scripts rendered by this task
+
         Returns:
-            pairs of (name, SQL statement)
+            Pairs of (name, **SQL statement** | list[**SQL statement**]), |br|
+            where a **SQL statement** is anything that, when casted to string, turns into valid SQL
+
+            Examples are: :py:class:`str`, :py:class:`sqlalchemy.sql.expression.TextClause`,
+            :py:class:`sqlalchemy.engine.Compiled`
         """
 
         return []
