@@ -12,7 +12,7 @@ from sqlalchemy import TextClause, text
 
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
-    from ralsei.dialect import DialectInfo
+    from ralsei.dialect import Dialect
     from .environment import (
         SqlEnvironment,
         SqlTemplate,
@@ -77,7 +77,7 @@ class SqlalchemyEnvironment:
         return self._inner.adapter
 
     @property
-    def dialect(self) -> DialectInfo:
+    def dialect(self) -> "Dialect":
         return self._inner.dialect
 
     def render(self, source: str, /, *args, **kwargs) -> TextClause:

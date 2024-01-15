@@ -21,7 +21,7 @@ def test_map_columns(ctx: ConnectionContext):
         [
             """\
             CREATE TABLE {{table}}(
-                id {{dialect.serial_primary_key}},
+                id {{dialect.autoincrement_key}},
                 val INT
             );""",
             "INSERT INTO {{table}}(val) VALUES (2),(5),(12);",
@@ -63,7 +63,7 @@ def test_map_columns_resumable(engine: EngineContext):
             [
                 """\
                 CREATE TABLE {{table}}(
-                    id {{dialect.serial_primary_key}},
+                    id {{dialect.autoincrement_key}},
                     val INT
                 );""",
                 "INSERT INTO {{table}}(val) VALUES (2),(5),(12);",

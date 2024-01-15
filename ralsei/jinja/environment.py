@@ -24,7 +24,7 @@ from ._compiler import SqlCodeGenerator
 
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
-    from ralsei.dialect import DialectInfo
+    from ralsei.dialect import Dialect
     from ralsei.graph import OutputOf
 
 
@@ -70,14 +70,14 @@ TEMPLATE = TypeVar("TEMPLATE", bound=jinja2.Template)
 
 
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, dialect_info: "DialectInfo"):
+    def __init__(self, dialect: "Dialect"):
         from ralsei.types import Sql, Column, Identifier
         from ralsei.sql_adapter import create_adapter_for_env
 
         super().__init__(undefined=StrictUndefined)
 
         self._adapter = create_adapter_for_env(self)
-        self._dialect = dialect_info
+        self._dialect = dialect
         self._sqlalchemy = SqlalchemyEnvironment(self)
 
         def finalize(value: Any) -> str:
@@ -117,7 +117,7 @@ class SqlEnvironment(jinja2.Environment):
             "dict": dict,
             "joiner": joiner,
             "Column": Column,
-            "dialect": dialect_info,
+            "dialect": dialect,
         }
 
         self.add_extension(SplitTag)
@@ -130,7 +130,7 @@ class SqlEnvironment(jinja2.Environment):
         return self._adapter
 
     @property
-    def dialect(self) -> "DialectInfo":
+    def dialect(self) -> "Dialect":
         return self._dialect
 
     @property

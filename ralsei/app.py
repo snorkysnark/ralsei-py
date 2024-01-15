@@ -2,6 +2,7 @@ import click
 from rich import traceback
 from typing import Any, Callable, Optional, Sequence, overload
 import itertools
+from ralsei.dialect import DialectRegistry, Dialect
 
 from ralsei.graph import Pipeline, TreePath
 from ralsei.context import EngineContext
@@ -57,36 +58,6 @@ class TreePathType(click.ParamType):
 TYPE_TREEPATH = TreePathType()
 
 
-def build_cli(
-    pipeline_constructor: Callable[..., Pipeline],
-    custom_options: Sequence[click.Option],
-) -> click.Group:
-    @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-    def cli():
-        pass
-
-    @extend_params(custom_options)
-    @click.option("--db", "-d", help="sqlalchemy database url", required=True)
-    @click.option(
-        "--from",
-        "start_from",
-        help="run this task and its dependencies",
-        type=TYPE_TREEPATH,
-        multiple=True,
-    )
-    @cli.command("run")
-    def run_cmd(db: str, start_from: Optional[list[TreePath]], *args, **kwargs):
-        pipeline = pipeline_constructor(*args, **kwargs)
-        engine = EngineContext.create(db)
-        dag = pipeline.build_dag(engine.jinja)
-        sequence = dag.topological_sort(start_from=start_from)
-
-        with engine.connect() as ctx:
-            sequence.run(ctx)
-
-    return cli
-
-
 class Ralsei:
     @overload
     def __init__(
@@ -112,11 +83,47 @@ class Ralsei:
             self._pipeline_constructor = pipeline_source
             self._custom_cli_options = custom_cli_options
 
-        self.cli = build_cli(self._pipeline_constructor, self._custom_cli_options)
+        self._dialect_registry = DialectRegistry.create_default()
 
-    def run(self):
+    def register_dialect(
+        self,
+        dialect_name: str,
+        dialect_class: type[Dialect],
+        driver: Optional[str] = None,
+    ):
+        self._dialect_registry.register_dialect(
+            dialect_name, dialect_class, driver=driver
+        )
+
+    def build_cli(self) -> click.Group:
+        @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+        def cli():
+            pass
+
+        @extend_params(self._custom_cli_options)
+        @click.option("--db", "-d", help="sqlalchemy database url", required=True)
+        @click.option(
+            "--from",
+            "start_from",
+            help="run this task and its dependencies",
+            type=TYPE_TREEPATH,
+            multiple=True,
+        )
+        @cli.command("run")
+        def run_cmd(db: str, start_from: Optional[list[TreePath]], *args, **kwargs):
+            pipeline = self._pipeline_constructor(*args, **kwargs)
+            engine = EngineContext.create(db, dialect=self._dialect_registry)
+            dag = pipeline.build_dag(engine.jinja)
+            sequence = dag.topological_sort(start_from=start_from)
+
+            with engine.connect() as ctx:
+                sequence.run(ctx)
+
+        return cli
+
+    def __call__(self, *args, **kwargs):
         traceback.install(show_locals=True)
-        self.cli()
+        self.build_cli()(*args, **kwargs)
 
 
 __all__ = ["Ralsei"]

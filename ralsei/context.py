@@ -4,7 +4,7 @@ import sqlalchemy
 from sqlalchemy import URL
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
-from .dialect import DialectInfo
+from .dialect import Dialect, DialectRegistry, default_registry
 from .jinja import SqlalchemyEnvironment, SqlEnvironment
 from .connection import create_engine, Connection
 
@@ -13,17 +13,31 @@ class EngineContext:
     def __init__(
         self,
         engine: sqlalchemy.Engine,
-        environment: Optional[SqlalchemyEnvironment] = None,
+        environment: SqlalchemyEnvironment,
     ) -> None:
         self._engine = engine
-        self._jinja = (
-            environment
-            or SqlEnvironment(DialectInfo.from_sqlalchemy(engine.dialect)).sqlalchemy
+        self._jinja = environment
+
+    @staticmethod
+    def from_sqlalchemy(
+        engine: sqlalchemy.Engine,
+        dialect: Dialect | DialectRegistry = default_registry,
+    ) -> EngineContext:
+        resolved_dialect = (
+            dialect.from_sqlalchemy(engine.dialect)
+            if isinstance(dialect, DialectRegistry)
+            else dialect
+        )
+        return EngineContext(
+            engine,
+            SqlEnvironment(resolved_dialect).sqlalchemy,
         )
 
     @staticmethod
-    def create(url: str | URL, **kwargs) -> EngineContext:
-        return EngineContext(create_engine(url, **kwargs))
+    def create(
+        url: str | URL, dialect: Dialect | DialectRegistry = default_registry, **kwargs
+    ) -> EngineContext:
+        return EngineContext.from_sqlalchemy(create_engine(url, **kwargs), dialect)
 
     @property
     def engine(self):
@@ -32,6 +46,10 @@ class EngineContext:
     @property
     def jinja(self):
         return self._jinja
+
+    @property
+    def dialect(self):
+        return self.jinja.dialect
 
     def connect(self) -> ConnectionContext:
         return ConnectionContext(Connection(self.engine), self.jinja)
@@ -51,6 +69,10 @@ class ConnectionContext:
     @property
     def jinja(self) -> SqlalchemyEnvironment:
         return self._jinja
+
+    @property
+    def dialect(self):
+        return self.jinja.dialect
 
     def render_execute(
         self,

@@ -23,7 +23,7 @@ def test_map_new_table_noselect(ctx: ConnectionContext):
     task = MapToNewTable(
         table=table,
         columns=[
-            "id {{dialect.serial_primary_key}}",
+            "id {{dialect.autoincrement_key}}",
             ValueColumn("foo", "INT"),
             ValueColumn("bar", "TEXT"),
         ],
@@ -84,7 +84,7 @@ def test_map_table_resumable(engine: EngineContext):
             [
                 """\
                 CREATE TABLE {{table}}(
-                    id {{dialect.serial_primary_key}},
+                    id {{dialect.autoincrement_key}},
                     val INT
                 );""",
                 "INSERT INTO {{table}}(val) VALUES (2),(5),(12);",

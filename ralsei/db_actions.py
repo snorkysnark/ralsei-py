@@ -45,7 +45,8 @@ class AddColumns:
             {{column.definition}};""",
                 table=table,
                 column=column,
-                if_not_exists=if_not_exists and env.dialect.name != "sqlite",
+                if_not_exists=if_not_exists
+                and env.dialect.supports_column_if_not_exists,
             )
             for column in columns
         ]
@@ -53,7 +54,7 @@ class AddColumns:
         self._if_not_exists = if_not_exists
 
     def __call__(self, ctx: ConnectionContext):
-        if self._if_not_exists and ctx.connection.dialect.name == "sqlite":
+        if self._if_not_exists and not ctx.dialect.supports_column_if_not_exists:
             existing = _get_column_names(ctx.connection, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if not column.name in existing:
@@ -78,7 +79,7 @@ class DropColumns:
                 {{column.identifier}};""",
                 table=table,
                 column=column,
-                if_exists=if_exists and env.dialect.name != "sqlite",
+                if_exists=if_exists and env.dialect.supports_column_if_not_exists,
             )
             for column in columns
         ]
@@ -86,7 +87,7 @@ class DropColumns:
         self._if_exists = if_exists
 
     def __call__(self, ctx: ConnectionContext):
-        if self._if_exists and ctx.connection.dialect.name == "sqlite":
+        if self._if_exists and not ctx.dialect.supports_column_if_not_exists:
             existing = _get_column_names(ctx.connection, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if column.name in existing:
