@@ -70,6 +70,8 @@ autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_hidden_objects = ["inherited", "private"]
 autodoc2_hidden_regexes = [
+    r"ralsei\.wrappers\.OneToOne",
+    r"ralsei\.wrappers\.OneToMany",
     r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
     r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
     r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
