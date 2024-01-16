@@ -290,7 +290,15 @@ class MapToNewTable(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return db_actions.table_exists(ctx, self._table)
+            if db_actions.table_exists(ctx, self._table):
+                return (
+                    self._select is None
+                    or not self._marker_scripts
+                    # if resumable, check there are no more inputs
+                    or ctx.connection.execute(self._select).first() is None
+                )
+            else:
+                return False
 
         def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._create_table)

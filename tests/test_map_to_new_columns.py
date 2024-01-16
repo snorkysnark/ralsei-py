@@ -94,3 +94,36 @@ def test_map_columns_resumable(engine: EngineContext):
             (2, 5),
             (3, 12),
         ]
+
+
+def test_map_columns_continue(ctx: ConnectionContext):
+    table = Table("resumable")
+    ctx.render_executescript(
+        """\
+        CREATE TABLE {{table}}(
+            num INT PRIMARY KEY,
+            doubled INT,
+            __done BOOL
+        );
+        {%-split-%}
+        INSERT INTO {{table}} VALUES
+        (2, 4, TRUE),
+        (3, NULL, FALSE);""",
+        {"table": table},
+    )
+
+    def double(num: int):
+        return {"doubled": num * 2}
+
+    task = MapToNewColumns(
+        table=table,
+        select="SELECT num FROM {{table}} WHERE NOT {{is_done}}",
+        columns=[ValueColumn("doubled", "INT")],
+        is_done_column="__done",
+        fn=compose_one(double, pop_id_fields("num", keep=True)),
+    ).create(ctx.jinja)
+
+    assert not task.exists(ctx)
+    task.run(ctx)
+    assert task.exists(ctx)
+    assert get_rows(ctx, table) == [(2, 4, True), (3, 6, True)]

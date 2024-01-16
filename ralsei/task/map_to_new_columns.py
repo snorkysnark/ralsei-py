@@ -194,7 +194,15 @@ class MapToNewColumns(TaskDef):
             return self._table
 
         def exists(self, ctx: ConnectionContext) -> bool:
-            return db_actions.columns_exist(ctx, self._table, self._column_names)
+            if db_actions.columns_exist(ctx, self._table, self._column_names):
+                return (
+                    not self._commit_each
+                    # if resumable, check there are no more inputs
+                    or ctx.connection.execute(self._select).first() is None
+                )
+
+            else:
+                return False
 
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)

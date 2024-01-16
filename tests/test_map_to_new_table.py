@@ -114,3 +114,44 @@ def test_map_table_resumable(engine: EngineContext):
         ]
         task.delete(ctx)
         assert not table_exists(ctx, table)
+
+
+def test_map_table_continue(ctx: ConnectionContext):
+    table_source = Table("test_continue_source")
+    table_dest = Table("test_continue_dest")
+    ctx.render_executescript(
+        """\
+        CREATE TABLE {{source}}(
+            num INT PRIMARY KEY,
+            __done BOOL
+        );
+        {%-split-%}
+        INSERT INTO {{source}} VALUES
+        (2, TRUE),
+        (3, FALSE);
+        {%-split-%}
+        CREATE TABLE {{dest}}(
+            doubled INT
+        );
+        {%-split-%}
+        INSERT INTO {{dest}} VALUES (4);""",
+        {"source": table_source, "dest": table_dest},
+    )
+
+    def double(num: int):
+        yield {"doubled": num * 2}
+
+    task = MapToNewTable(
+        source_table=table_source,
+        select="SELECT num FROM {{source}} WHERE NOT {{is_done}}",
+        table=table_dest,
+        columns=[ValueColumn("doubled", "INT")],
+        is_done_column="__done",
+        fn=compose(double, pop_id_fields("num", keep=True)),
+    ).create(ctx.jinja)
+
+    assert not task.exists(ctx)
+    task.run(ctx)
+    assert task.exists(ctx)
+    assert get_rows(ctx, table_source) == [(2, True), (3, True)]
+    assert get_rows(ctx, table_dest) == [(4,), (6,)]
