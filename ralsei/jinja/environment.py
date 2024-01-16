@@ -80,8 +80,11 @@ class SqlEnvironment(jinja2.Environment):
         self._dialect = dialect
         self._sqlalchemy = SqlalchemyEnvironment(self)
 
-        def finalize(value: Any) -> str:
-            return self.adapter.to_sql(self.resolve(value))
+        def finalize(value: Any) -> str | jinja2.Undefined:
+            if isinstance(value, jinja2.Undefined):
+                return value
+            else:
+                return self.adapter.to_sql(self.resolve(value))
 
         def joiner(sep: str = ", ") -> Callable[[], Sql]:
             inner = jinja2.utils.Joiner(sep)
