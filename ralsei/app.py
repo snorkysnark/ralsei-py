@@ -81,7 +81,10 @@ class Ralsei:
             self._custom_cli_options = []
         else:
             self._pipeline_constructor = pipeline_source
-            self._custom_cli_options = custom_cli_options
+            self._custom_cli_options = [
+                *getattr(pipeline_source, "__click_params__", []),
+                *custom_cli_options,
+            ]
 
         self._dialect_registry = DialectRegistry.create_default()
 
