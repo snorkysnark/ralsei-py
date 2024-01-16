@@ -3,9 +3,8 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
-from ralsei.console import track
-
 from .base import TaskImpl, TaskDef
+from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
     Table,
@@ -16,7 +15,7 @@ from ralsei.types import (
 )
 from ralsei.wrappers import OneToOne
 from ralsei.jinja import SqlalchemyEnvironment
-from ralsei.utils import expect_optional
+from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
 from ralsei.context import ConnectionContext
 
@@ -137,9 +136,18 @@ class MapToNewColumns(TaskDef):
             self._fn = this.fn
             self._yield_per = this.yield_per
 
+            template_params = merge_params(
+                {"table": self._table},
+                (
+                    {"is_done": Identifier(this.is_done_column)}
+                    if this.is_done_column
+                    else {}
+                ),
+                this.params,
+            )
+
             columns_rendered = [
-                column.render(env.text, table=self._table, **this.params)
-                for column in this.columns
+                column.render(env.text, **template_params) for column in this.columns
             ]
             self._column_names = [column.name for column in columns_rendered]
 
@@ -158,16 +166,7 @@ class MapToNewColumns(TaskDef):
                 ),
                 ValueError("Must provide id_fields if using is_done_column"),
             )
-            self._select = env.render(
-                this.select,
-                table=self._table,
-                is_done=(
-                    Maybe.from_optional(this.is_done_column)
-                    .map(Identifier)
-                    .value_or(None)
-                ),
-                **this.params,
-            )
+            self._select = env.render(this.select, **template_params)
             self._add_columns = db_actions.AddColumns(
                 env,
                 self._table,

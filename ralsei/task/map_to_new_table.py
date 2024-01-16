@@ -19,7 +19,7 @@ from ralsei import db_actions
 from ralsei.graph import OutputOf
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.sql_adapter import ToSql
-from ralsei.utils import expect_optional
+from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
 from ralsei.context import ConnectionContext
 from ralsei.console import track
@@ -188,16 +188,15 @@ class MapToNewTable(TaskDef):
 
             source_table = env.resolve(this.source_table)
 
-            template_params = {
-                "table": this.table,
-                "source": source_table,
-                "is_done": (
-                    Maybe.from_optional(this.is_done_column)
-                    .map(Identifier)
-                    .value_or(None)
+            template_params = merge_params(
+                {"table": this.table, "source": source_table},
+                (
+                    {"is_done": Identifier(this.is_done_column)}
+                    if this.is_done_column
+                    else {}
                 ),
-                **this.params,
-            }
+                this.params,
+            )
 
             self._select = (
                 Maybe.from_optional(this.select)
