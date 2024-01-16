@@ -1,11 +1,13 @@
+from dataclasses import dataclass
 import click
 from rich import traceback
-from typing import Any, Callable, Optional, Sequence, overload
+from typing import Any, Callable, Optional, Sequence, TypeVar, overload
 import itertools
-from ralsei.dialect import DialectRegistry, Dialect
 
-from ralsei.graph import Pipeline, TreePath
-from ralsei.context import EngineContext
+from ralsei.dialect import DialectRegistry, Dialect
+from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
+from ralsei.context import ConnectionContext, EngineContext
+from ralsei.utils import expect_optional
 
 
 def get_existing_names(params: Sequence[click.Parameter]) -> tuple[set[str], set[str]]:
@@ -22,10 +24,13 @@ def get_existing_names(params: Sequence[click.Parameter]) -> tuple[set[str], set
     return existing_names, existing_opts
 
 
+T = TypeVar("T", bound=click.Command)
+
+
 def extend_params(
     extra_params: Sequence[click.Parameter],
-) -> Callable[[click.Command], click.Command]:
-    def decorator(cmd: click.Command) -> click.Command:
+) -> Callable[[T], T]:
+    def decorator(cmd: T) -> T:
         existing_names, existing_opts = get_existing_names(cmd.params)
         for param in extra_params:
             if param.name and param.name in existing_names:
@@ -56,6 +61,12 @@ class TreePathType(click.ParamType):
 
 
 TYPE_TREEPATH = TreePathType()
+
+
+@dataclass
+class CommandContext:
+    engine: EngineContext
+    dag: DAG
 
 
 class Ralsei:
@@ -98,13 +109,12 @@ class Ralsei:
             dialect_name, dialect_class, driver=driver
         )
 
-    def build_cli(self) -> click.Group:
-        @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-        def cli():
-            pass
-
-        @extend_params(self._custom_cli_options)
-        @click.option("--db", "-d", help="sqlalchemy database url", required=True)
+    def __build_cmd(
+        self,
+        group: click.Group,
+        name: str,
+        action: Callable[[TaskSequence, ConnectionContext], None],
+    ):
         @click.option(
             "--from",
             "start_from",
@@ -112,15 +122,36 @@ class Ralsei:
             type=TYPE_TREEPATH,
             multiple=True,
         )
-        @cli.command("run")
-        def run_cmd(db: str, start_from: Optional[list[TreePath]], *args, **kwargs):
+        @group.command(name)
+        @click.pass_context
+        def cmd(click_context: click.Context, start_from: Optional[list[TreePath]]):
+            obj = expect_optional(
+                click_context.find_object(CommandContext),
+                RuntimeError("Can't find CommandContext in parent context object"),
+            )
+
+            sequence = obj.dag.topological_sort(start_from=start_from)
+            with obj.engine.connect() as ctx:
+                action(sequence, ctx)
+
+    def build_cli(self) -> click.Group:
+        @extend_params(self._custom_cli_options)
+        @click.option("--db", "-d", help="sqlalchemy database url", required=True)
+        @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+        @click.pass_context
+        def cli(ctx: click.Context, db: str, *args, **kwargs):
             pipeline = self._pipeline_constructor(*args, **kwargs)
             engine = EngineContext.create(db, dialect=self._dialect_registry)
             dag = pipeline.build_dag(engine.jinja)
-            sequence = dag.topological_sort(start_from=start_from)
 
-            with engine.connect() as ctx:
-                sequence.run(ctx)
+            ctx.obj = CommandContext(engine, dag)
+
+        for name, action in [
+            ("run", TaskSequence.run),
+            ("delete", TaskSequence.delete),
+            ("redo", TaskSequence.redo),
+        ]:
+            self.__build_cmd(cli, name, action)
 
         return cli
 
