@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
-from sqlalchemy import TextClause
 
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
