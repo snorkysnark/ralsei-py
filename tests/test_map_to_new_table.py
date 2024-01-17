@@ -9,6 +9,7 @@ from ralsei import (
     compose,
     pop_id_fields,
 )
+from ralsei.task import ExistsStatus
 from ralsei.db_actions import table_exists
 
 from common.db_helper import get_rows
@@ -150,8 +151,8 @@ def test_map_table_continue(ctx: ConnectionContext):
         fn=compose(double, pop_id_fields("num", keep=True)),
     ).create(ctx.jinja)
 
-    assert not task.exists(ctx)
+    assert task.exists(ctx) == ExistsStatus.PARTIAL
     task.run(ctx)
-    assert task.exists(ctx)
+    assert task.exists(ctx) == ExistsStatus.YES
     assert get_rows(ctx, table_source) == [(2, True), (3, True)]
     assert get_rows(ctx, table_dest) == [(4,), (6,)]

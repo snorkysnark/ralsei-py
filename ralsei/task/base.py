@@ -1,10 +1,20 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
+from enum import Enum
 
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
 
-T = TypeVar("T")
+
+class ExistsStatus(Enum):
+    """
+    Since bool is a subclass of int,
+    ExistsStatus(False) = NO and ExistsStatus(True) = YES
+    """
+
+    NO = 0
+    YES = 1
+    PARTIAL = 2
 
 
 class Task(ABC):
@@ -32,7 +42,7 @@ class Task(ABC):
         """
 
     @abstractmethod
-    def exists(self, ctx: ConnectionContext) -> bool:
+    def exists(self, ctx: ConnectionContext) -> ExistsStatus:
         """Check if task has already been done"""
 
     def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
@@ -47,6 +57,9 @@ class Task(ABC):
         """
 
         return []
+
+
+T = TypeVar("T")
 
 
 class TaskImpl(Task, Generic[T]):
@@ -69,4 +82,4 @@ class TaskDef:
         return self.Impl(self, env)
 
 
-__all__ = ["Task", "TaskImpl", "TaskDef"]
+__all__ = ["Task", "ExistsStatus", "TaskImpl", "TaskDef"]

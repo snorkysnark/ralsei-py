@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from .base import TaskDef, TaskImpl
+from .base import TaskDef, TaskImpl, ExistsStatus
 from ralsei.types import Table
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.context import ConnectionContext
@@ -74,8 +74,8 @@ class CreateTableSql(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> bool:
-            return db_actions.table_exists(ctx, self._table)
+        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
+            return ExistsStatus(db_actions.table_exists(ctx, self._table))
 
         def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.executescript(self._sql)

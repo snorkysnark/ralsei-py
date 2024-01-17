@@ -4,7 +4,7 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
-from .base import TaskDef, TaskImpl
+from .base import TaskDef, TaskImpl, ExistsStatus
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -289,16 +289,18 @@ class MapToNewTable(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> bool:
-            if db_actions.table_exists(ctx, self._table):
-                return (
-                    self._select is None
-                    or not self._marker_scripts
-                    # if resumable, check there are no more inputs
-                    or ctx.connection.execute(self._select).first() is None
-                )
+        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
+            if not db_actions.table_exists(ctx, self._table):
+                return ExistsStatus.NO
+            elif (
+                # non-resumable or resumable with no more inputs
+                self._select is None
+                or not self._marker_scripts
+                or ctx.connection.execute(self._select).first() is None
+            ):
+                return ExistsStatus.YES
             else:
-                return False
+                return ExistsStatus.PARTIAL
 
         def run(self, ctx: ConnectionContext) -> None:
             ctx.connection.execute(self._create_table)

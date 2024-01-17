@@ -24,8 +24,10 @@ class TaskSequence:
         self.steps = steps
 
     def run(self, ctx: "ConnectionContext"):
+        from ralsei.task import ExistsStatus
+
         for named_task in track(self.steps, description="Running tasks..."):
-            if named_task.task.exists(ctx):
+            if named_task.task.exists(ctx) == ExistsStatus.YES:
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: already done"
                 )
@@ -36,8 +38,10 @@ class TaskSequence:
                 ctx.connection.commit()
 
     def delete(self, ctx: "ConnectionContext"):
+        from ralsei.task import ExistsStatus
+
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
-            if not named_task.task.exists(ctx):
+            if named_task.task.exists(ctx) == ExistsStatus.NO:
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: does not exist"
                 )

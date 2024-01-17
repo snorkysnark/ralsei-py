@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence, cast
 from sqlalchemy import TextClause
 
-from .base import TaskImpl, TaskDef
+from .base import TaskImpl, TaskDef, ExistsStatus
 from ralsei.graph import OutputOf
 from ralsei.types import Table, ColumnBase
 from ralsei.jinja import SqlalchemyEnvironment
@@ -102,8 +102,10 @@ class AddColumnsSql(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> bool:
-            return db_actions.columns_exist(ctx, self._table, self._column_names)
+        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
+            return ExistsStatus(
+                db_actions.columns_exist(ctx, self._table, self._column_names)
+            )
 
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)

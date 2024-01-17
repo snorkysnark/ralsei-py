@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
-from .base import TaskImpl, TaskDef
+from .base import TaskImpl, TaskDef, ExistsStatus
 from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
@@ -193,16 +193,17 @@ class MapToNewColumns(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> bool:
-            if db_actions.columns_exist(ctx, self._table, self._column_names):
-                return (
-                    not self._commit_each
-                    # if resumable, check there are no more inputs
-                    or ctx.connection.execute(self._select).first() is None
-                )
-
+        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
+            if not db_actions.columns_exist(ctx, self._table, self._column_names):
+                return ExistsStatus.NO
+            elif (
+                # non-resumable or resumable with no more inputs
+                not self._commit_each
+                or ctx.connection.execute(self._select).first() is None
+            ):
+                return ExistsStatus.YES
             else:
-                return False
+                return ExistsStatus.PARTIAL
 
         def run(self, ctx: ConnectionContext) -> None:
             self._add_columns(ctx)
