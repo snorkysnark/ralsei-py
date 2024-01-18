@@ -219,11 +219,13 @@ class MapToNewColumns(TaskDef):
                     lambda row: row._asdict(),
                     track(result, description="Task progress..."),
                 ):
-                    context = TaskContext.from_id_fields(self._id_fields, input_row)
-                    jsql.connection.execute(
-                        self._update,
-                        self._fn(**input_row, **self._inject_context(context)),
-                    )
+                    with TaskContext.from_id_fields(
+                        self._id_fields, input_row
+                    ) as context:
+                        jsql.connection.execute(
+                            self._update,
+                            self._fn(**input_row, **self._inject_context(context)),
+                        )
 
                     if self._commit_each:
                         jsql.connection.commit()

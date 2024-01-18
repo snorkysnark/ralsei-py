@@ -1,16 +1,20 @@
 from dataclasses import dataclass
 import click
-from rich import traceback
+from rich.console import Console
 from typing import Callable, Optional, Sequence, overload
 from returns.maybe import Maybe
 import inspect
+import sys
 
 from ralsei.dialect import DialectRegistry, Dialect
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
 from ralsei.jinjasql import JinjaSqlConnection, JinjaSqlEngine
+from ralsei.task.context import row_context_atrribute
 from ._parsers import TYPE_TREEPATH
 from ._decorators import extend_params
 from ._rich import print_task_info
+
+traceback_console = Console(stderr=True)
 
 
 @dataclass
@@ -125,8 +129,14 @@ class Ralsei:
                 action(sequence, ctx)
 
     def __call__(self, *args, **kwargs):
-        traceback.install(show_locals=True)
-        self.build_cli()(*args, **kwargs)
+        try:
+            self.build_cli()(*args, **kwargs)
+        except Exception as err:
+            traceback_console.print_exception(show_locals=True)
+            if row_context := getattr(err, row_context_atrribute, None):
+                traceback_console.print("Row context:", row_context)
+
+            sys.exit(1)
 
 
 __all__ = ["Ralsei"]

@@ -5,6 +5,8 @@ import inspect
 
 from ralsei.console import console
 
+row_context_atrribute = "__ralsei_row_context"
+
 
 class TaskContext:
     def __init__(self, popped_fields: dict) -> None:
@@ -29,6 +31,13 @@ class TaskContext:
             *args,
             **kwargs,
         )
+
+    def __enter__(self) -> TaskContext:
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_value:
+            setattr(exc_value, row_context_atrribute, self._popped_fields)
 
 
 def create_context_argument(

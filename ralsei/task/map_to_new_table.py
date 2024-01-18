@@ -328,12 +328,11 @@ class MapToNewTable(TaskDef):
             for input_row in (
                 Maybe.from_optional(self._select).map(iter_input_rows).value_or([{}])
             ):
-                context = TaskContext.from_id_fields(self._id_fields, input_row)
-
-                for output_row in self._fn(
-                    **input_row, **self._inject_context(context)
-                ):
-                    jsql.connection.execute(self._insert, output_row)
+                with TaskContext.from_id_fields(self._id_fields, input_row) as context:
+                    for output_row in self._fn(
+                        **input_row, **self._inject_context(context)
+                    ):
+                        jsql.connection.execute(self._insert, output_row)
 
         def delete(self, jsql: JinjaSqlConnection) -> None:
             if self._marker_scripts:
