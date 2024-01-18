@@ -31,7 +31,7 @@ class Table(ToSql):
 
     def to_sql(self, env: "SqlEnvironment") -> str:
         return env.render(
-            "{{name | identifier}}{%if schema%}.{{schema | identifier}}{%endif%}",
+            "{%if schema%}{{schema | identifier}}.{%endif%}{{name | identifier}}",
             name=self.name,
             schema=self.schema,
         )
