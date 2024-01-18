@@ -164,7 +164,7 @@ class MapToNewColumns(TaskDef):
                     .map(lambda names: [IdColumn(name) for name in names])
                     .value_or(None)
                 ),
-                ValueError("Must provide id_fields if using is_done_column"),
+                ValueError("Couldn't infer id_fields from function"),
             )
             self._select = env.render(this.select, **template_params)
             self._add_columns = db_actions.AddColumns(
