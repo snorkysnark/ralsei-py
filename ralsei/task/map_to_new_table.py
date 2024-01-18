@@ -5,6 +5,7 @@ from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
 from .base import TaskDef, TaskImpl, ExistsStatus
+from .context import TaskContext, create_context_argument
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -19,7 +20,7 @@ from ralsei import db_actions
 from ralsei.graph import OutputOf
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.sql_adapter import ToSql
-from ralsei.utils import expect_optional, merge_params
+from ralsei.utils import merge_params
 from ralsei import db_actions
 from ralsei.jinjasql import JinjaSqlConnection
 from ralsei.console import track
@@ -185,6 +186,7 @@ class MapToNewTable(TaskDef):
             self._table = this.table
             self._fn = this.fn
             self._yield_per = this.yield_per
+            self._inject_context = create_context_argument(this.fn)
 
             source_table = env.resolve(this.source_table)
 
@@ -239,22 +241,22 @@ class MapToNewTable(TaskDef):
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
+            id_fields = this.id_fields or (
+                Maybe.from_optional(getattr(this.fn, "id_fields", None))
+                .map(lambda names: [IdColumn(name) for name in names])
+                .value_or([])
+            )
+            self._id_fields = set(id_field.name for id_field in id_fields)
+
             def create_marker_scripts():
                 if this.is_done_column:
                     if not source_table:
                         raise ValueError(
                             "Cannot create is_done_column when source_table is None"
                         )
+                    if not id_fields:
+                        ValueError("Must provide id_fields if using is_done_column")
 
-                    id_fields = expect_optional(
-                        this.id_fields
-                        or (
-                            Maybe.from_optional(getattr(this.fn, "id_fields", None))
-                            .map(lambda names: [IdColumn(name) for name in names])
-                            .value_or(None)
-                        ),
-                        ValueError("Must provide id_fields if using is_done_column"),
-                    )
                     is_done_column = ColumnRendered(
                         this.is_done_column, "BOOL DEFAULT FALSE"
                     )
@@ -326,7 +328,11 @@ class MapToNewTable(TaskDef):
             for input_row in (
                 Maybe.from_optional(self._select).map(iter_input_rows).value_or([{}])
             ):
-                for output_row in self._fn(**input_row):
+                context = TaskContext.from_id_fields(self._id_fields, input_row)
+
+                for output_row in self._fn(
+                    **input_row, **self._inject_context(context)
+                ):
                     jsql.connection.execute(self._insert, output_row)
 
         def delete(self, jsql: JinjaSqlConnection) -> None:

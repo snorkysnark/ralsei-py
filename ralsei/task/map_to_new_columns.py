@@ -4,6 +4,7 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
 from .base import TaskImpl, TaskDef, ExistsStatus
+from .context import TaskContext, create_context_argument
 from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
@@ -134,6 +135,7 @@ class MapToNewColumns(TaskDef):
         def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
             self._table = env.resolve(this.table)
             self._fn = this.fn
+            self._inject_context = create_context_argument(this.fn)
             self._yield_per = this.yield_per
 
             template_params = merge_params(
@@ -166,6 +168,8 @@ class MapToNewColumns(TaskDef):
                 ),
                 ValueError("Couldn't infer id_fields from function"),
             )
+            self._id_fields = set(id_field.name for id_field in id_fields)
+
             self._select = env.render(this.select, **template_params)
             self._add_columns = db_actions.AddColumns(
                 env,
@@ -215,7 +219,11 @@ class MapToNewColumns(TaskDef):
                     lambda row: row._asdict(),
                     track(result, description="Task progress..."),
                 ):
-                    jsql.connection.execute(self._update, self._fn(**input_row))
+                    context = TaskContext.from_id_fields(self._id_fields, input_row)
+                    jsql.connection.execute(
+                        self._update,
+                        self._fn(**input_row, **self._inject_context(context)),
+                    )
 
                     if self._commit_each:
                         jsql.connection.commit()
