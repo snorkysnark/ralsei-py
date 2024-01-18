@@ -9,7 +9,8 @@ from ralsei.dialect import DialectRegistry, Dialect
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
 from ralsei.context import ConnectionContext, EngineContext
 from ._parsers import TYPE_TREEPATH
-from ._utils import extend_params
+from ._decorators import extend_params
+from ._rich import print_task_info
 
 
 @dataclass
@@ -88,6 +89,15 @@ class Ralsei:
             ("redo", TaskSequence.redo),
         ]:
             self.__build_cmd(cli, name, action)
+
+        @click.argument("task_name", metavar="TASK", type=TYPE_TREEPATH)
+        @cli.command("describe")
+        @click.pass_context
+        def describe_cmd(click_ctx: click.Context, task_name: TreePath):
+            group = click_ctx.find_object(GroupContext)
+            assert group, "Group context hasn't been set"
+
+            print_task_info(group.dag.tasks[task_name])
 
         return cli
 
