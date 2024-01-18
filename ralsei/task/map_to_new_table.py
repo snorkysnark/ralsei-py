@@ -5,7 +5,7 @@ from returns.maybe import Maybe
 from sqlalchemy import TextClause
 
 from .base import TaskDef, TaskImpl, ExistsStatus
-from .context import TaskContext, create_context_argument
+from .context import TaskContext, ContextManagerBundle, create_context_argument
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -180,6 +180,7 @@ class MapToNewTable(TaskDef):
     instead of loading them all into memory
 
     Using this option will break progress bars"""
+    context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlalchemyEnvironment) -> None:
@@ -187,6 +188,7 @@ class MapToNewTable(TaskDef):
             self._fn = this.fn
             self._yield_per = this.yield_per
             self._inject_context = create_context_argument(this.fn)
+            self._context_managers = ContextManagerBundle(this.context)
 
             source_table = env.resolve(this.source_table)
 
@@ -325,14 +327,19 @@ class MapToNewTable(TaskDef):
                             )
                             jsql.connection.commit()
 
-            for input_row in (
-                Maybe.from_optional(self._select).map(iter_input_rows).value_or([{}])
-            ):
-                with TaskContext.from_id_fields(self._id_fields, input_row) as context:
-                    for output_row in self._fn(
-                        **input_row, **self._inject_context(context)
-                    ):
-                        jsql.connection.execute(self._insert, output_row)
+            with self._context_managers as extra_context:
+                for input_row in (
+                    Maybe.from_optional(self._select)
+                    .map(iter_input_rows)
+                    .value_or([{}])
+                ):
+                    with TaskContext.from_id_fields(
+                        self._id_fields, input_row, extras=extra_context
+                    ) as context:
+                        for output_row in self._fn(
+                            **input_row, **self._inject_context(context)
+                        ):
+                            jsql.connection.execute(self._insert, output_row)
 
         def delete(self, jsql: JinjaSqlConnection) -> None:
             if self._marker_scripts:

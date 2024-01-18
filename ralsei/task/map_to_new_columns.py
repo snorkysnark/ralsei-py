@@ -4,7 +4,7 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
 from .base import TaskImpl, TaskDef, ExistsStatus
-from .context import TaskContext, create_context_argument
+from .context import TaskContext, ContextManagerBundle, create_context_argument
 from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
@@ -130,6 +130,7 @@ class MapToNewColumns(TaskDef):
     instead of loading them all into memory
 
     Using this option will break progress bars"""
+    context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
@@ -137,6 +138,7 @@ class MapToNewColumns(TaskDef):
             self._fn = this.fn
             self._inject_context = create_context_argument(this.fn)
             self._yield_per = this.yield_per
+            self._context_managers = ContextManagerBundle(this.context)
 
             template_params = merge_params(
                 {"table": self._table},
@@ -214,13 +216,13 @@ class MapToNewColumns(TaskDef):
 
             with jsql.connection.execute_with_length_hint(
                 self._select, yield_per=self._yield_per
-            ) as result:
+            ) as result, self._context_managers as extra_context:
                 for input_row in map(
                     lambda row: row._asdict(),
                     track(result, description="Task progress..."),
                 ):
                     with TaskContext.from_id_fields(
-                        self._id_fields, input_row
+                        self._id_fields, input_row, extras=extra_context
                     ) as context:
                         jsql.connection.execute(
                             self._update,
