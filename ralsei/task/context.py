@@ -7,8 +7,8 @@ from ralsei.console import console
 
 
 class TaskContext:
-    def __init__(self, identifier: object) -> None:
-        self._identifier = identifier
+    def __init__(self, popped_fields: dict) -> None:
+        self._popped_fields = popped_fields
 
     @staticmethod
     def from_id_fields(id_fields: set[str], inputs: dict) -> TaskContext:
@@ -18,14 +18,14 @@ class TaskContext:
 
     def print(self, *args: Any, **kwargs: Any):
         console.log(
-            Text(f"Context: {self._identifier}", style="light_sea_green"),
+            Text(f"Context: {self._popped_fields}", style="light_sea_green"),
             *args,
             **kwargs,
         )
 
     def log(self, *args: Any, **kwargs: Any):
         console.log(
-            Text(f"Context: {self._identifier}", style="light_sea_green"),
+            Text(f"Context: {self._popped_fields}", style="light_sea_green"),
             *args,
             **kwargs,
         )
