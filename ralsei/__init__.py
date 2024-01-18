@@ -14,6 +14,7 @@ from .wrappers import *
 from .task import CreateTableSql, AddColumnsSql, MapToNewTable, MapToNewColumns
 from .graph import Pipeline, OutputOf, CyclicGraphError
 from .app import Ralsei
+from .utils import folder
 
 __all__ = [
     "Sql",
@@ -46,4 +47,5 @@ __all__ = [
     "OutputOf",
     "CyclicGraphError",
     "Ralsei",
+    "folder",
 ]

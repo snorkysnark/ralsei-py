@@ -1,3 +1,5 @@
+import inspect
+from pathlib import Path
 from typing import Optional, TypeVar
 from returns.maybe import Maybe, UnwrapFailedError
 
@@ -39,4 +41,8 @@ def expect_maybe(value: Maybe[T], error: Exception) -> T:
         raise error
 
 
-__all__ = ["merge_params", "expect_optional", "expect_maybe"]
+def folder() -> Path:
+    return Path(inspect.stack()[1].filename).parent
+
+
+__all__ = ["merge_params", "expect_optional", "expect_maybe", "folder"]
