@@ -21,7 +21,7 @@ from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.sql_adapter import ToSql
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
-from ralsei.context import ConnectionContext
+from ralsei.jinjasql import JinjaSqlConnection
 from ralsei.console import track
 
 
@@ -289,26 +289,26 @@ class MapToNewTable(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
-            if not db_actions.table_exists(ctx, self._table):
+        def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
+            if not db_actions.table_exists(jsql, self._table):
                 return ExistsStatus.NO
             elif (
                 # non-resumable or resumable with no more inputs
                 self._select is None
                 or not self._marker_scripts
-                or ctx.connection.execute(self._select).first() is None
+                or jsql.connection.execute(self._select).first() is None
             ):
                 return ExistsStatus.YES
             else:
                 return ExistsStatus.PARTIAL
 
-        def run(self, ctx: ConnectionContext) -> None:
-            ctx.connection.execute(self._create_table)
+        def run(self, jsql: JinjaSqlConnection) -> None:
+            jsql.connection.execute(self._create_table)
             if self._marker_scripts:
-                self._marker_scripts.add_marker(ctx)
+                self._marker_scripts.add_marker(jsql)
 
             def iter_input_rows(select: TextClause):
-                with ctx.connection.execute_with_length_hint(
+                with jsql.connection.execute_with_length_hint(
                     select, yield_per=self._yield_per
                 ) as result:
                     for input_row in map(
@@ -318,21 +318,21 @@ class MapToNewTable(TaskDef):
                         yield input_row
 
                         if self._marker_scripts:
-                            ctx.connection.execute(
+                            jsql.connection.execute(
                                 self._marker_scripts.set_marker, input_row
                             )
-                            ctx.connection.commit()
+                            jsql.connection.commit()
 
             for input_row in (
                 Maybe.from_optional(self._select).map(iter_input_rows).value_or([{}])
             ):
                 for output_row in self._fn(**input_row):
-                    ctx.connection.execute(self._insert, output_row)
+                    jsql.connection.execute(self._insert, output_row)
 
-        def delete(self, ctx: ConnectionContext) -> None:
+        def delete(self, jsql: JinjaSqlConnection) -> None:
             if self._marker_scripts:
-                self._marker_scripts.drop_marker(ctx)
-            ctx.connection.execute(self._drop_table)
+                self._marker_scripts.drop_marker(jsql)
+            jsql.connection.execute(self._drop_table)
 
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             if self._marker_scripts:

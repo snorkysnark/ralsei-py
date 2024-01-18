@@ -1,7 +1,7 @@
 import pytest
 from ralsei import (
-    ConnectionContext,
-    EngineContext,
+    JinjaSqlConnection,
+    JinjaSqlEngine,
     Table,
     MapToNewColumns,
     ValueColumn,
@@ -13,12 +13,12 @@ from ralsei.task import ExistsStatus
 from common.db_helper import get_rows
 
 
-def test_map_columns(ctx: ConnectionContext):
+def test_map_columns(jsql: JinjaSqlConnection):
     def double(val: int):
         return {"doubled": val * 2}
 
     table = Table("test_map_columns")
-    ctx.render_executescript(
+    jsql.render_executescript(
         [
             """\
             CREATE TABLE {{table}}(
@@ -35,23 +35,23 @@ def test_map_columns(ctx: ConnectionContext):
         select="SELECT id, val FROM {{table}}",
         columns=[ValueColumn("doubled", "INT")],
         fn=compose_one(double, pop_id_fields("id")),
-    ).create(ctx.jinja)
+    ).create(jsql.jinja)
 
-    task.run(ctx)
-    assert get_rows(ctx, table, order_by=["id"]) == [
+    task.run(jsql)
+    assert get_rows(jsql, table, order_by=["id"]) == [
         (1, 2, 4),
         (2, 5, 10),
         (3, 12, 24),
     ]
-    task.delete(ctx)
-    assert get_rows(ctx, table, order_by=["id"]) == [
+    task.delete(jsql)
+    assert get_rows(jsql, table, order_by=["id"]) == [
         (1, 2),
         (2, 5),
         (3, 12),
     ]
 
 
-def test_map_columns_resumable(engine: EngineContext):
+def test_map_columns_resumable(jengine: JinjaSqlEngine):
     def failing(val: int):
         if val < 10:
             return {"doubled": val * 2}
@@ -59,8 +59,8 @@ def test_map_columns_resumable(engine: EngineContext):
             raise RuntimeError()
 
     table = Table("test_map_columns_resumable")
-    with engine.connect() as ctx:
-        ctx.render_executescript(
+    with jengine.connect() as jsql:
+        jsql.render_executescript(
             [
                 """\
                 CREATE TABLE {{table}}(
@@ -78,28 +78,28 @@ def test_map_columns_resumable(engine: EngineContext):
             columns=[ValueColumn("doubled", "INT")],
             fn=compose_one(failing, pop_id_fields("id")),
             is_done_column="__success",
-        ).create(ctx.jinja)
+        ).create(jsql.jinja)
 
         with pytest.raises(RuntimeError):
-            task.run(ctx)
+            task.run(jsql)
 
-    with engine.connect() as ctx:
-        assert get_rows(ctx, table, order_by=["id"]) == [
+    with jengine.connect() as jsql:
+        assert get_rows(jsql, table, order_by=["id"]) == [
             (1, 2, 4, True),
             (2, 5, 10, True),
             (3, 12, None, False),
         ]
-        task.delete(ctx)
-        assert get_rows(ctx, table, order_by=["id"]) == [
+        task.delete(jsql)
+        assert get_rows(jsql, table, order_by=["id"]) == [
             (1, 2),
             (2, 5),
             (3, 12),
         ]
 
 
-def test_map_columns_continue(ctx: ConnectionContext):
+def test_map_columns_continue(jsql: JinjaSqlConnection):
     table = Table("resumable")
-    ctx.render_executescript(
+    jsql.render_executescript(
         """\
         CREATE TABLE {{table}}(
             num INT PRIMARY KEY,
@@ -122,9 +122,9 @@ def test_map_columns_continue(ctx: ConnectionContext):
         columns=[ValueColumn("doubled", "INT")],
         is_done_column="__done",
         fn=compose_one(double, pop_id_fields("num", keep=True)),
-    ).create(ctx.jinja)
+    ).create(jsql.jinja)
 
-    assert task.exists(ctx) == ExistsStatus.PARTIAL
-    task.run(ctx)
-    assert task.exists(ctx) == ExistsStatus.YES
-    assert get_rows(ctx, table) == [(2, 4, True), (3, 6, True)]
+    assert task.exists(jsql) == ExistsStatus.PARTIAL
+    task.run(jsql)
+    assert task.exists(jsql) == ExistsStatus.YES
+    assert get_rows(jsql, table) == [(2, 4, True), (3, 6, True)]

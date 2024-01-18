@@ -3,7 +3,7 @@ from typing import Any, Iterable, Self, Self, TypeVar, Generic
 from enum import Enum
 
 from ralsei.jinja import SqlalchemyEnvironment
-from ralsei.context import ConnectionContext
+from ralsei.jinjasql import JinjaSqlConnection
 
 
 class ExistsStatus(Enum):
@@ -21,17 +21,17 @@ class Task(ABC):
     """Task base class"""
 
     @abstractmethod
-    def run(self, ctx: ConnectionContext):
+    def run(self, jsql: JinjaSqlConnection):
         """Run the task"""
 
     @abstractmethod
-    def delete(self, ctx: ConnectionContext):
+    def delete(self, jsql: JinjaSqlConnection):
         """Delete whatever :py:meth:`~run` has created"""
 
-    def redo(self, ctx: ConnectionContext):
+    def redo(self, jsql: JinjaSqlConnection):
         """Calls :py:meth:`~delete` and then :py:meth:`~run`"""
-        self.delete(ctx)
-        self.run(ctx)
+        self.delete(jsql)
+        self.run(jsql)
 
     @abstractproperty
     def output(self) -> Any:
@@ -42,7 +42,7 @@ class Task(ABC):
         """
 
     @abstractmethod
-    def exists(self, ctx: ConnectionContext) -> ExistsStatus:
+    def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
         """Check if task has already been done"""
 
     def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:

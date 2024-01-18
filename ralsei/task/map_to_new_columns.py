@@ -17,7 +17,7 @@ from ralsei.wrappers import OneToOne
 from ralsei.jinja import SqlalchemyEnvironment
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
-from ralsei.context import ConnectionContext
+from ralsei.jinjasql import JinjaSqlConnection
 
 
 @dataclass
@@ -193,35 +193,35 @@ class MapToNewColumns(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, ctx: ConnectionContext) -> ExistsStatus:
-            if not db_actions.columns_exist(ctx, self._table, self._column_names):
+        def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
+            if not db_actions.columns_exist(jsql, self._table, self._column_names):
                 return ExistsStatus.NO
             elif (
                 # non-resumable or resumable with no more inputs
                 not self._commit_each
-                or ctx.connection.execute(self._select).first() is None
+                or jsql.connection.execute(self._select).first() is None
             ):
                 return ExistsStatus.YES
             else:
                 return ExistsStatus.PARTIAL
 
-        def run(self, ctx: ConnectionContext) -> None:
-            self._add_columns(ctx)
+        def run(self, jsql: JinjaSqlConnection) -> None:
+            self._add_columns(jsql)
 
-            with ctx.connection.execute_with_length_hint(
+            with jsql.connection.execute_with_length_hint(
                 self._select, yield_per=self._yield_per
             ) as result:
                 for input_row in map(
                     lambda row: row._asdict(),
                     track(result, description="Task progress..."),
                 ):
-                    ctx.connection.execute(self._update, self._fn(**input_row))
+                    jsql.connection.execute(self._update, self._fn(**input_row))
 
                     if self._commit_each:
-                        ctx.connection.commit()
+                        jsql.connection.commit()
 
-        def delete(self, ctx: ConnectionContext) -> None:
-            self._drop_columns(ctx)
+        def delete(self, jsql: JinjaSqlConnection) -> None:
+            self._drop_columns(jsql)
 
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Add columns", self._add_columns.statements

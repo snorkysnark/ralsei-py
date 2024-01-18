@@ -9,7 +9,7 @@ from .types import (
     ValueColumnRendered,
     IdColumn,
 )
-from .context import ConnectionContext, EngineContext
+from .jinjasql import JinjaSqlEngine, JinjaSqlConnection
 from .wrappers import *
 from .task import CreateTableSql, AddColumnsSql, MapToNewTable, MapToNewColumns
 from .graph import Pipeline, OutputOf, CyclicGraphError
@@ -26,8 +26,8 @@ __all__ = [
     "ValueColumn",
     "ValueColumnRendered",
     "IdColumn",
-    "ConnectionContext",
-    "EngineContext",
+    "JinjaSqlEngine",
+    "JinjaSqlConnection",
     "OneToOne",
     "OneToMany",
     "into_many",

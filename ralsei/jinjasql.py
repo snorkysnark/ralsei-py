@@ -9,7 +9,7 @@ from .jinja import SqlalchemyEnvironment, SqlEnvironment
 from .connection import create_engine, Connection
 
 
-class EngineContext:
+class JinjaSqlEngine:
     def __init__(
         self,
         engine: sqlalchemy.Engine,
@@ -22,13 +22,13 @@ class EngineContext:
     def from_sqlalchemy(
         engine: sqlalchemy.Engine,
         dialect: Dialect | DialectRegistry = default_registry,
-    ) -> EngineContext:
+    ) -> JinjaSqlEngine:
         resolved_dialect = (
             dialect.from_sqlalchemy(engine.dialect)
             if isinstance(dialect, DialectRegistry)
             else dialect
         )
-        return EngineContext(
+        return JinjaSqlEngine(
             engine,
             SqlEnvironment(resolved_dialect).sqlalchemy,
         )
@@ -36,8 +36,8 @@ class EngineContext:
     @staticmethod
     def create(
         url: str | URL, dialect: Dialect | DialectRegistry = default_registry, **kwargs
-    ) -> EngineContext:
-        return EngineContext.from_sqlalchemy(create_engine(url, **kwargs), dialect)
+    ) -> JinjaSqlEngine:
+        return JinjaSqlEngine.from_sqlalchemy(create_engine(url, **kwargs), dialect)
 
     @property
     def engine(self):
@@ -51,11 +51,11 @@ class EngineContext:
     def dialect(self):
         return self.jinja.dialect
 
-    def connect(self) -> ConnectionContext:
-        return ConnectionContext(Connection(self.engine), self.jinja)
+    def connect(self) -> JinjaSqlConnection:
+        return JinjaSqlConnection(Connection(self.engine), self.jinja)
 
 
-class ConnectionContext:
+class JinjaSqlConnection:
     def __init__(
         self, connection: Connection, environment: SqlalchemyEnvironment
     ) -> None:
@@ -99,11 +99,11 @@ class ConnectionContext:
             bind_params,
         )
 
-    def __enter__(self) -> ConnectionContext:
+    def __enter__(self) -> JinjaSqlConnection:
         return self
 
     def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
         self.connection.close()
 
 
-__all__ = ["EngineContext", "ConnectionContext"]
+__all__ = ["JinjaSqlEngine", "JinjaSqlConnection"]

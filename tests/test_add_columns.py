@@ -1,10 +1,10 @@
-from ralsei import ConnectionContext, Table, AddColumnsSql, Column
+from ralsei import JinjaSqlConnection, Table, AddColumnsSql, Column
 
 from common.db_helper import get_rows
 
 
-def create_table(ctx: ConnectionContext, table: Table):
-    ctx.render_executescript(
+def create_table(jsql: JinjaSqlConnection, table: Table):
+    jsql.render_executescript(
         [
             """\
             CREATE TABLE {{ table }}(
@@ -16,9 +16,9 @@ def create_table(ctx: ConnectionContext, table: Table):
     )
 
 
-def test_add_columns(ctx: ConnectionContext):
+def test_add_columns(jsql: JinjaSqlConnection):
     table = Table("test_add_column")
-    create_table(ctx, table)
+    create_table(jsql, table)
 
     task = AddColumnsSql(
         sql=[
@@ -27,20 +27,20 @@ def test_add_columns(ctx: ConnectionContext):
         ],
         table=table,
         columns=[Column("b", "INT"), Column("c", "TEXT")],
-    ).create(ctx.jinja)
+    ).create(jsql.jinja)
 
-    task.run(ctx)
-    assert get_rows(ctx, table) == [
+    task.run(jsql)
+    assert get_rows(jsql, table) == [
         (2, 4, "2-4"),
         (5, 10, "5-10"),
     ]
-    task.delete(ctx)
-    assert get_rows(ctx, table) == [(2,), (5,)]
+    task.delete(jsql)
+    assert get_rows(jsql, table) == [(2,), (5,)]
 
 
-def test_add_columns_jinja_var(ctx: ConnectionContext):
+def test_add_columns_jinja_var(jsql: JinjaSqlConnection):
     table = Table("test_add_column")
-    create_table(ctx, table)
+    create_table(jsql, table)
 
     task = AddColumnsSql(
         sql="""\
@@ -53,29 +53,29 @@ def test_add_columns_jinja_var(ctx: ConnectionContext):
         {%-split-%}
         UPDATE {{ table }} SET c = a || '-' || b;""",
         table=table,
-    ).create(ctx.jinja)
+    ).create(jsql.jinja)
 
-    task.run(ctx)
-    assert get_rows(ctx, table) == [
+    task.run(jsql)
+    assert get_rows(jsql, table) == [
         (2, 4, "2-4"),
         (5, 10, "5-10"),
     ]
-    task.delete(ctx)
-    assert get_rows(ctx, table) == [(2,), (5,)]
+    task.delete(jsql)
+    assert get_rows(jsql, table) == [(2,), (5,)]
 
 
-def test_column_template(ctx: ConnectionContext):
+def test_column_template(jsql: JinjaSqlConnection):
     table = Table("test_add_column")
-    create_table(ctx, table)
+    create_table(jsql, table)
 
     task = AddColumnsSql(
         sql="",
         table=table,
         columns=[Column("b", "TEXT DEFAULT {{ default }}")],
         params={"default": "Hello"},
-    ).create(ctx.jinja)
+    ).create(jsql.jinja)
 
-    task.run(ctx)
-    assert get_rows(ctx, table) == [(2, "Hello"), (5, "Hello")]
-    task.delete(ctx)
-    assert get_rows(ctx, table) == [(2,), (5,)]
+    task.run(jsql)
+    assert get_rows(jsql, table) == [(2, "Hello"), (5, "Hello")]
+    task.delete(jsql)
+    assert get_rows(jsql, table) == [(2,), (5,)]

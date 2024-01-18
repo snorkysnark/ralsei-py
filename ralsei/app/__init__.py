@@ -7,7 +7,7 @@ import inspect
 
 from ralsei.dialect import DialectRegistry, Dialect
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
-from ralsei.context import ConnectionContext, EngineContext
+from ralsei.jinjasql import JinjaSqlConnection, JinjaSqlEngine
 from ._parsers import TYPE_TREEPATH
 from ._decorators import extend_params
 from ._rich import print_task_info
@@ -15,7 +15,7 @@ from ._rich import print_task_info
 
 @dataclass
 class GroupContext:
-    engine: EngineContext
+    engine: JinjaSqlEngine
     dag: DAG
 
 
@@ -49,7 +49,7 @@ class Ralsei:
             ]
 
             for name, param in inspect.signature(pipeline_source).parameters.items():
-                if param.annotation is EngineContext:
+                if param.annotation is JinjaSqlEngine:
                     self._engine_context_arg = name
                     break
 
@@ -71,7 +71,7 @@ class Ralsei:
         @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
         @click.pass_context
         def cli(ctx: click.Context, db: str, *args, **kwargs):
-            engine = EngineContext.create(db, dialect=self._dialect_registry)
+            engine = JinjaSqlEngine.create(db, dialect=self._dialect_registry)
             pipeline = self._pipeline_constructor(
                 *args,
                 **kwargs,
@@ -105,7 +105,7 @@ class Ralsei:
         self,
         group: click.Group,
         name: str,
-        action: Callable[[TaskSequence, ConnectionContext], None],
+        action: Callable[[TaskSequence, JinjaSqlConnection], None],
     ):
         @click.option(
             "--from",

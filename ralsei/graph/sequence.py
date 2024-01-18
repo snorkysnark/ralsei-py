@@ -5,7 +5,7 @@ from ralsei.console import console, track
 from .path import TreePath
 
 if TYPE_CHECKING:
-    from ralsei.context import ConnectionContext
+    from ralsei.jinjasql import JinjaSqlConnection
     from ralsei.task import Task
 
 
@@ -23,37 +23,37 @@ class TaskSequence:
     def __init__(self, steps: list[NamedTask]) -> None:
         self.steps = steps
 
-    def run(self, ctx: "ConnectionContext"):
+    def run(self, jsql: "JinjaSqlConnection"):
         from ralsei.task import ExistsStatus
 
         for named_task in track(self.steps, description="Running tasks..."):
-            if named_task.task.exists(ctx) == ExistsStatus.YES:
+            if named_task.task.exists(jsql) == ExistsStatus.YES:
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: already done"
                 )
             else:
                 console.print(f"Running [bold green]{named_task.name}")
 
-                named_task.task.run(ctx)
-                ctx.connection.commit()
+                named_task.task.run(jsql)
+                jsql.connection.commit()
 
-    def delete(self, ctx: "ConnectionContext"):
+    def delete(self, jsql: "JinjaSqlConnection"):
         from ralsei.task import ExistsStatus
 
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
-            if named_task.task.exists(ctx) == ExistsStatus.NO:
+            if named_task.task.exists(jsql) == ExistsStatus.NO:
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: does not exist"
                 )
             else:
                 console.print(f"Deleting [bold green]{named_task.name}")
 
-                named_task.task.delete(ctx)
-                ctx.connection.commit()
+                named_task.task.delete(jsql)
+                jsql.connection.commit()
 
-    def redo(self, ctx: "ConnectionContext"):
-        self.delete(ctx)
-        self.run(ctx)
+    def redo(self, jsql: "JinjaSqlConnection"):
+        self.delete(jsql)
+        self.run(jsql)
 
 
 __all__ = ["NamedTask", "TaskSequence"]

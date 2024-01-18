@@ -2,7 +2,8 @@ from typing import Iterable
 from sqlalchemy import inspect
 from sqlalchemy import TextClause
 
-from ralsei.context import ConnectionContext, Connection
+from ralsei.jinjasql import JinjaSqlConnection
+from ralsei.connection import Connection
 from ralsei.types import Table, ColumnRendered
 from ralsei.jinja import SqlalchemyEnvironment
 
@@ -16,12 +17,14 @@ def _get_column_names(conn: Connection, table: Table):
     )
 
 
-def table_exists(ctx: ConnectionContext, table: Table) -> bool:
-    return inspect(ctx.connection).has_table(table.name, table.schema)
+def table_exists(jsql: JinjaSqlConnection, table: Table) -> bool:
+    return inspect(jsql.connection).has_table(table.name, table.schema)
 
 
-def columns_exist(ctx: ConnectionContext, table: Table, columns: Iterable[str]) -> bool:
-    existing = _get_column_names(ctx.connection, table)
+def columns_exist(
+    jsql: JinjaSqlConnection, table: Table, columns: Iterable[str]
+) -> bool:
+    existing = _get_column_names(jsql.connection, table)
 
     for column in columns:
         if column not in existing:
@@ -53,14 +56,14 @@ class AddColumns:
         self._table, self._columns = table, columns
         self._if_not_exists = if_not_exists
 
-    def __call__(self, ctx: ConnectionContext):
-        if self._if_not_exists and not ctx.dialect.supports_column_if_not_exists:
-            existing = _get_column_names(ctx.connection, self._table)
+    def __call__(self, jsql: JinjaSqlConnection):
+        if self._if_not_exists and not jsql.dialect.supports_column_if_not_exists:
+            existing = _get_column_names(jsql.connection, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if not column.name in existing:
-                    ctx.connection.execute(statement)
+                    jsql.connection.execute(statement)
         else:
-            ctx.connection.executescript(self.statements)
+            jsql.connection.executescript(self.statements)
 
 
 class DropColumns:
@@ -86,14 +89,14 @@ class DropColumns:
         self._table, self._columns = table, columns
         self._if_exists = if_exists
 
-    def __call__(self, ctx: ConnectionContext):
-        if self._if_exists and not ctx.dialect.supports_column_if_not_exists:
-            existing = _get_column_names(ctx.connection, self._table)
+    def __call__(self, jsql: JinjaSqlConnection):
+        if self._if_exists and not jsql.dialect.supports_column_if_not_exists:
+            existing = _get_column_names(jsql.connection, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if column.name in existing:
-                    ctx.connection.execute(statement)
+                    jsql.connection.execute(statement)
         else:
-            ctx.connection.executescript(self.statements)
+            jsql.connection.executescript(self.statements)
 
 
 __all__ = ["table_exists", "columns_exist", "AddColumns", "DropColumns"]

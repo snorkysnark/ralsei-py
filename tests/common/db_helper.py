@@ -1,12 +1,12 @@
 from typing import Optional
 
-from ralsei import ConnectionContext, Table
+from ralsei import JinjaSqlConnection, Table
 
 
 def get_rows(
-    ctx: ConnectionContext, table: Table, order_by: Optional[list[str]] = None
+    jsql: JinjaSqlConnection, table: Table, order_by: Optional[list[str]] = None
 ):
-    return ctx.render_execute(
+    return jsql.render_execute(
         """\
         SELECT * FROM {{table}}{%if order_by%}
         {%set sep = joiner(', ')-%}
