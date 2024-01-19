@@ -11,7 +11,13 @@ from .types import (
 )
 from .jinjasql import JinjaSqlEngine, JinjaSqlConnection
 from .wrappers import *
-from .task import CreateTableSql, AddColumnsSql, MapToNewTable, MapToNewColumns
+from .task import (
+    CreateTableSql,
+    AddColumnsSql,
+    MapToNewTable,
+    MapToNewColumns,
+    TaskContext,
+)
 from .graph import Pipeline, OutputOf, CyclicGraphError
 from .app import Ralsei
 from .utils import folder
@@ -43,6 +49,7 @@ __all__ = [
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
+    "TaskContext",
     "Pipeline",
     "OutputOf",
     "CyclicGraphError",
