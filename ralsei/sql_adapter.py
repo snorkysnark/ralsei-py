@@ -40,6 +40,7 @@ def create_adapter_for_env(env: "SqlEnvironment"):
     adapter.register_type(str, lambda value: "'{}'".format(value.replace("'", "''")))
     adapter.register_type(int, str)
     adapter.register_type(float, str)
+    adapter.register_type(type(None), lambda value: "NULL")
     adapter.register_type(ToSql, lambda value: value.to_sql(env))
 
     return adapter
