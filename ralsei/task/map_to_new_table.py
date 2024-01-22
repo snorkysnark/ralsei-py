@@ -349,6 +349,8 @@ class MapToNewTable(TaskDef):
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             if self._marker_scripts:
                 yield "Add marker", self._marker_scripts.add_marker.statements
+            if self._select is not None:
+                yield "Select", self._select
             yield "Create table", self._create_table
             yield "Insert", self._insert
             if self._marker_scripts:
