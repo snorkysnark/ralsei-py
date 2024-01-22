@@ -1,18 +1,23 @@
 from dataclasses import dataclass
+from pathlib import Path
 import click
 from rich.console import Console
+from rich.prompt import Prompt
 from typing import Callable, Optional, Sequence, overload
 from returns.maybe import Maybe
 import inspect
 import sys
 
 from ralsei.dialect import DialectRegistry, Dialect
-from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
+from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG, NamedTask
 from ralsei.jinjasql import JinjaSqlConnection, JinjaSqlEngine
+from ralsei.console import console
 from ralsei.task.context import row_context_atrribute
+
 from ._parsers import TYPE_TREEPATH
 from ._decorators import extend_params
 from ._rich import print_task_info
+from ._opener import open_in_default_app
 
 traceback_console = Console(stderr=True)
 
@@ -87,12 +92,9 @@ class Ralsei:
 
             ctx.obj = GroupContext(engine, dag)
 
-        for name, action in [
-            ("run", TaskSequence.run),
-            ("delete", TaskSequence.delete),
-            ("redo", TaskSequence.redo),
-        ]:
-            self.__build_cmd(cli, name, action)
+        self.__build_cmd(cli, "run", TaskSequence.run)
+        self.__build_cmd(cli, "delete", TaskSequence.delete, ask=True)
+        self.__build_cmd(cli, "redo", TaskSequence.redo, ask=True)
 
         @click.argument("task_name", metavar="TASK", type=TYPE_TREEPATH)
         @cli.command("describe")
@@ -103,6 +105,16 @@ class Ralsei:
 
             print_task_info(group.dag.tasks[task_name])
 
+        @click.argument("filename", type=Path, default="graph.dot")
+        @cli.command("graph")
+        @click.pass_context
+        def graph_cmd(click_ctx: click.Context, filename: str):
+            group = click_ctx.find_object(GroupContext)
+            assert group, "Group context hasn't been set"
+
+            rendered = group.dag.graphviz().render(filename, format="png")
+            open_in_default_app(rendered)
+
         return cli
 
     def __build_cmd(
@@ -110,6 +122,7 @@ class Ralsei:
         group: click.Group,
         name: str,
         action: Callable[[TaskSequence, JinjaSqlConnection], None],
+        ask: bool = False,
     ):
         @click.option(
             "--from",
@@ -118,15 +131,43 @@ class Ralsei:
             type=TYPE_TREEPATH,
             multiple=True,
         )
+        @click.option(
+            "--one",
+            "single",
+            help="run only this task",
+            type=TYPE_TREEPATH,
+            multiple=True,
+        )
         @group.command(name)
         @click.pass_context
-        def cmd(click_ctx: click.Context, start_from: Optional[list[TreePath]]):
+        def cmd(
+            click_ctx: click.Context,
+            start_from: Optional[list[TreePath]],
+            single: list[TreePath] = [],
+        ):
             group = click_ctx.find_object(GroupContext)
             assert group, "Group context hasn't been set"
 
-            sequence = group.dag.topological_sort(start_from=start_from)
-            with group.engine.connect() as ctx:
-                action(sequence, ctx)
+            if single:
+                sequence = (
+                    group.dag.topological_sort_filtered(start_from)
+                    if start_from
+                    else TaskSequence(
+                        [NamedTask(path, group.dag.tasks[path]) for path in single]
+                    )
+                )
+            elif start_from:
+                sequence = group.dag.topological_sort_filtered(start_from)
+            else:
+                sequence = group.dag.topological_sort()
+
+            if ask:
+                for task in sequence.steps:
+                    console.print(task.name)
+
+            if not ask or Prompt.ask("(y/n)?", console=console) == "y":
+                with group.engine.connect() as ctx:
+                    action(sequence, ctx)
 
     def __call__(self, *args, **kwargs):
         try:

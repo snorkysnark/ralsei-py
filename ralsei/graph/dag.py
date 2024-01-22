@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import defaultdict
 from graphviz import Digraph
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from .path import TreePath
 from .sequence import NamedTask, TaskSequence
@@ -29,13 +29,16 @@ class TopologicalSort:
 
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
 
-    def run(self, start_from: Optional[list[TreePath]] = None) -> TaskSequence:
-        for path in start_from or self.dag.tasks:
+    def run_filtered(self, start_from: Iterable[TreePath]) -> TaskSequence:
+        for path in start_from:
             if not self.visited[path]:
                 self._visit_recursive(path)
 
         self.stack.reverse()
         return TaskSequence(self.stack)
+
+    def run(self) -> TaskSequence:
+        return self.run_filtered(self.dag.tasks)
 
 
 @dataclass
@@ -52,18 +55,18 @@ class DAG:
             for parent, children in self.relations.items()
         }
 
-    def topological_sort(
-        self, start_from: Optional[list[TreePath]] = None
-    ) -> TaskSequence:
-        return TopologicalSort(self).run(start_from)
+    def topological_sort(self) -> TaskSequence:
+        return TopologicalSort(self).run()
 
-    def digraph(self) -> Digraph:
+    def topological_sort_filtered(self, start_from: Iterable[TreePath]) -> TaskSequence:
+        return TopologicalSort(self).run_filtered(start_from)
+
+    def graphviz(self) -> Digraph:
         dot = Digraph()
         dot.attr("node", shape="box")
 
-        for path in self.tasks:
-            path_str = str(path)
-            dot.node(path_str, path_str)
+        for path, task in self.tasks.items():
+            dot.node(str(path), f"<<b>{path}</b><br/>{task.output}>")
 
         for path_from, children in self.relations.items():
             for path_to in children:

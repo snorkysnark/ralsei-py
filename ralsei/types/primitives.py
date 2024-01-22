@@ -29,6 +29,12 @@ class Table(ToSql):
     name: str
     schema: Optional[str] = None
 
+    def __str__(self) -> str:
+        if self.schema:
+            return f"{self.schema}.{self.name}"
+        else:
+            return self.name
+
     def to_sql(self, env: "SqlEnvironment") -> str:
         return env.render(
             "{%if schema%}{{schema | identifier}}.{%endif%}{{name | identifier}}",
