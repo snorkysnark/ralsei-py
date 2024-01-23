@@ -57,4 +57,12 @@ class Pipeline(ABC):
         return DependencyResolver.from_definition(self._flatten()).build_dag(env)
 
 
-__all__ = ["Pipeline"]
+class SimplePipeline(Pipeline):
+    def __init__(self, tasks: Mapping[str, Union["TaskDef", Pipeline]]) -> None:
+        self.tasks = tasks
+
+    def create_tasks(self) -> Mapping[str, Union["TaskDef", Pipeline]]:
+        return self.tasks
+
+
+__all__ = ["Pipeline", "SimplePipeline"]

@@ -18,7 +18,7 @@ from .task import (
     MapToNewColumns,
     TaskContext,
 )
-from .graph import Pipeline, OutputOf, CyclicGraphError
+from .graph import Pipeline, SimplePipeline, OutputOf, CyclicGraphError
 from .app import Ralsei
 from .utils import folder
 
@@ -51,6 +51,7 @@ __all__ = [
     "MapToNewColumns",
     "TaskContext",
     "Pipeline",
+    "SimplePipeline",
     "OutputOf",
     "CyclicGraphError",
     "Ralsei",
