@@ -3,18 +3,20 @@ from sqlalchemy import inspect
 from sqlalchemy import TextClause
 
 from ralsei.jinjasql import JinjaSqlConnection
-from ralsei.connection import Connection
 from ralsei.types import Table, ColumnRendered
 from ralsei.jinja import SqlalchemyEnvironment
 
 
-def _get_column_names(conn: Connection, table: Table):
-    return set(
-        map(
-            lambda col: col["name"],
-            inspect(conn).get_columns(table.name, table.schema),
+def _get_column_names(jsql: JinjaSqlConnection, table: Table):
+    if table_exists(jsql, table):
+        return set(
+            map(
+                lambda col: col["name"],
+                inspect(jsql.connection).get_columns(table.name, table.schema),
+            )
         )
-    )
+    else:
+        return set()
 
 
 def table_exists(jsql: JinjaSqlConnection, table: Table) -> bool:
@@ -24,7 +26,7 @@ def table_exists(jsql: JinjaSqlConnection, table: Table) -> bool:
 def columns_exist(
     jsql: JinjaSqlConnection, table: Table, columns: Iterable[str]
 ) -> bool:
-    existing = _get_column_names(jsql.connection, table)
+    existing = _get_column_names(jsql, table)
 
     for column in columns:
         if column not in existing:
