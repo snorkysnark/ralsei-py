@@ -60,7 +60,7 @@ class AddColumns:
 
     def __call__(self, jsql: JinjaSqlConnection):
         if self._if_not_exists and not jsql.dialect.supports_column_if_not_exists:
-            existing = _get_column_names(jsql.connection, self._table)
+            existing = _get_column_names(jsql, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if not column.name in existing:
                     jsql.connection.execute(statement)
@@ -93,7 +93,7 @@ class DropColumns:
 
     def __call__(self, jsql: JinjaSqlConnection):
         if self._if_exists and not jsql.dialect.supports_column_if_not_exists:
-            existing = _get_column_names(jsql.connection, self._table)
+            existing = _get_column_names(jsql, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if column.name in existing:
                     jsql.connection.execute(statement)

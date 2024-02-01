@@ -95,7 +95,7 @@ class AddColumnsSql(TaskDef):
                 env, self._table, rendered_columns
             )
             self._drop_columns = db_actions.DropColumns(
-                env, self._table, rendered_columns
+                env, self._table, rendered_columns, if_exists=True
             )
 
         @property

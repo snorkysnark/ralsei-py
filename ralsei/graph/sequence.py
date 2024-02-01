@@ -38,18 +38,11 @@ class TaskSequence:
                 jsql.connection.commit()
 
     def delete(self, jsql: "JinjaSqlConnection"):
-        from ralsei.task import ExistsStatus
-
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
-            if named_task.task.exists(jsql) == ExistsStatus.NO:
-                console.print(
-                    f"Skipping [bold green]{named_task.name}[/bold green]: does not exist"
-                )
-            else:
-                console.print(f"Deleting [bold green]{named_task.name}")
+            console.print(f"Deleting [bold green]{named_task.name}")
 
-                named_task.task.delete(jsql)
-                jsql.connection.commit()
+            named_task.task.delete(jsql)
+            jsql.connection.commit()
 
     def redo(self, jsql: "JinjaSqlConnection"):
         self.delete(jsql)

@@ -190,9 +190,7 @@ class MapToNewColumns(TaskDef):
                 id_fields=id_fields,
             )
             self._drop_columns = db_actions.DropColumns(
-                env,
-                self._table,
-                columns_rendered,
+                env, self._table, columns_rendered, if_exists=True
             )
 
         @property
