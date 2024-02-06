@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Any, Optional, Iterable, Self
 import sqlalchemy
 from sqlalchemy import URL, event
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
-from contextlib import AbstractContextManager
 
 from .length_hint import execute_with_length_hint
 
@@ -67,9 +66,8 @@ class Connection(sqlalchemy.Connection):
         self,
         statement: sqlalchemy.Executable,
         parameters: Optional[_CoreSingleExecuteParams] = None,
-        yield_per: Optional[int] = None,
-    ) -> AbstractContextManager[Iterable[sqlalchemy.Row[Any]]]:
-        return execute_with_length_hint(self, statement, parameters, yield_per)
+    ) -> Iterable[sqlalchemy.Row[Any]]:
+        return execute_with_length_hint(self, statement, parameters)
 
 
 __all__ = ["create_engine", "Connection"]

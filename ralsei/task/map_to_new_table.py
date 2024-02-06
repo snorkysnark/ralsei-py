@@ -175,18 +175,12 @@ class MapToNewTable(TaskDef):
     """
     params: dict = field(default_factory=dict)
     """Parameters passed to the jinja template"""
-    yield_per: Optional[int] = None
-    """Fetch :py:attr:`~select` results in blocks of this size,
-    instead of loading them all into memory
-
-    Using this option will break progress bars"""
     context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlalchemyEnvironment) -> None:
             self._table = this.table
             self._fn = this.fn
-            self._yield_per = this.yield_per
             self._inject_context = create_context_argument(this.fn)
             self._context_managers = ContextManagerBundle(this.context)
 
@@ -312,20 +306,20 @@ class MapToNewTable(TaskDef):
                 self._marker_scripts.add_marker(jsql)
 
             def iter_input_rows(select: TextClause):
-                with jsql.connection.execute_with_length_hint(
-                    select, yield_per=self._yield_per
-                ) as result:
-                    for input_row in map(
-                        lambda row: row._asdict(),
-                        track(result, description="Task progress..."),
-                    ):
-                        yield input_row
+                for input_row in map(
+                    lambda row: row._asdict(),
+                    track(
+                        jsql.connection.execute_with_length_hint(select),
+                        description="Task progress...",
+                    ),
+                ):
+                    yield input_row
 
-                        if self._marker_scripts:
-                            jsql.connection.execute(
-                                self._marker_scripts.set_marker, input_row
-                            )
-                            jsql.connection.commit()
+                    if self._marker_scripts:
+                        jsql.connection.execute(
+                            self._marker_scripts.set_marker, input_row
+                        )
+                        jsql.connection.commit()
 
             with self._context_managers as extra_context:
                 for input_row in (
