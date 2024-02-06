@@ -46,10 +46,11 @@ class Ralsei:
         pipeline_source: Callable[..., Pipeline] | Pipeline,
         custom_cli_options: Sequence[click.Option] = [],
     ) -> None:
+        self._engine_context_arg = None
+
         if isinstance(pipeline_source, Pipeline):
             self._pipeline_constructor = lambda: pipeline_source
             self._custom_cli_options = []
-            self._engine_context_arg = None
         else:
             self._pipeline_constructor = pipeline_source
             self._custom_cli_options = [
