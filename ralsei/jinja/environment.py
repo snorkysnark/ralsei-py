@@ -17,8 +17,8 @@ from jinja2 import StrictUndefined
 from jinja2.environment import TemplateModule
 from jinja2.nodes import Template as TemplateNode
 import itertools
+from sqlalchemy import TextClause
 
-from .sqlalchemy import SqlalchemyEnvironment
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
 
@@ -42,11 +42,20 @@ class SqlTemplateModule(TemplateModule):
     def render(self) -> str:
         return str(self)
 
+    def render_sql(self) -> TextClause:
+        return TextClause(str(self))
+
     def render_split(self) -> list[str]:
         return _render_split(self._body_stream)
 
+    def render_sql_split(self) -> list[TextClause]:
+        return list(map(TextClause, self.render_split()))
+
 
 class SqlTemplate(jinja2.Template):
+    def render_sql(self, *args: Any, **kwargs: Any) -> TextClause:
+        return TextClause(self.render(*args, **kwargs))
+
     def render_split(self, *args: Any, **kwargs: Any) -> list[str]:
         ctx = self.new_context(dict(*args, **kwargs))
 
@@ -54,6 +63,9 @@ class SqlTemplate(jinja2.Template):
             return _render_split(self.root_render_func(ctx))
         except Exception:
             self.environment.handle_exception()
+
+    def render_sql_split(self, *args: Any, **kwargs: Any) -> list[TextClause]:
+        return list(map(TextClause, self.render_split(*args, **kwargs)))
 
     def make_module(
         self,
@@ -78,7 +90,6 @@ class SqlEnvironment(jinja2.Environment):
 
         self._adapter = create_adapter_for_env(self)
         self._dialect = dialect
-        self._sqlalchemy = SqlalchemyEnvironment(self)
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):
@@ -136,10 +147,6 @@ class SqlEnvironment(jinja2.Environment):
     def dialect(self) -> "Dialect":
         return self._dialect
 
-    @property
-    def sqlalchemy(self) -> SqlalchemyEnvironment:
-        return self._sqlalchemy
-
     @overload
     def from_string(
         self,
@@ -173,8 +180,16 @@ class SqlEnvironment(jinja2.Environment):
     def render(self, source: str, /, *args: Any, **kwargs: Any) -> str:
         return self.from_string(source).render(*args, **kwargs)
 
+    def render_sql(self, source: str, /, *args: Any, **kwargs: Any) -> TextClause:
+        return self.from_string(source).render_sql(*args, **kwargs)
+
     def render_split(self, source: str, /, *args: Any, **kwargs: Any) -> list[str]:
         return self.from_string(source).render_split(*args, **kwargs)
+
+    def render_sql_split(
+        self, source: str, /, *args: Any, **kwargs: Any
+    ) -> list[TextClause]:
+        return self.from_string(source).render_sql_split(*args, **kwargs)
 
     def getattr(self, obj: Any, attribute: str) -> Any:
         return super().getattr(self.resolve(obj), attribute)
@@ -190,7 +205,7 @@ class SqlEnvironment(jinja2.Environment):
     def resolve(self, value: Any) -> Any:
         from ralsei.graph import resolve
 
-        return resolve(self.sqlalchemy, value)
+        return resolve(self, value)
 
 
 __all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]

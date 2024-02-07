@@ -18,7 +18,7 @@ from ralsei.types import (
 from ralsei.wrappers import OneToMany
 from ralsei import db_actions
 from ralsei.graph import OutputOf
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.sql_adapter import ToSql
 from ralsei.utils import merge_params
 from ralsei import db_actions
@@ -178,7 +178,7 @@ class MapToNewTable(TaskDef):
     context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewTable, env: SqlalchemyEnvironment) -> None:
+        def __init__(self, this: MapToNewTable, env: SqlEnvironment) -> None:
             self._table = this.table
             self._fn = this.fn
             self._inject_context = create_context_argument(this.fn)
@@ -198,7 +198,7 @@ class MapToNewTable(TaskDef):
 
             self._select = (
                 Maybe.from_optional(this.select)
-                .map(lambda sql: env.render(sql, **template_params))
+                .map(lambda sql: env.render_sql(sql, **template_params))
                 .value_or(None)
             )
 
@@ -206,14 +206,14 @@ class MapToNewTable(TaskDef):
             insert_columns: list[ValueColumnRendered] = []
             for column in this.columns:
                 if isinstance(column, str):
-                    rendered = Sql(env.text.render(column, **template_params))
+                    rendered = Sql(env.render(column, **template_params))
                     definitions.append(rendered)
                 else:
-                    rendered = column.render(env.text, **template_params)
+                    rendered = column.render(env, **template_params)
                     insert_columns.append(rendered)
                     definitions.append(rendered.definition)
 
-            self._create_table = env.render(
+            self._create_table = env.render_sql(
                 """\
                 CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                     {{ definition | join(',\\n    ') }}
@@ -222,7 +222,7 @@ class MapToNewTable(TaskDef):
                 definition=definitions,
                 if_not_exists=this.is_done_column is not None,
             )
-            self._insert = env.render(
+            self._insert = env.render_sql(
                 """\
                 INSERT INTO {{ table }}(
                     {{ columns | join(',\\n    ', attribute='identifier') }}
@@ -233,7 +233,7 @@ class MapToNewTable(TaskDef):
                 table=this.table,
                 columns=insert_columns,
             )
-            self._drop_table = env.render(
+            self._drop_table = env.render_sql(
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
@@ -264,7 +264,7 @@ class MapToNewTable(TaskDef):
                             [is_done_column],
                             if_not_exists=True,
                         ),
-                        env.render(
+                        env.render_sql(
                             """\
                             UPDATE {{source}}
                             SET {{is_done}} = TRUE

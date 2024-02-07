@@ -11,7 +11,7 @@ from ._flattened import FlattenedPipeline
 
 if TYPE_CHECKING:
     from ralsei.task import Task
-    from ralsei.jinja import SqlalchemyEnvironment
+    from ralsei.jinja import SqlEnvironment
     from .pipeline import Pipeline
 
 RESOLVER_CONTEXT: ContextVar[DependencyResolver] = ContextVar("RESOLVER_CONTEXT")
@@ -58,7 +58,7 @@ class DependencyResolver:
     def sub_resolver(self, task_path: TreePath) -> DependencyResolver:
         return DependencyResolver(self._graph, self._call_stack.push(task_path))
 
-    def resolve_path(self, env: "SqlalchemyEnvironment", task_path: TreePath) -> "Task":
+    def resolve_path(self, env: "SqlEnvironment", task_path: TreePath) -> "Task":
         if last_caller := self._call_stack.last_caller:
             self._graph.relations[task_path].add(last_caller)
 
@@ -76,7 +76,7 @@ class DependencyResolver:
 
     def resolve_relative_path(
         self,
-        env: "SqlalchemyEnvironment",
+        env: "SqlEnvironment",
         pipeline: "Pipeline",
         relative_path: TreePath,
     ) -> "Task":
@@ -85,7 +85,7 @@ class DependencyResolver:
             TreePath(*self._graph.definition.pipeline_paths[pipeline], *relative_path),
         )
 
-    def resolve(self, env: "SqlalchemyEnvironment", outputof: OutputOf) -> Any:
+    def resolve(self, env: "SqlEnvironment", outputof: OutputOf) -> Any:
         task_paths = iter(outputof.task_paths)
         first_output = self.resolve_relative_path(
             env, outputof.pipeline, next(task_paths)
@@ -102,7 +102,7 @@ class DependencyResolver:
 
         return first_output
 
-    def build_dag(self, env: "SqlalchemyEnvironment") -> DAG:
+    def build_dag(self, env: "SqlEnvironment") -> DAG:
         for task_path in self._graph.definition.task_definitions:
             self.resolve_path(env, task_path)
 

@@ -4,7 +4,7 @@ from sqlalchemy import TextClause
 
 from ralsei.jinjasql import JinjaSqlConnection
 from ralsei.types import Table, ColumnRendered
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 
 
 def _get_column_names(jsql: JinjaSqlConnection, table: Table):
@@ -37,13 +37,13 @@ def columns_exist(
 class AddColumns:
     def __init__(
         self,
-        env: SqlalchemyEnvironment,
+        env: SqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_not_exists: bool = False,
     ) -> None:
         self.statements: list[TextClause] = [
-            env.render(
+            env.render_sql(
                 """\
             ALTER TABLE {{table}}
             ADD COLUMN {%if if_not_exists%}IF NOT EXISTS {%endif-%}
@@ -71,13 +71,13 @@ class AddColumns:
 class DropColumns:
     def __init__(
         self,
-        env: SqlalchemyEnvironment,
+        env: SqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_exists: bool = False,
     ) -> None:
         self.statements: list[TextClause] = [
-            env.render(
+            env.render_sql(
                 """\
                 ALTER TABLE {{table}}
                 DROP COLUMN {%if if_exists%}IF EXISTS {%endif-%}

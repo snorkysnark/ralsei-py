@@ -4,7 +4,7 @@ from typing import Any, Iterable
 
 from .base import TaskDef, TaskImpl, ExistsStatus
 from ralsei.types import Table
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.jinjasql import JinjaSqlConnection
 from ralsei import db_actions
 
@@ -54,15 +54,15 @@ class CreateTableSql(TaskDef):
     """whether this is a ``VIEW`` instead of a ``TABLE``"""
 
     class Impl(TaskImpl):
-        def __init__(self, this: CreateTableSql, env: SqlalchemyEnvironment) -> None:
+        def __init__(self, this: CreateTableSql, env: SqlEnvironment) -> None:
             template_params = {"table": this.table, "view": this.view, **this.params}
             self._sql = (
-                env.render_split(this.sql, **template_params)
+                env.render_sql_split(this.sql, **template_params)
                 if isinstance(this.sql, str)
-                else [env.render(sql, **template_params) for sql in this.sql]
+                else [env.render_sql(sql, **template_params) for sql in this.sql]
             )
 
-            self._drop_sql = env.render(
+            self._drop_sql = env.render_sql(
                 "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
                 table=this.table,
                 view=this.view,

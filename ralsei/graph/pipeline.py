@@ -10,7 +10,7 @@ from .outputof import OutputOf
 
 if TYPE_CHECKING:
     from ralsei.task import TaskDef
-    from ralsei.jinja import SqlalchemyEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 
 class Pipeline(ABC):
@@ -53,7 +53,7 @@ class Pipeline(ABC):
 
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
-    def build_dag(self, env: "SqlalchemyEnvironment") -> DAG:
+    def build_dag(self, env: "SqlEnvironment") -> DAG:
         return DependencyResolver.from_definition(self._flatten()).build_dag(env)
 
 

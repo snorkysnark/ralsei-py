@@ -5,7 +5,7 @@ from sqlalchemy import URL
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
 from .dialect import Dialect, DialectRegistry, default_registry
-from .jinja import SqlalchemyEnvironment, SqlEnvironment
+from .jinja import SqlEnvironment
 from .connection import create_engine, Connection
 
 
@@ -13,7 +13,7 @@ class JinjaSqlEngine:
     def __init__(
         self,
         engine: sqlalchemy.Engine,
-        environment: SqlalchemyEnvironment,
+        environment: SqlEnvironment,
     ) -> None:
         self._engine = engine
         self._jinja = environment
@@ -30,7 +30,7 @@ class JinjaSqlEngine:
         )
         return JinjaSqlEngine(
             engine,
-            SqlEnvironment(resolved_dialect).sqlalchemy,
+            SqlEnvironment(resolved_dialect),
         )
 
     @staticmethod
@@ -56,9 +56,7 @@ class JinjaSqlEngine:
 
 
 class JinjaSqlConnection:
-    def __init__(
-        self, connection: Connection, environment: SqlalchemyEnvironment
-    ) -> None:
+    def __init__(self, connection: Connection, environment: SqlEnvironment) -> None:
         self._conn = connection
         self._jinja = environment
 
@@ -67,7 +65,7 @@ class JinjaSqlConnection:
         return self._conn
 
     @property
-    def jinja(self) -> SqlalchemyEnvironment:
+    def jinja(self) -> SqlEnvironment:
         return self._jinja
 
     @property
@@ -81,7 +79,7 @@ class JinjaSqlConnection:
         bind_params: Optional[_CoreAnyExecuteParams] = None,
     ) -> sqlalchemy.CursorResult[Any]:
         return self.connection.execute(
-            self.jinja.render(source, **template_params), bind_params
+            self.jinja.render_sql(source, **template_params), bind_params
         )
 
     def render_executescript(
@@ -91,10 +89,11 @@ class JinjaSqlConnection:
         bind_params: Optional[_CoreSingleExecuteParams] = None,
     ):
         self.connection.executescript(
-            self.jinja.render_split(source, **template_params)
+            self.jinja.render_sql_split(source, **template_params)
             if isinstance(source, str)
             else [
-                self.jinja.render(statement, **template_params) for statement in source
+                self.jinja.render_sql(statement, **template_params)
+                for statement in source
             ],
             bind_params,
         )

@@ -15,7 +15,7 @@ from ralsei.types import (
     Identifier,
 )
 from ralsei.wrappers import OneToOne
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
 from ralsei.jinjasql import JinjaSqlConnection
@@ -128,7 +128,7 @@ class MapToNewColumns(TaskDef):
     context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
-        def __init__(self, this: MapToNewColumns, env: SqlalchemyEnvironment) -> None:
+        def __init__(self, this: MapToNewColumns, env: SqlEnvironment) -> None:
             self._table = env.resolve(this.table)
             self._fn = this.fn
             self._inject_context = create_context_argument(this.fn)
@@ -145,7 +145,7 @@ class MapToNewColumns(TaskDef):
             )
 
             columns_rendered = [
-                column.render(env.text, **template_params) for column in this.columns
+                column.render(env, **template_params) for column in this.columns
             ]
             self._column_names = [column.name for column in columns_rendered]
 
@@ -166,14 +166,14 @@ class MapToNewColumns(TaskDef):
             )
             self._id_fields = set(id_field.name for id_field in id_fields)
 
-            self._select = env.render(this.select, **template_params)
+            self._select = env.render_sql(this.select, **template_params)
             self._add_columns = db_actions.AddColumns(
                 env,
                 self._table,
                 columns_rendered,
                 if_not_exists=self._commit_each,
             )
-            self._update = env.render(
+            self._update = env.render_sql(
                 """\
                 UPDATE {{table}} SET
                 {{columns | join(',\\n', attribute='set_statement')}}

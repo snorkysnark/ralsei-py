@@ -6,7 +6,7 @@ from sqlalchemy import TextClause
 from .base import TaskImpl, TaskDef, ExistsStatus
 from ralsei.graph import OutputOf
 from ralsei.types import Table, ColumnBase
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional
 from ralsei import db_actions
 from ralsei.jinjasql import JinjaSqlConnection
@@ -58,7 +58,7 @@ class AddColumnsSql(TaskDef):
     """parameters passed to the jinja template"""
 
     class Impl(TaskImpl):
-        def __init__(self, this: AddColumnsSql, env: SqlalchemyEnvironment) -> None:
+        def __init__(self, this: AddColumnsSql, env: SqlEnvironment) -> None:
             self._table = env.resolve(this.table)
 
             def render_script() -> (
@@ -73,10 +73,10 @@ class AddColumnsSql(TaskDef):
                         getattr(template_module, "columns", None),
                     )
 
-                    return template_module.render_split(), columns
+                    return template_module.render_sql_split(), columns
                 else:
                     return [
-                        env.render(sql, table=self._table, **this.params)
+                        env.render_sql(sql, table=self._table, **this.params)
                         for sql in this.sql
                     ], None
 
@@ -86,8 +86,7 @@ class AddColumnsSql(TaskDef):
             )
 
             rendered_columns = [
-                col.render(env.text, table=self._table, **this.params)
-                for col in columns
+                col.render(env, table=self._table, **this.params) for col in columns
             ]
             self._column_names = [col.name for col in rendered_columns]
 

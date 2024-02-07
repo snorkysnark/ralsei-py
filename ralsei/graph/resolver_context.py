@@ -4,7 +4,7 @@ from .outputof import OutputOf
 from ._resolver import RESOLVER_CONTEXT, CyclicGraphError
 
 if TYPE_CHECKING:
-    from ralsei.jinja import SqlalchemyEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 T = TypeVar("T")
 
@@ -14,16 +14,16 @@ class ResolverContextError(RuntimeError):
 
 
 @overload
-def resolve(env: "SqlalchemyEnvironment", value: T | OutputOf) -> T:
+def resolve(env: "SqlEnvironment", value: T | OutputOf) -> T:
     ...
 
 
 @overload
-def resolve(env: "SqlalchemyEnvironment", value: Any) -> Any:
+def resolve(env: "SqlEnvironment", value: Any) -> Any:
     ...
 
 
-def resolve(env: "SqlalchemyEnvironment", value: Any) -> Any:
+def resolve(env: "SqlEnvironment", value: Any) -> Any:
     if not isinstance(value, OutputOf):
         return value
     elif resolver := RESOLVER_CONTEXT.get(None):

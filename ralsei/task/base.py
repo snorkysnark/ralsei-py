@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
 from enum import Enum
 
-from ralsei.jinja import SqlalchemyEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.jinjasql import JinjaSqlConnection
 
 
@@ -66,7 +66,7 @@ class TaskImpl(Task, Generic[T]):
     """Task with a predefined constructor"""
 
     @abstractmethod
-    def __init__(self, this: T, env: SqlalchemyEnvironment) -> None:
+    def __init__(self, this: T, env: SqlEnvironment) -> None:
         ...
 
 
@@ -76,7 +76,7 @@ class TaskDef:
     Impl: type[TaskImpl[Self]]
     """The actual task class"""
 
-    def create(self, env: SqlalchemyEnvironment) -> TaskImpl[Self]:
+    def create(self, env: SqlEnvironment) -> TaskImpl[Self]:
         """Instantiate the task"""
 
         return self.Impl(self, env)
