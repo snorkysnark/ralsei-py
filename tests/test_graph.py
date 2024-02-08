@@ -1,6 +1,6 @@
 import pytest
 from ralsei import (
-    JinjaSqlConnection,
+    SqlConnection,
     Pipeline,
     MapToNewTable,
     Table,
@@ -82,8 +82,8 @@ class TestPipeline(Pipeline):
         }
 
 
-def test_graph(jsql: JinjaSqlConnection):
-    dag = TestPipeline().build_dag(jsql.jinja)
+def test_graph(conn: SqlConnection):
+    dag = TestPipeline().build_dag(conn.jinja)
 
     assert set(dag.tasks_str()) == {"aa", "description", "sum", "grouped", "extras"}
     assert dag.relations_str() == {
@@ -156,8 +156,8 @@ class RootPipeline(Pipeline):
         }
 
 
-def test_graph_nested(jsql: JinjaSqlConnection):
-    dag = RootPipeline().build_dag(jsql.jinja)
+def test_graph_nested(conn: SqlConnection):
+    dag = RootPipeline().build_dag(conn.jinja)
 
     assert set(dag.tasks_str()) == {"aa", "bb", "child.join", "child.extend"}
     assert dag.relations_str() == {
@@ -189,15 +189,15 @@ class RecursivePipeline(Pipeline):
         }
 
 
-def test_recursion(jsql: JinjaSqlConnection):
+def test_recursion(conn: SqlConnection):
     with pytest.raises(CyclicGraphError):
-        RecursivePipeline().build_dag(jsql.jinja)
+        RecursivePipeline().build_dag(conn.jinja)
 
 
-def test_topological_sort(jsql: JinjaSqlConnection):
+def test_topological_sort(conn: SqlConnection):
     sorted = [
         named_task.name
-        for named_task in RootPipeline().build_dag(jsql.jinja).topological_sort().steps
+        for named_task in RootPipeline().build_dag(conn.jinja).topological_sort().steps
     ]
 
     assert sorted == ["aa", "bb", "child.join", "child.extend"] or sorted == [

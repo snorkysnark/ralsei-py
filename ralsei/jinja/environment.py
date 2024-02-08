@@ -19,12 +19,12 @@ from jinja2.nodes import Template as TemplateNode
 import itertools
 from sqlalchemy import TextClause
 
+from ralsei.dialect import BaseDialectInfo
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
 
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
-    from ralsei.dialect import Dialect
     from ralsei.graph import OutputOf
 
 
@@ -82,14 +82,14 @@ TEMPLATE = TypeVar("TEMPLATE", bound=jinja2.Template)
 
 
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, dialect: "Dialect"):
+    def __init__(self, dialect_info: BaseDialectInfo = BaseDialectInfo()):
         from ralsei.types import Sql, Column, Identifier
         from ralsei.sql_adapter import create_adapter_for_env
 
         super().__init__(undefined=StrictUndefined)
 
         self._adapter = create_adapter_for_env(self)
-        self._dialect = dialect
+        self._dialect_info = dialect_info
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):
@@ -131,7 +131,7 @@ class SqlEnvironment(jinja2.Environment):
             "dict": dict,
             "joiner": joiner,
             "Column": Column,
-            "dialect": dialect,
+            "dialect": dialect_info,
         }
 
         self.add_extension(SplitTag)
@@ -144,8 +144,13 @@ class SqlEnvironment(jinja2.Environment):
         return self._adapter
 
     @property
-    def dialect(self) -> "Dialect":
-        return self._dialect
+    def dialect_info(self) -> BaseDialectInfo:
+        return self._dialect_info
+
+    @dialect_info.setter
+    def dialect_info(self, value: BaseDialectInfo):
+        self._dialect_info = value
+        self.globals["dialect"] = value
 
     @overload
     def from_string(

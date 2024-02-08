@@ -18,7 +18,7 @@ from ralsei.wrappers import OneToOne
 from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
-from ralsei.jinjasql import JinjaSqlConnection
+from ralsei.connection import SqlConnection
 
 
 @dataclass
@@ -191,42 +191,42 @@ class MapToNewColumns(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
-            if not db_actions.columns_exist(jsql, self._table, self._column_names):
+        def exists(self, conn: SqlConnection) -> ExistsStatus:
+            if not db_actions.columns_exist(conn, self._table, self._column_names):
                 return ExistsStatus.NO
             elif (
                 # non-resumable or resumable with no more inputs
                 not self._commit_each
-                or jsql.connection.execute(self._select).first() is None
+                or conn.sqlalchemy.execute(self._select).first() is None
             ):
                 return ExistsStatus.YES
             else:
                 return ExistsStatus.PARTIAL
 
-        def run(self, jsql: JinjaSqlConnection) -> None:
-            self._add_columns(jsql)
+        def run(self, conn: SqlConnection) -> None:
+            self._add_columns(conn)
 
             with self._context_managers as extra_context:
                 for input_row in map(
                     lambda row: row._asdict(),
                     track(
-                        jsql.connection.execute_with_length_hint(self._select),
+                        conn.execute_with_length_hint(self._select),
                         description="Task progress...",
                     ),
                 ):
                     with TaskContext.from_id_fields(
                         self._id_fields, input_row, extras=extra_context
                     ) as context:
-                        jsql.connection.execute(
+                        conn.sqlalchemy.execute(
                             self._update,
                             self._fn(**input_row, **self._inject_context(context)),
                         )
 
                     if self._commit_each:
-                        jsql.connection.commit()
+                        conn.sqlalchemy.commit()
 
-        def delete(self, jsql: JinjaSqlConnection) -> None:
-            self._drop_columns(jsql)
+        def delete(self, conn: SqlConnection) -> None:
+            self._drop_columns(conn)
 
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Add columns", self._add_columns.statements

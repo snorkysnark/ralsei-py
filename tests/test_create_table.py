@@ -1,11 +1,11 @@
 import pytest
 from typing import Tuple
-from ralsei import Table, CreateTableSql, JinjaSqlConnection
+from ralsei import Table, CreateTableSql, SqlConnection
 from ralsei.db_actions import table_exists
 from common.db_helper import get_rows
 
 
-def test_create_table(jsql: JinjaSqlConnection):
+def test_create_table(conn: SqlConnection):
     table = Table("test_create_table")
     task = CreateTableSql(
         sql=[
@@ -20,12 +20,12 @@ def test_create_table(jsql: JinjaSqlConnection):
             (2, 'b');""",
         ],
         table=table,
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    task.run(jsql)
-    assert get_rows(jsql, table) == [(1, "a"), (2, "b")]
-    task.delete(jsql)
-    assert not table_exists(jsql, table)
+    task.run(conn)
+    assert get_rows(conn, table) == [(1, "a"), (2, "b")]
+    task.delete(conn)
+    assert not table_exists(conn, table)
 
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ def test_create_table(jsql: JinjaSqlConnection):
     ],
 )
 def test_create_table_jinja_args(
-    jsql: JinjaSqlConnection, flag: bool, expected: list[Tuple]
+    conn: SqlConnection, flag: bool, expected: list[Tuple]
 ):
     table = Table("test_create_table_jinja_args")
     task = CreateTableSql(
@@ -49,15 +49,15 @@ def test_create_table_jinja_args(
         {%- endif %}""",
         table=table,
         params={"flag": flag},
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    task.run(jsql)
-    assert get_rows(jsql, table) == expected
-    task.delete(jsql)
-    assert not table_exists(jsql, table)
+    task.run(conn)
+    assert get_rows(conn, table) == expected
+    task.delete(conn)
+    assert not table_exists(conn, table)
 
 
-def test_create_table_literal(jsql: JinjaSqlConnection):
+def test_create_table_literal(conn: SqlConnection):
     table = Table("test_create_table_literal")
     task = CreateTableSql(
         sql="""
@@ -69,9 +69,9 @@ def test_create_table_literal(jsql: JinjaSqlConnection):
         INSERT INTO {{ table }} VALUES ({{ foo }}, {{ bar }});""",
         table=table,
         params={"foo": "Ralsei\ncute", "bar": 10},
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    task.run(jsql)
-    assert get_rows(jsql, table) == [("Ralsei\ncute", 10)]
-    task.delete(jsql)
-    assert not table_exists(jsql, table)
+    task.run(conn)
+    assert get_rows(conn, table) == [("Ralsei\ncute", 10)]
+    task.delete(conn)
+    assert not table_exists(conn, table)

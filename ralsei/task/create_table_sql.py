@@ -5,7 +5,7 @@ from typing import Any, Iterable
 from .base import TaskDef, TaskImpl, ExistsStatus
 from ralsei.types import Table
 from ralsei.jinja import SqlEnvironment
-from ralsei.jinjasql import JinjaSqlConnection
+from ralsei.connection import SqlConnection
 from ralsei import db_actions
 
 
@@ -74,14 +74,14 @@ class CreateTableSql(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
-            return ExistsStatus(db_actions.table_exists(jsql, self._table))
+        def exists(self, conn: SqlConnection) -> ExistsStatus:
+            return ExistsStatus(db_actions.table_exists(conn, self._table))
 
-        def run(self, jsql: JinjaSqlConnection) -> None:
-            jsql.connection.executescript(self._sql)
+        def run(self, conn: SqlConnection) -> None:
+            conn.sqlalchemy.executescript(self._sql)
 
-        def delete(self, jsql: JinjaSqlConnection) -> None:
-            jsql.connection.execute(self._drop_sql)
+        def delete(self, conn: SqlConnection) -> None:
+            conn.sqlalchemy.execute(self._drop_sql)
 
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Main", self._sql

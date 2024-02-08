@@ -4,13 +4,11 @@ import click
 from rich.console import Console
 from rich.prompt import Prompt
 from typing import Callable, Optional, Sequence, overload
-from returns.maybe import Maybe
-import inspect
 import sys
 
-from ralsei.dialect import DialectRegistry, Dialect
+from ralsei.dialect import DEFAULT_DIALECT_REGISTRY
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG, NamedTask
-from ralsei.jinjasql import JinjaSqlConnection, JinjaSqlEngine
+from ralsei.connection import SqlEngine, SqlConnection
 from ralsei.console import console
 from ralsei.task.context import row_context_atrribute
 
@@ -24,7 +22,7 @@ traceback_console = Console(stderr=True)
 
 @dataclass
 class GroupContext:
-    engine: JinjaSqlEngine
+    engine: SqlEngine
     dag: DAG
 
 
@@ -46,8 +44,6 @@ class Ralsei:
         pipeline_source: Callable[..., Pipeline] | Pipeline,
         custom_cli_options: Sequence[click.Option] = [],
     ) -> None:
-        self._engine_context_arg = None
-
         if isinstance(pipeline_source, Pipeline):
             self._pipeline_constructor = lambda: pipeline_source
             self._custom_cli_options = []
@@ -58,22 +54,7 @@ class Ralsei:
                 *custom_cli_options,
             ]
 
-            for name, param in inspect.signature(pipeline_source).parameters.items():
-                if param.annotation is JinjaSqlEngine:
-                    self._engine_context_arg = name
-                    break
-
-        self._dialect_registry = DialectRegistry.create_default()
-
-    def register_dialect(
-        self,
-        dialect_name: str,
-        dialect_class: type[Dialect],
-        driver: Optional[str] = None,
-    ):
-        self._dialect_registry.register_dialect(
-            dialect_name, dialect_class, driver=driver
-        )
+        self.dialect_registry = DEFAULT_DIALECT_REGISTRY.copy()
 
     def build_cli(self) -> click.Group:
         @extend_params(self._custom_cli_options)
@@ -81,13 +62,10 @@ class Ralsei:
         @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
         @click.pass_context
         def cli(ctx: click.Context, db: str, *args, **kwargs):
-            engine = JinjaSqlEngine.create(db, dialect=self._dialect_registry)
+            engine = SqlEngine.create(db, dialect_source=self.dialect_registry)
             pipeline = self._pipeline_constructor(
                 *args,
                 **kwargs,
-                **Maybe.from_optional(self._engine_context_arg)
-                .map(lambda arg: {arg: engine})
-                .value_or({}),
             )
             dag = pipeline.build_dag(engine.jinja)
 
@@ -122,7 +100,7 @@ class Ralsei:
         self,
         group: click.Group,
         name: str,
-        action: Callable[[TaskSequence, JinjaSqlConnection], None],
+        action: Callable[[TaskSequence, SqlConnection], None],
         ask: bool = False,
     ):
         @click.option(
@@ -167,8 +145,8 @@ class Ralsei:
                     console.print(task.name)
 
             if not ask or Prompt.ask("(y/n)?", console=console) == "y":
-                with group.engine.connect() as ctx:
-                    action(sequence, ctx)
+                with group.engine.connect() as conn:
+                    action(sequence, conn)
 
     def __call__(self, *args, **kwargs):
         try:

@@ -1,3 +1,4 @@
+from .connection import SqlConnection, SqlEngine
 from .types import (
     Sql,
     Identifier,
@@ -9,7 +10,6 @@ from .types import (
     ValueColumnRendered,
     IdColumn,
 )
-from .jinjasql import JinjaSqlEngine, JinjaSqlConnection
 from .wrappers import *
 from .task import (
     CreateTableSql,
@@ -32,8 +32,6 @@ __all__ = [
     "ValueColumn",
     "ValueColumnRendered",
     "IdColumn",
-    "JinjaSqlEngine",
-    "JinjaSqlConnection",
     "OneToOne",
     "OneToMany",
     "into_many",

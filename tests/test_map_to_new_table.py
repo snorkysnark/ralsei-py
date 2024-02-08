@@ -1,7 +1,7 @@
 import pytest
 from ralsei import (
-    JinjaSqlConnection,
-    JinjaSqlEngine,
+    SqlConnection,
+    SqlEngine,
     Table,
     MapToNewTable,
     ValueColumn,
@@ -15,7 +15,7 @@ from ralsei.db_actions import table_exists
 from common.db_helper import get_rows
 
 
-def test_map_new_table_noselect(jsql: JinjaSqlConnection):
+def test_map_new_table_noselect(conn: SqlConnection):
     def make_rows():
         yield {"foo": 1, "bar": "a"}
         yield {"foo": 2, "bar": "b"}
@@ -29,20 +29,20 @@ def test_map_new_table_noselect(jsql: JinjaSqlConnection):
             ValueColumn("bar", "TEXT"),
         ],
         fn=make_rows,
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    task.run(jsql)
-    assert get_rows(jsql, table) == [(1, 1, "a"), (2, 2, "b")]
-    task.delete(jsql)
-    assert not table_exists(jsql, table)
+    task.run(conn)
+    assert get_rows(conn, table) == [(1, 1, "a"), (2, 2, "b")]
+    task.delete(conn)
+    assert not table_exists(conn, table)
 
 
-def test_map_table_jinja(jsql: JinjaSqlConnection):
+def test_map_table_jinja(conn: SqlConnection):
     def double(foo: int):
         yield {"foo": foo * 2}
 
     table_source = Table("source_args")
-    jsql.render_executescript(
+    conn.render_executescript(
         [
             """\
             CREATE TABLE {{table}}(
@@ -64,15 +64,15 @@ def test_map_table_jinja(jsql: JinjaSqlConnection):
         ],
         fn=double,
         params={"year": 2015, "foo_type": Sql("INT")},
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    task.run(jsql)
-    assert get_rows(jsql, table) == [(2015, 4), (2015, 10)]
-    task.delete(jsql)
-    assert not table_exists(jsql, table)
+    task.run(conn)
+    assert get_rows(conn, table) == [(2015, 4), (2015, 10)]
+    task.delete(conn)
+    assert not table_exists(conn, table)
 
 
-def test_map_table_resumable(jengine: JinjaSqlEngine):
+def test_map_table_resumable(engine: SqlEngine):
     def failing(val: int):
         yield {"doubled": val * 2}
         if val >= 10:
@@ -80,8 +80,8 @@ def test_map_table_resumable(jengine: JinjaSqlEngine):
 
     table_source = Table("source_args")
 
-    with jengine.connect() as jsql:
-        jsql.render_executescript(
+    with engine.connect() as conn:
+        conn.render_executescript(
             [
                 """\
                 CREATE TABLE {{table}}(
@@ -101,26 +101,26 @@ def test_map_table_resumable(jengine: JinjaSqlEngine):
             columns=[ValueColumn("doubled", "INT")],
             is_done_column="__success",
             fn=compose(failing, pop_id_fields("id")),
-        ).create(jsql.jinja)
+        ).create(conn.jinja)
 
         with pytest.raises(RuntimeError):
-            task.run(jsql)
+            task.run(conn)
 
-    with jengine.connect() as jsql:
-        assert get_rows(jsql, table) == [(4,), (10,)]
-        assert get_rows(jsql, table_source, order_by=["id"]) == [
+    with engine.connect() as conn:
+        assert get_rows(conn, table) == [(4,), (10,)]
+        assert get_rows(conn, table_source, order_by=["id"]) == [
             (1, 2, True),
             (2, 5, True),
             (3, 12, False),
         ]
-        task.delete(jsql)
-        assert not table_exists(jsql, table)
+        task.delete(conn)
+        assert not table_exists(conn, table)
 
 
-def test_map_table_continue(jsql: JinjaSqlConnection):
+def test_map_table_continue(conn: SqlConnection):
     table_source = Table("test_continue_source")
     table_dest = Table("test_continue_dest")
-    jsql.render_executescript(
+    conn.render_executescript(
         """\
         CREATE TABLE {{source}}(
             num INT PRIMARY KEY,
@@ -149,10 +149,10 @@ def test_map_table_continue(jsql: JinjaSqlConnection):
         columns=[ValueColumn("doubled", "INT")],
         is_done_column="__done",
         fn=compose(double, pop_id_fields("num", keep=True)),
-    ).create(jsql.jinja)
+    ).create(conn.jinja)
 
-    assert task.exists(jsql) == ExistsStatus.PARTIAL
-    task.run(jsql)
-    assert task.exists(jsql) == ExistsStatus.YES
-    assert get_rows(jsql, table_source) == [(2, True), (3, True)]
-    assert get_rows(jsql, table_dest) == [(4,), (6,)]
+    assert task.exists(conn) == ExistsStatus.PARTIAL
+    task.run(conn)
+    assert task.exists(conn) == ExistsStatus.YES
+    assert get_rows(conn, table_source) == [(2, True), (3, True)]
+    assert get_rows(conn, table_dest) == [(4,), (6,)]

@@ -9,7 +9,7 @@ from ralsei.types import Table, ColumnBase
 from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional
 from ralsei import db_actions
-from ralsei.jinjasql import JinjaSqlConnection
+from ralsei.connection import SqlConnection
 
 
 @dataclass
@@ -101,17 +101,17 @@ class AddColumnsSql(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, jsql: JinjaSqlConnection) -> ExistsStatus:
+        def exists(self, conn: SqlConnection) -> ExistsStatus:
             return ExistsStatus(
-                db_actions.columns_exist(jsql, self._table, self._column_names)
+                db_actions.columns_exist(conn, self._table, self._column_names)
             )
 
-        def run(self, jsql: JinjaSqlConnection) -> None:
-            self._add_columns(jsql)
-            jsql.connection.executescript(self._sql)
+        def run(self, conn: SqlConnection) -> None:
+            self._add_columns(conn)
+            conn.sqlalchemy.executescript(self._sql)
 
-        def delete(self, jsql: JinjaSqlConnection) -> None:
-            self._drop_columns(jsql)
+        def delete(self, conn: SqlConnection) -> None:
+            self._drop_columns(conn)
 
         def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
             yield "Add columns", self._add_columns.statements

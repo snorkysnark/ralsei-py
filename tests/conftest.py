@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from pytest import fixture, FixtureRequest
 
-from ralsei.jinjasql import JinjaSqlEngine
+from ralsei.connection import SqlEngine
 
 
 # Helper module used in multiple tests
@@ -12,27 +12,27 @@ DATABASE_URLS = ["postgresql:///ralsei_test", "sqlite:///ralsei_test.sqlite"]
 
 
 def postgres_engine():
-    engine_ctx = JinjaSqlEngine.create("postgresql:///ralsei_test")
-    with engine_ctx.connect().connection as conn:
-        conn.execute_text("DROP SCHEMA public CASCADE;")
-        conn.execute_text("CREATE SCHEMA public;")
-        conn.commit()
+    engine = SqlEngine.create("postgresql:///ralsei_test")
+    with engine.connect() as conn:
+        conn.sqlalchemy.execute_text("DROP SCHEMA public CASCADE;")
+        conn.sqlalchemy.execute_text("CREATE SCHEMA public;")
+        conn.sqlalchemy.commit()
 
-    return engine_ctx
+    return engine
 
 
 def sqlite_engine():
     Path("ralsei_test.sqlite").unlink(missing_ok=True)
 
-    return JinjaSqlEngine.create("sqlite:///ralsei_test.sqlite")
+    return SqlEngine.create("sqlite:///ralsei_test.sqlite")
 
 
 @fixture(params=[postgres_engine, sqlite_engine])
-def jengine(request: FixtureRequest):
+def engine(request: FixtureRequest):
     return request.param()
 
 
 @fixture()
-def jsql(jengine: JinjaSqlEngine):
-    with jengine.connect() as jsql:
-        yield jsql
+def conn(engine: SqlEngine):
+    with engine.connect() as conn:
+        yield conn
