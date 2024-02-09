@@ -14,7 +14,7 @@ from ralsei.types import (
     ValueColumnRendered,
     Identifier,
 )
-from ralsei.wrappers import OneToOne
+from ralsei.wrappers import OneToOne, ID_FIELDS_ATTR
 from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
@@ -158,7 +158,7 @@ class MapToNewColumns(TaskDef):
             id_fields = expect_optional(
                 this.id_fields
                 or (
-                    Maybe.from_optional(getattr(this.fn, "id_fields", None))
+                    Maybe.from_optional(getattr(this.fn, ID_FIELDS_ATTR, None))
                     .map(lambda names: [IdColumn(name) for name in names])
                     .value_or(None)
                 ),

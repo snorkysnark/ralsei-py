@@ -15,7 +15,7 @@ from ralsei.types import (
     Sql,
     ColumnRendered,
 )
-from ralsei.wrappers import OneToMany
+from ralsei.wrappers import OneToMany, ID_FIELDS_ATTR
 from ralsei import db_actions
 from ralsei.graph import OutputOf
 from ralsei.jinja import SqlEnvironment
@@ -238,7 +238,7 @@ class MapToNewTable(TaskDef):
             )
 
             id_fields = this.id_fields or (
-                Maybe.from_optional(getattr(this.fn, "id_fields", None))
+                Maybe.from_optional(getattr(this.fn, ID_FIELDS_ATTR, None))
                 .map(lambda names: [IdColumn(name) for name in names])
                 .value_or([])
             )

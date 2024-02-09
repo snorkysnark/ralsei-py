@@ -1,6 +1,8 @@
 from typing import Any, Callable, Iterator, TypeVar
 from functools import wraps
 
+ID_FIELDS_ATTR = "__ralsei_id_fields"
+
 OneToOne = Callable[..., dict[str, Any]]
 OneToMany = Callable[..., Iterator[dict[str, Any]]]
 
@@ -41,9 +43,9 @@ def pop_id_fields(*id_fields: str, keep: bool = False):
                 yield {**row, **id_values}
 
         # Save metadata on which fields are considered identifiers (useful for SQL generation)
-        metadata = getattr(wrapper, "id_fields", [])
+        metadata = getattr(wrapper, ID_FIELDS_ATTR, [])
         metadata.extend(id_fields)
-        setattr(wrapper, "id_fields", metadata)
+        setattr(wrapper, ID_FIELDS_ATTR, metadata)
 
         return wrapper
 
@@ -117,6 +119,7 @@ def compose_one(
 
 
 __all__ = [
+    "ID_FIELDS_ATTR",
     "OneToOne",
     "OneToMany",
     "into_many",
