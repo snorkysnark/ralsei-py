@@ -16,7 +16,6 @@ from .task import (
     AddColumnsSql,
     MapToNewTable,
     MapToNewColumns,
-    TaskContext,
 )
 from .graph import Pipeline, SimplePipeline, OutputOf, CyclicGraphError
 from .app import Ralsei
@@ -43,11 +42,12 @@ __all__ = [
     "add_to_output",
     "compose",
     "compose_one",
+    "FnContext",
+    "FnContextBase",
     "CreateTableSql",
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
-    "TaskContext",
     "Pipeline",
     "SimplePipeline",
     "OutputOf",

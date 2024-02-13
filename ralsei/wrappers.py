@@ -1,7 +1,16 @@
-from typing import Any, Callable, Iterator, TypeVar
+from abc import ABC, abstractmethod
+import contextlib
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterator,
+    Optional,
+    TypeVar,
+)
 from functools import wraps
 
-ID_FIELDS_ATTR = "__ralsei_id_fields"
+POPPED_FIELDS_ATTR = "__ralsei_popped_fields"
 
 OneToOne = Callable[..., dict[str, Any]]
 OneToMany = Callable[..., Iterator[dict[str, Any]]]
@@ -43,9 +52,9 @@ def pop_id_fields(*id_fields: str, keep: bool = False):
                 yield {**row, **id_values}
 
         # Save metadata on which fields are considered identifiers (useful for SQL generation)
-        metadata = getattr(wrapper, ID_FIELDS_ATTR, [])
+        metadata = getattr(wrapper, POPPED_FIELDS_ATTR, [])
         metadata.extend(id_fields)
-        setattr(wrapper, ID_FIELDS_ATTR, metadata)
+        setattr(wrapper, POPPED_FIELDS_ATTR, metadata)
 
         return wrapper
 
@@ -118,8 +127,49 @@ def compose_one(
     return into_one(compose(into_many(fn), *decorators))
 
 
+class FnContextBase(ABC, Generic[T]):
+    def __init__(self, fn: T, **context: Any) -> None:
+        self.fn = fn
+        self._context_managers = {
+            name: obj if hasattr(obj, "__enter__") else contextlib.nullcontext(obj)
+            for name, obj in context.items()
+        }
+
+    def __enter__(self) -> T:
+        context = {
+            name: obj.__enter__() for name, obj in self._context_managers.items()
+        }
+        return self._wrap_fn(context)
+
+    @abstractmethod
+    def _wrap_fn(self, context: dict[str, Any]) -> T:
+        ...
+
+    def __exit__(self, *excinfo):
+        for context_manager in self._context_managers.values():
+            context_manager.__exit__(*excinfo)
+
+
+class FnContext(FnContextBase[OneToMany]):
+    def _wrap_fn(self, context: dict[str, Any]) -> OneToMany:
+        return add_to_input(**context)(self.fn)
+
+
+class FnContextOne(FnContextBase[OneToOne]):
+    def _wrap_fn(self, context: dict[str, Any]) -> OneToOne:
+        @wraps(self.fn)
+        def wrapper(**kwargs):
+            return self.fn(**kwargs, **context)
+
+        return wrapper
+
+
+def get_popped_fields(obj: Callable | FnContextBase) -> Optional[list[str]]:
+    fn = obj.fn if isinstance(obj, FnContextBase) else obj
+    return getattr(fn, POPPED_FIELDS_ATTR, None)
+
+
 __all__ = [
-    "ID_FIELDS_ATTR",
     "OneToOne",
     "OneToMany",
     "into_many",
@@ -131,4 +181,7 @@ __all__ = [
     "add_to_output",
     "compose",
     "compose_one",
+    "FnContext",
+    "FnContextBase",
+    "get_popped_fields",
 ]

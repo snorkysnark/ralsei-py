@@ -1,10 +1,10 @@
 from __future__ import annotations
+import contextlib
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
 from .base import TaskImpl, TaskDef, ExistsStatus
-from .context import TaskContext, ContextManagerBundle, create_context_argument
 from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
@@ -14,7 +14,7 @@ from ralsei.types import (
     ValueColumnRendered,
     Identifier,
 )
-from ralsei.wrappers import OneToOne, ID_FIELDS_ATTR
+from ralsei.wrappers import OneToOne, FnContextOne, get_popped_fields
 from ralsei.jinja import SqlEnvironment
 from ralsei.utils import expect_optional, merge_params
 from ralsei import db_actions
@@ -99,7 +99,7 @@ class MapToNewColumns(TaskDef):
 
     Used for ``ADD COLUMN`` and ``UPDATE`` statement generation.
     """
-    fn: OneToOne
+    fn: OneToOne | FnContextOne
     """Function that maps one row to values of the new columns
     in the same row
 
@@ -130,9 +130,12 @@ class MapToNewColumns(TaskDef):
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlEnvironment) -> None:
             self._table = env.resolve(this.table)
-            self._fn = this.fn
-            self._inject_context = create_context_argument(this.fn)
-            self._context_managers = ContextManagerBundle(this.context)
+            self._fn_context = (
+                this.fn
+                if isinstance(this.fn, FnContextOne)
+                else contextlib.nullcontext(this.fn)
+            )
+            popped_fields = get_popped_fields(this.fn)
 
             template_params = merge_params(
                 {"table": self._table},
@@ -158,7 +161,7 @@ class MapToNewColumns(TaskDef):
             id_fields = expect_optional(
                 this.id_fields
                 or (
-                    Maybe.from_optional(getattr(this.fn, ID_FIELDS_ATTR, None))
+                    Maybe.from_optional(popped_fields)
                     .map(lambda names: [IdColumn(name) for name in names])
                     .value_or(None)
                 ),
@@ -206,7 +209,7 @@ class MapToNewColumns(TaskDef):
         def run(self, conn: SqlConnection) -> None:
             self._add_columns(conn)
 
-            with self._context_managers as extra_context:
+            with self._fn_context as fn:
                 for input_row in map(
                     lambda row: row._asdict(),
                     track(
@@ -214,13 +217,7 @@ class MapToNewColumns(TaskDef):
                         description="Task progress...",
                     ),
                 ):
-                    with TaskContext.from_id_fields(
-                        self._id_fields, input_row, extras=extra_context
-                    ) as context:
-                        conn.sqlalchemy.execute(
-                            self._update,
-                            self._fn(**input_row, **self._inject_context(context)),
-                        )
+                    conn.sqlalchemy.execute(self._update, fn(**input_row))
 
                     if self._commit_each:
                         conn.sqlalchemy.commit()

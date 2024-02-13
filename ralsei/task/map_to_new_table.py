@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 from sqlalchemy import TextClause
+import contextlib
 
 from .base import TaskDef, TaskImpl, ExistsStatus
-from .context import TaskContext, ContextManagerBundle, create_context_argument
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -15,7 +15,7 @@ from ralsei.types import (
     Sql,
     ColumnRendered,
 )
-from ralsei.wrappers import OneToMany, ID_FIELDS_ATTR
+from ralsei.wrappers import OneToMany, FnContext, get_popped_fields
 from ralsei import db_actions
 from ralsei.graph import OutputOf
 from ralsei.jinja import SqlEnvironment
@@ -138,7 +138,7 @@ class MapToNewTable(TaskDef):
     :py:class:`str` columns and :py:class:`ralsei.types.ValueColumn`'s `type`
     are passed through the jinja preprocessor
     """
-    fn: OneToMany
+    fn: OneToMany | FnContext
     """A generator function, mapping one row to many rows
 
     If :py:attr:`~id_fields` argument is omitted, will try to infer the *id_fields*
@@ -175,17 +175,18 @@ class MapToNewTable(TaskDef):
     """
     params: dict = field(default_factory=dict)
     """Parameters passed to the jinja template"""
-    context: dict[str, Any] = field(default_factory=dict)
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlEnvironment) -> None:
             self._table = this.table
-            self._fn = this.fn
-            self._inject_context = create_context_argument(this.fn)
-            self._context_managers = ContextManagerBundle(this.context)
+            self._fn_context = (
+                this.fn
+                if isinstance(this.fn, FnContext)
+                else contextlib.nullcontext(this.fn)
+            )
+            popped_fields = get_popped_fields(this.fn)
 
             source_table = env.resolve(this.source_table)
-
             template_params = merge_params(
                 {"table": this.table, "source": source_table},
                 (
@@ -237,19 +238,18 @@ class MapToNewTable(TaskDef):
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
             )
 
-            id_fields = this.id_fields or (
-                Maybe.from_optional(getattr(this.fn, ID_FIELDS_ATTR, None))
-                .map(lambda names: [IdColumn(name) for name in names])
-                .value_or([])
-            )
-            self._id_fields = set(id_field.name for id_field in id_fields)
-
             def create_marker_scripts():
                 if this.is_done_column:
                     if not source_table:
                         raise ValueError(
                             "Cannot create is_done_column when source_table is None"
                         )
+
+                    id_fields = this.id_fields or (
+                        Maybe.from_optional(popped_fields)
+                        .map(lambda names: [IdColumn(name) for name in names])
+                        .value_or(None)
+                    )
                     if not id_fields:
                         ValueError("Must provide id_fields if using is_done_column")
 
@@ -321,19 +321,14 @@ class MapToNewTable(TaskDef):
                         )
                         conn.sqlalchemy.commit()
 
-            with self._context_managers as extra_context:
+            with self._fn_context as fn:
                 for input_row in (
                     Maybe.from_optional(self._select)
                     .map(iter_input_rows)
                     .value_or([{}])
                 ):
-                    with TaskContext.from_id_fields(
-                        self._id_fields, input_row, extras=extra_context
-                    ) as context:
-                        for output_row in self._fn(
-                            **input_row, **self._inject_context(context)
-                        ):
-                            conn.sqlalchemy.execute(self._insert, output_row)
+                    for output_row in fn(**input_row):
+                        conn.sqlalchemy.execute(self._insert, output_row)
 
         def delete(self, conn: SqlConnection) -> None:
             if self._marker_scripts:
