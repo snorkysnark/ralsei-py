@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Mapping, Union
+from typing import TYPE_CHECKING, Iterable, Mapping, Union
 
 from ._resolver import DependencyResolver
 from ._flattened import ScopedTaskDef, FlattenedPipeline
@@ -12,10 +12,26 @@ if TYPE_CHECKING:
     from ralsei.task import TaskDef
     from ralsei.jinja import SqlEnvironment
 
+Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
+
+
+def _iter_tasks_flattened(
+    tasks: Tasks,
+) -> Iterable[tuple[TreePath, Union["TaskDef", "Pipeline"]]]:
+    for name, value in tasks.items():
+        if "." in name:
+            raise ValueError(". symbol not allowed in task name")
+
+        if isinstance(value, Mapping):
+            for sub_name, sub_value in _iter_tasks_flattened(value):
+                yield TreePath(name, *sub_name), sub_value
+        else:
+            yield TreePath(name), value
+
 
 class Pipeline(ABC):
     @abstractmethod
-    def create_tasks(self) -> Mapping[str, Union["TaskDef", Pipeline]]:
+    def create_tasks(self) -> Tasks:
         ...
 
     def outputof(self, *task_paths: str | TreePath) -> OutputOf:
@@ -31,25 +47,22 @@ class Pipeline(ABC):
         task_definitions: dict[TreePath, ScopedTaskDef] = {}
         pipeline_to_path: dict[Pipeline, TreePath] = {self: TreePath()}
 
-        for name, value in self.create_tasks().items():
-            if "." in name:
-                raise ValueError(". symbol not allowed in task name")
-
+        for name, value in _iter_tasks_flattened(self.create_tasks()):
             if isinstance(value, Pipeline):
                 subtree = value._flatten()
 
                 for relative_path, definition in subtree.task_definitions.items():
-                    task_definitions[TreePath(name, *relative_path)] = definition
+                    task_definitions[TreePath(*name, *relative_path)] = definition
 
                 for pipeline, relative_path in subtree.pipeline_paths.items():
                     if pipeline in pipeline_to_path:
                         raise ValueError(
                             "The same pipeline object cannot be used twice"
                         )
-                    pipeline_to_path[pipeline] = TreePath(name, *relative_path)
+                    pipeline_to_path[pipeline] = TreePath(*name, *relative_path)
 
             else:
-                task_definitions[TreePath(name)] = ScopedTaskDef(self, value)
+                task_definitions[name] = ScopedTaskDef(self, value)
 
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
