@@ -43,7 +43,7 @@ __all__ = [
     "compose",
     "compose_one",
     "FnContext",
-    "FnContextBase",
+    "FnContextOne",
     "CreateTableSql",
     "AddColumnsSql",
     "MapToNewTable",

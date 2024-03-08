@@ -182,6 +182,7 @@ __all__ = [
     "compose",
     "compose_one",
     "FnContext",
+    "FnContextOne",
     "FnContextBase",
     "get_popped_fields",
 ]
