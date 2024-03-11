@@ -7,6 +7,7 @@ from typing import (
     Iterator,
     Optional,
     TypeVar,
+    overload,
 )
 from functools import wraps
 
@@ -114,19 +115,6 @@ def add_to_output(**add_values):
 T = TypeVar("T")
 
 
-def compose(fn: T, *decorators: Callable[[T], T]) -> T:
-    for decorator in decorators:
-        fn = decorator(fn)
-
-    return fn
-
-
-def compose_one(
-    fn: OneToOne, *decorators: Callable[[OneToMany], OneToMany]
-) -> OneToOne:
-    return into_one(compose(into_many(fn), *decorators))
-
-
 class FnContextBase(ABC, Generic[T]):
     def __init__(self, fn: T, **context: Any) -> None:
         self.fn = fn
@@ -162,6 +150,61 @@ class FnContextOne(FnContextBase[OneToOne]):
             return self.fn(**kwargs, **context)
 
         return wrapper
+
+
+@overload
+def compose(
+    fn: OneToMany,
+    *decorators: Callable[[OneToMany], OneToMany],
+    context: None = None,
+) -> OneToMany:
+    ...
+
+
+@overload
+def compose(
+    fn: OneToMany,
+    *decorators: Callable[[OneToMany], OneToMany],
+    context: dict,
+) -> FnContext:
+    ...
+
+
+def compose(
+    fn: OneToMany,
+    *decorators: Callable[[OneToMany], OneToMany],
+    context: Optional[dict] = None,
+) -> OneToMany | FnContext:
+    for decorator in decorators:
+        fn = decorator(fn)
+
+    return FnContext(fn, **context) if context else fn
+
+
+@overload
+def compose_one(
+    fn: OneToOne,
+    *decorators: Callable[[OneToMany], OneToMany],
+    context: None = None,
+) -> OneToOne:
+    ...
+
+
+@overload
+def compose_one(
+    fn: OneToOne, *decorators: Callable[[OneToMany], OneToMany], context: dict
+) -> FnContextOne:
+    ...
+
+
+def compose_one(
+    fn: OneToOne,
+    *decorators: Callable[[OneToMany], OneToMany],
+    context: Optional[dict] = None,
+) -> OneToOne | FnContextOne:
+    fn = into_one(compose(into_many(fn), *decorators))
+
+    return FnContextOne(fn, **context) if context else fn
 
 
 def get_popped_fields(obj: Callable | FnContextBase) -> Optional[list[str]]:

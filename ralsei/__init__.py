@@ -42,8 +42,6 @@ __all__ = [
     "add_to_output",
     "compose",
     "compose_one",
-    "FnContext",
-    "FnContextOne",
     "CreateTableSql",
     "AddColumnsSql",
     "MapToNewTable",
