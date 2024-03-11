@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 import click
 from rich.console import Console
 from rich.prompt import Prompt
@@ -9,6 +10,7 @@ from ralsei.dialect import DEFAULT_DIALECT_REGISTRY
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG, NamedTask
 from ralsei.connection import SqlEngine, SqlConnection
 from ralsei.console import console
+from ralsei.task import ROW_CONTEXT_ATRRIBUTE
 
 from ._parsers import TYPE_TREEPATH
 from ._decorators import extend_params
@@ -147,7 +149,13 @@ class Ralsei:
                     action(sequence, conn)
 
     def __call__(self, *args, **kwargs):
-        self.build_cli()(*args, **kwargs)
+        try:
+            self.build_cli()(*args, **kwargs)
+        except Exception as err:
+            traceback_console.print_exception(show_locals=True)
+            if row_context := getattr(err, ROW_CONTEXT_ATRRIBUTE, None):
+                traceback_console.print("Row context:", row_context)
+            sys.exit(1)
 
 
 __all__ = ["Ralsei"]

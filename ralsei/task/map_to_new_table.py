@@ -6,6 +6,7 @@ from sqlalchemy import TextClause
 import contextlib
 
 from .base import TaskDef, TaskImpl, ExistsStatus
+from .context import RowContext
 from ralsei.types import (
     Table,
     ValueColumnBase,
@@ -185,6 +186,9 @@ class MapToNewTable(TaskDef):
                 else contextlib.nullcontext(this.fn)
             )
             popped_fields = get_popped_fields(this.fn)
+            self._popped_fields: set[str] = (
+                Maybe.from_optional(popped_fields).map(set).value_or(set())
+            )
 
             source_table = env.resolve(this.source_table)
             template_params = merge_params(
@@ -327,8 +331,9 @@ class MapToNewTable(TaskDef):
                     .map(iter_input_rows)
                     .value_or([{}])
                 ):
-                    for output_row in fn(**input_row):
-                        conn.sqlalchemy.execute(self._insert, output_row)
+                    with RowContext.from_input_row(input_row, self._popped_fields):
+                        for output_row in fn(**input_row):
+                            conn.sqlalchemy.execute(self._insert, output_row)
 
         def delete(self, conn: SqlConnection) -> None:
             if self._marker_scripts:

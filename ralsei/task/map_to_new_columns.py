@@ -5,6 +5,7 @@ from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
 from .base import TaskImpl, TaskDef, ExistsStatus
+from .context import RowContext
 from ralsei.console import track
 from ralsei.graph import OutputOf
 from ralsei.types import (
@@ -136,6 +137,9 @@ class MapToNewColumns(TaskDef):
                 else contextlib.nullcontext(this.fn)
             )
             popped_fields = get_popped_fields(this.fn)
+            self._popped_fields: set[str] = (
+                Maybe.from_optional(popped_fields).map(set).value_or(set())
+            )
 
             template_params = merge_params(
                 {"table": self._table},
@@ -217,10 +221,11 @@ class MapToNewColumns(TaskDef):
                         description="Task progress...",
                     ),
                 ):
-                    conn.sqlalchemy.execute(self._update, fn(**input_row))
+                    with RowContext.from_input_row(input_row, self._popped_fields):
+                        conn.sqlalchemy.execute(self._update, fn(**input_row))
 
-                    if self._commit_each:
-                        conn.sqlalchemy.commit()
+                        if self._commit_each:
+                            conn.sqlalchemy.commit()
 
         def delete(self, conn: SqlConnection) -> None:
             self._drop_columns(conn)
