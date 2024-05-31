@@ -1,6 +1,5 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from collections import defaultdict
 from graphviz import Digraph
 from typing import TYPE_CHECKING, Iterable, Optional
 
@@ -15,16 +14,14 @@ if TYPE_CHECKING:
 class TopologicalSort:
     dag: DAG
     stack: list[NamedTask] = field(default_factory=list)
-    visited: defaultdict[TreePath, bool] = field(
-        default_factory=lambda: defaultdict(bool)
-    )
+    visited: set[TreePath] = field(default_factory=set)
 
     def _visit_recursive(self, path: TreePath):
-        self.visited[path] = True
+        self.visited.add(path)
 
         if relations := self.dag.relations.get(path, None):
             for neighbor_path in relations:
-                if not self.visited[neighbor_path]:
+                if neighbor_path not in self.visited:
                     self._visit_recursive(neighbor_path)
 
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
@@ -39,7 +36,7 @@ class TopologicalSort:
         )
 
         for path in starting_nodes:
-            if not self.visited[path]:
+            if path not in self.visited:
                 self._visit_recursive(path)
 
         self.stack.reverse()
