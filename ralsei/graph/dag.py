@@ -32,7 +32,11 @@ class TopologicalSort:
     def run(
         self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
     ) -> TaskSequence:
-        starting_nodes = constrain_starting_nodes or self.dag.tasks
+        starting_nodes = (
+            self.dag.tasks
+            if constrain_starting_nodes is None
+            else constrain_starting_nodes
+        )
 
         for path in starting_nodes:
             if not self.visited[path]:

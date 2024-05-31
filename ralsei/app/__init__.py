@@ -4,7 +4,7 @@ import sys
 import click
 from rich.console import Console
 from rich.prompt import Prompt
-from typing import Callable, Optional, Sequence, overload
+from typing import Callable, Iterable, Optional, Sequence, overload
 
 from ralsei.dialect import DEFAULT_DIALECT_REGISTRY
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG, NamedTask
@@ -104,14 +104,14 @@ class Ralsei:
     ):
         @click.option(
             "--from",
-            "start_from",
+            "from_filters",
             help="run this task and its dependencies",
             type=TYPE_TREEPATH,
             multiple=True,
         )
         @click.option(
             "--one",
-            "single",
+            "single_filters",
             help="run only this task",
             type=TYPE_TREEPATH,
             multiple=True,
@@ -120,32 +120,36 @@ class Ralsei:
         @click.pass_context
         def cmd(
             click_ctx: click.Context,
-            start_from: Optional[list[TreePath]],
-            single: list[TreePath] = [],
+            from_filters: Iterable[TreePath],
+            single_filters: Iterable[TreePath],
         ):
             group = click_ctx.find_object(GroupContext)
             assert group, "Group context hasn't been set"
 
-            if single:
-                sequence = (
-                    group.dag.topological_sort(constrain_starting_nodes=start_from)
-                    if start_from
-                    else TaskSequence(
-                        [NamedTask(path, group.dag.tasks[path]) for path in single]
-                    )
-                )
-            elif start_from:
-                sequence = group.dag.topological_sort(
-                    constrain_starting_nodes=start_from
-                )
-            else:
-                sequence = group.dag.topological_sort()
+            sequence = group.dag.topological_sort()
 
-            if ask:
-                for task in sequence.steps:
-                    console.print(task.name)
+            if from_filters or single_filters:
+                mask: set[TreePath] = set()
 
-            if not ask or Prompt.ask("(y/n)?", console=console) == "y":
+                for task in group.dag.topological_sort(
+                    constrain_starting_nodes=from_filters
+                ).steps:
+                    mask.add(task.path)
+                for single_path in single_filters:
+                    mask.add(single_path)
+
+                sequence = TaskSequence(
+                    [task for task in sequence.steps if task.path in mask]
+                )
+
+            if (
+                not ask
+                or Prompt.ask(
+                    "\n".join([*(task.name for task in sequence.steps), "(y/n)?"]),
+                    console=console,
+                )
+                == "y"
+            ):
                 with group.engine.connect() as conn:
                     action(sequence, conn)
 
