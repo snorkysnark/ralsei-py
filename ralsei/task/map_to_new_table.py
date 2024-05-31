@@ -176,10 +176,16 @@ class MapToNewTable(TaskDef):
     """
     params: dict = field(default_factory=dict)
     """Parameters passed to the jinja template"""
+    yield_per: Optional[int] = None
+    """Fetch :py:attr:`~select` results in blocks of this size,
+    instead of loading them all into memory
+
+    Using this option will break progress bars"""
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlEnvironment) -> None:
             self._table = this.table
+            self._yield_per = this.yield_per
             self._fn_context = (
                 this.fn
                 if isinstance(this.fn, FnContext)
@@ -310,20 +316,23 @@ class MapToNewTable(TaskDef):
                 self._marker_scripts.add_marker(conn)
 
             def iter_input_rows(select: TextClause):
-                for input_row in map(
-                    lambda row: row._asdict(),
-                    track(
-                        conn.execute_with_length_hint(select),
-                        description="Task progress...",
-                    ),
-                ):
-                    yield input_row
+                with conn.execute_universal(
+                    select, yield_per=self._yield_per
+                ) as result:
+                    for input_row in map(
+                        lambda row: row._asdict(),
+                        track(
+                            result,
+                            description="Task progress...",
+                        ),
+                    ):
+                        yield input_row
 
-                    if self._marker_scripts:
-                        conn.sqlalchemy.execute(
-                            self._marker_scripts.set_marker, input_row
-                        )
-                        conn.sqlalchemy.commit()
+                        if self._marker_scripts:
+                            conn.sqlalchemy.execute(
+                                self._marker_scripts.set_marker, input_row
+                            )
+                            conn.sqlalchemy.commit()
 
             with self._fn_context as fn:
                 for input_row in (

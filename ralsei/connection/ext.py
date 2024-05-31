@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Any, Iterable, Optional, Self
 import sqlalchemy
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
@@ -27,6 +28,18 @@ class ConnectionExt(sqlalchemy.Connection):
 
     def __enter__(self) -> Self:
         return self
+
+    @contextmanager
+    def execute_server_side(
+        self,
+        statement: sqlalchemy.Executable,
+        yield_per: int,
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+    ):
+        with self.execution_options(yield_per=yield_per).execute(
+            statement, parameters
+        ) as result:
+            yield result
 
 
 __all__ = ["ConnectionExt"]

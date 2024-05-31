@@ -126,11 +126,16 @@ class MapToNewColumns(TaskDef):
     """
     params: dict = field(default_factory=dict)
     """Parameters passed to the jinja template"""
-    context: dict[str, Any] = field(default_factory=dict)
+    yield_per: Optional[int] = None
+    """Fetch :py:attr:`~select` results in blocks of this size,
+    instead of loading them all into memory
+
+    Using this option will break progress bars"""
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlEnvironment) -> None:
             self._table = env.resolve(this.table)
+            self._yield_per = this.yield_per
             self._fn_context = (
                 this.fn
                 if isinstance(this.fn, FnContextOne)
@@ -213,11 +218,16 @@ class MapToNewColumns(TaskDef):
         def run(self, conn: SqlConnection) -> None:
             self._add_columns(conn)
 
-            with self._fn_context as fn:
+            with (
+                self._fn_context as fn,
+                conn.execute_universal(
+                    self._select, yield_per=self._yield_per
+                ) as result,
+            ):
                 for input_row in map(
                     lambda row: row._asdict(),
                     track(
-                        conn.execute_with_length_hint(self._select),
+                        result,
                         description="Task progress...",
                     ),
                 ):

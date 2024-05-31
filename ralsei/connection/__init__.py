@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import contextmanager
 from typing import Any, Iterable, Mapping, Optional
 import sqlalchemy
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
@@ -15,9 +16,9 @@ class SqlEnvironmentMixin:
     def __init__(
         self,
         sqlalchemy_dialect: sqlalchemy.Dialect,
-        init_environment: SqlEnvironment
-        | BaseDialectInfo
-        | DialectRegistry = DEFAULT_DIALECT_REGISTRY,
+        init_environment: (
+            SqlEnvironment | BaseDialectInfo | DialectRegistry
+        ) = DEFAULT_DIALECT_REGISTRY,
     ) -> None:
         if isinstance(init_environment, SqlEnvironment):
             self.jinja = init_environment
@@ -41,9 +42,9 @@ class SqlConnection(SqlEnvironmentMixin):
     def __init__(
         self,
         sqlalchemy_connection: ConnectionExt,
-        init_environment: SqlEnvironment
-        | BaseDialectInfo
-        | DialectRegistry = DEFAULT_DIALECT_REGISTRY,
+        init_environment: (
+            SqlEnvironment | BaseDialectInfo | DialectRegistry
+        ) = DEFAULT_DIALECT_REGISTRY,
     ) -> None:
         self.sqlalchemy = sqlalchemy_connection
         super().__init__(sqlalchemy_connection.dialect, init_environment)
@@ -65,12 +66,14 @@ class SqlConnection(SqlEnvironmentMixin):
         bind_params: Optional[_CoreSingleExecuteParams] = None,
     ):
         self.sqlalchemy.executescript(
-            self.jinja.render_sql_split(source, **template_params)
-            if isinstance(source, str)
-            else [
-                self.jinja.render_sql(statement, **template_params)
-                for statement in source
-            ],
+            (
+                self.jinja.render_sql_split(source, **template_params)
+                if isinstance(source, str)
+                else [
+                    self.jinja.render_sql(statement, **template_params)
+                    for statement in source
+                ]
+            ),
             bind_params,
         )
 
@@ -80,11 +83,26 @@ class SqlConnection(SqlEnvironmentMixin):
         parameters: Optional[_CoreSingleExecuteParams] = None,
     ) -> Iterable[sqlalchemy.Row[Any]]:
         result = self.sqlalchemy.execute(statement, parameters)
+        return (
+            CountableCursorResult(result)
+            if self.dialect_info.supports_rowcount
+            else result.all()
+        )
 
-        if self.dialect_info.supports_rowcount:
-            return CountableCursorResult(result)
+    @contextmanager
+    def execute_universal(
+        self,
+        statement: sqlalchemy.Executable,
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+        yield_per: Optional[int] = None,
+    ):
+        if yield_per is not None:
+            with self.sqlalchemy.execute_server_side(
+                statement, parameters=parameters, yield_per=yield_per
+            ) as result:
+                yield result
         else:
-            return result.all()
+            yield self.execute_with_length_hint(statement, parameters)
 
     def __enter__(self) -> SqlConnection:
         return self
@@ -97,9 +115,9 @@ class SqlEngine(SqlEnvironmentMixin):
     def __init__(
         self,
         sqlalchemy_engine: sqlalchemy.Engine,
-        init_environment: SqlEnvironment
-        | BaseDialectInfo
-        | DialectRegistry = DEFAULT_DIALECT_REGISTRY,
+        init_environment: (
+            SqlEnvironment | BaseDialectInfo | DialectRegistry
+        ) = DEFAULT_DIALECT_REGISTRY,
     ) -> None:
         self.sqlalchemy = sqlalchemy_engine
         super().__init__(sqlalchemy_engine.dialect, init_environment)
