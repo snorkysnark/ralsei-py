@@ -22,6 +22,8 @@ from .app import Ralsei
 from .utils import folder
 
 __all__ = [
+    "SqlConnection",
+    "SqlEngine",
     "Sql",
     "Identifier",
     "Table",
