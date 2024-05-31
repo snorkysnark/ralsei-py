@@ -32,12 +32,10 @@ class Ralsei:
         self,
         pipeline_source: Callable[..., Pipeline],
         custom_cli_options: Sequence[click.Option] = [],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
-    def __init__(self, pipeline_source: Pipeline) -> None:
-        ...
+    def __init__(self, pipeline_source: Pipeline) -> None: ...
 
     def __init__(
         self,
@@ -67,6 +65,7 @@ class Ralsei:
                 *args,
                 **kwargs,
             )
+            pipeline.prepare_engine(engine)
             dag = pipeline.build_dag(engine.jinja)
 
             ctx.obj = GroupContext(engine, dag)
