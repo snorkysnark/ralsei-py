@@ -29,16 +29,17 @@ class TopologicalSort:
 
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
 
-    def run_filtered(self, start_from: Iterable[TreePath]) -> TaskSequence:
-        for path in start_from:
+    def run(
+        self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
+    ) -> TaskSequence:
+        starting_nodes = constrain_starting_nodes or self.dag.tasks
+
+        for path in starting_nodes:
             if not self.visited[path]:
                 self._visit_recursive(path)
 
         self.stack.reverse()
         return TaskSequence(self.stack)
-
-    def run(self) -> TaskSequence:
-        return self.run_filtered(self.dag.tasks)
 
 
 @dataclass
@@ -55,11 +56,10 @@ class DAG:
             for parent, children in self.relations.items()
         }
 
-    def topological_sort(self) -> TaskSequence:
-        return TopologicalSort(self).run()
-
-    def topological_sort_filtered(self, start_from: Iterable[TreePath]) -> TaskSequence:
-        return TopologicalSort(self).run_filtered(start_from)
+    def topological_sort(
+        self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
+    ) -> TaskSequence:
+        return TopologicalSort(self).run(constrain_starting_nodes)
 
     def graphviz(self) -> Digraph:
         dot = Digraph()

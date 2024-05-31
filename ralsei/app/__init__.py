@@ -128,14 +128,16 @@ class Ralsei:
 
             if single:
                 sequence = (
-                    group.dag.topological_sort_filtered(start_from)
+                    group.dag.topological_sort(constrain_starting_nodes=start_from)
                     if start_from
                     else TaskSequence(
                         [NamedTask(path, group.dag.tasks[path]) for path in single]
                     )
                 )
             elif start_from:
-                sequence = group.dag.topological_sort_filtered(start_from)
+                sequence = group.dag.topological_sort(
+                    constrain_starting_nodes=start_from
+                )
             else:
                 sequence = group.dag.topological_sort()
 
