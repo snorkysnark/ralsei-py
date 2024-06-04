@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from typing import Any, Iterable, Self, Self, TypeVar, Generic
 from enum import Enum
 
@@ -33,7 +33,8 @@ class Task(ABC):
         self.delete(conn)
         self.run(conn)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def output(self) -> Any:
         """Object created or modified by this task
         (usually a :py:class:`ralsei.types.Table`)
@@ -66,8 +67,7 @@ class TaskImpl(Task, Generic[T]):
     """Task with a predefined constructor"""
 
     @abstractmethod
-    def __init__(self, this: T, env: SqlEnvironment) -> None:
-        ...
+    def __init__(self, this: T, env: SqlEnvironment) -> None: ...
 
 
 class TaskDef:
