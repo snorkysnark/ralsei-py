@@ -90,6 +90,9 @@ class DropColumns:
         self._if_exists = if_exists
 
     def __call__(self, conn: SqlConnection):
+        if self._if_exists and not table_exists(conn, self._table):
+            return
+
         if self._if_exists and not conn.dialect_info.supports_column_if_not_exists:
             existing = _get_column_names(conn, self._table)
             for column, statement in zip(self._columns, self.statements):
