@@ -131,6 +131,7 @@ class MapToNewColumns(TaskDef):
     instead of loading them all into memory
 
     Using this option will break progress bars"""
+    post: Optional[str] = None
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewColumns, env: SqlEnvironment) -> None:
@@ -198,6 +199,11 @@ class MapToNewColumns(TaskDef):
             self._drop_columns = db_actions.DropColumns(
                 env, self._table, columns_rendered, if_exists=True
             )
+            self._post = (
+                Maybe.from_optional(this.post)
+                .map(lambda post: env.render_sql(post, **template_params))
+                .value_or(None)
+            )
 
         @property
         def output(self) -> Any:
@@ -237,6 +243,9 @@ class MapToNewColumns(TaskDef):
                         if self._commit_each:
                             conn.sqlalchemy.commit()
 
+            if self._post is not None:
+                conn.sqlalchemy.execute(self._post)
+
         def delete(self, conn: SqlConnection) -> None:
             self._drop_columns(conn)
 
@@ -245,6 +254,9 @@ class MapToNewColumns(TaskDef):
             yield "Select", self._select
             yield "Update", self._update
             yield "Drop columns", self._drop_columns.statements
+
+            if self._post is not None:
+                yield "Post", self._post
 
 
 __all__ = ["MapToNewColumns"]

@@ -181,6 +181,7 @@ class MapToNewTable(TaskDef):
     instead of loading them all into memory
 
     Using this option will break progress bars"""
+    post: Optional[str] = None
 
     class Impl(TaskImpl):
         def __init__(self, this: MapToNewTable, env: SqlEnvironment) -> None:
@@ -246,6 +247,11 @@ class MapToNewTable(TaskDef):
             )
             self._drop_table = env.render_sql(
                 "DROP TABLE IF EXISTS {{table}};", table=this.table
+            )
+            self._post = (
+                Maybe.from_optional(this.post)
+                .map(lambda post: env.render_sql(post, **template_params))
+                .value_or(None)
             )
 
             def create_marker_scripts():
@@ -344,6 +350,9 @@ class MapToNewTable(TaskDef):
                         for output_row in fn(**input_row):
                             conn.sqlalchemy.execute(self._insert, output_row)
 
+            if self._post is not None:
+                conn.sqlalchemy.execute(self._post)
+
         def delete(self, conn: SqlConnection) -> None:
             if self._marker_scripts:
                 self._marker_scripts.drop_marker(conn)
@@ -361,6 +370,9 @@ class MapToNewTable(TaskDef):
             yield "Drop table", self._drop_table
             if self._marker_scripts:
                 yield "Drop marker", self._marker_scripts.drop_marker.statements
+
+            if self._post is not None:
+                yield "Post", self._post
 
 
 __all__ = ["MapToNewTable"]
