@@ -5,7 +5,7 @@ from ralsei.console import console, track
 from .path import TreePath
 
 if TYPE_CHECKING:
-    from ralsei.engine import SqlConnection
+    from ralsei.connection import SqlConnection
     from ralsei.task import Task
 
 
@@ -24,10 +24,8 @@ class TaskSequence:
         self.steps = steps
 
     def run(self, conn: "SqlConnection"):
-        from ralsei.task import ExistsStatus
-
         for named_task in track(self.steps, description="Running tasks..."):
-            if named_task.task.exists(conn) == ExistsStatus.YES:
+            if named_task.task.exists(conn):
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: already done"
                 )

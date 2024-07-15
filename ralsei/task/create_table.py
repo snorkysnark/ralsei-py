@@ -4,7 +4,6 @@ from ralsei.db_actions import table_exists
 from ralsei.types import Table
 from ralsei.jinja import SqlEnvironment
 from ralsei.connection import SqlConnection
-from .base import ExistsStatus
 
 
 class CreateTableMixin:
@@ -19,8 +18,8 @@ class CreateTableMixin:
     def output(self) -> Any:
         return self._table
 
-    def exists(self, conn: SqlConnection) -> ExistsStatus:
-        return ExistsStatus(table_exists(conn, self._table))
+    def exists(self, conn: SqlConnection) -> bool:
+        return table_exists(conn, self._table)
 
 
 __all__ = ["CreateTableMixin"]

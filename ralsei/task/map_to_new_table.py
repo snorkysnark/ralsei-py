@@ -5,7 +5,7 @@ from returns.maybe import Maybe
 from sqlalchemy import TextClause
 import contextlib
 
-from .base import TaskDef, TaskImpl, ExistsStatus
+from .base import TaskDef, TaskImpl
 from .context import RowContext
 from ralsei.types import (
     Table,
@@ -303,18 +303,16 @@ class MapToNewTable(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, conn: SqlConnection) -> ExistsStatus:
+        def exists(self, conn: SqlConnection) -> bool:
             if not db_actions.table_exists(conn, self._table):
-                return ExistsStatus.NO
-            elif (
-                # non-resumable or resumable with no more inputs
-                self._select is None
-                or not self._marker_scripts
-                or conn.sqlalchemy.execute(self._select).first() is None
-            ):
-                return ExistsStatus.YES
+                return False
             else:
-                return ExistsStatus.PARTIAL
+                return (
+                    # non-resumable or resumable with no more inputs
+                    self._select is None
+                    or not self._marker_scripts
+                    or conn.sqlalchemy.execute(self._select).first() is None
+                )
 
         def run(self, conn: SqlConnection) -> None:
             conn.sqlalchemy.execute(self._create_table)

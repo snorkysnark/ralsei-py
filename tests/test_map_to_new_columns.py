@@ -8,7 +8,6 @@ from ralsei import (
     compose_one,
     pop_id_fields,
 )
-from ralsei.task import ExistsStatus
 
 from common.db_helper import get_rows
 
@@ -124,7 +123,7 @@ def test_map_columns_continue(conn: SqlConnection):
         fn=compose_one(double, pop_id_fields("num", keep=True)),
     ).create(conn.jinja)
 
-    assert task.exists(conn) == ExistsStatus.PARTIAL
+    assert not task.exists(conn)
     task.run(conn)
-    assert task.exists(conn) == ExistsStatus.YES
+    assert task.exists(conn)
     assert get_rows(conn, table) == [(2, 4, True), (3, 6, True)]

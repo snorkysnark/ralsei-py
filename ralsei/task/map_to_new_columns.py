@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional, Sequence
 from returns.maybe import Maybe
 
-from .base import TaskImpl, TaskDef, ExistsStatus
+from .base import TaskImpl, TaskDef
 from .context import RowContext
 from ralsei.console import track
 from ralsei.graph import OutputOf
@@ -209,17 +209,15 @@ class MapToNewColumns(TaskDef):
         def output(self) -> Any:
             return self._table
 
-        def exists(self, conn: SqlConnection) -> ExistsStatus:
+        def exists(self, conn: SqlConnection) -> bool:
             if not db_actions.columns_exist(conn, self._table, self._column_names):
-                return ExistsStatus.NO
-            elif (
-                # non-resumable or resumable with no more inputs
-                not self._commit_each
-                or conn.sqlalchemy.execute(self._select).first() is None
-            ):
-                return ExistsStatus.YES
+                return False
             else:
-                return ExistsStatus.PARTIAL
+                # non-resumable or resumable with no more inputs
+                return (
+                    not self._commit_each
+                    or conn.sqlalchemy.execute(self._select).first() is None
+                )
 
         def run(self, conn: SqlConnection) -> None:
             self._add_columns(conn)
