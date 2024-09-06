@@ -9,11 +9,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+
     steps:
       - name: Fetch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/find-latest-tag
-      - name: Print version
-        run: echo $LATEST_TAG
+      - name: Checkout latest tag
+        run: git checkout $LATEST_TAG
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          cache: true
+      - name: Install dependencies
+        run: pdm install
+      - name: Run Tests
+        run: pdm run pytest ./tests
+        env:
+          POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
