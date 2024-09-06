@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: ./.github/setup-action
+      - name: Fetch
+        uses: actions/checkout@v4
+        fetch-depth: 0
+      - uses: ./.github/find-latest-tag
       - name: Print version
         run: echo $LATEST_TAG

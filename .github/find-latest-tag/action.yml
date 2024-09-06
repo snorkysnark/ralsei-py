@@ -1,0 +1,11 @@
+name: Latest tag
+description: Find latest tag
+
+runs:
+  using: composite
+  steps:
+    - name: Find latest tag
+      run: echo "LATEST_TAG=$(git tag | grep ^v | tail -n 1)" >> $GITHUB_ENV
+    - name: Fail if tag doesn't exist
+      if: env.LATEST_TAG == ''
+      run: exit 1
