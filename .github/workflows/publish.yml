@@ -33,6 +33,6 @@ jobs:
       - name: Install dependencies
         run: pdm install
       - name: Run Tests
-        run: pdm run pytest ./tests
         env:
           POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: pdm run pytest ./tests
