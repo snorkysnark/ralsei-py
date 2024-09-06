@@ -40,6 +40,9 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      # For PyPi trusted publishing
+      id-token: write
 
     steps:
       - name: Fetch
