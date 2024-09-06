@@ -5,7 +5,9 @@ runs:
   using: composite
   steps:
     - name: Find latest tag
+      shell: bash
       run: echo "LATEST_TAG=$(git tag | grep ^v | tail -n 1)" >> $GITHUB_ENV
     - name: Fail if tag doesn't exist
       if: env.LATEST_TAG == ''
+      shell: bash
       run: exit 1
