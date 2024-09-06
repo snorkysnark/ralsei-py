@@ -51,3 +51,12 @@ DEFAULT_DIALECT_REGISTRY = DialectRegistry(
         "sqlite": SqliteDialectInfo(),
     }
 )
+
+__all__ = [
+    "BaseDialectInfo",
+    "PostgresDialectInfo",
+    "SqliteDialectInfo",
+    "DialectNotFoundError",
+    "DialectRegistry",
+    "DEFAULT_DIALECT_REGISTRY",
+]

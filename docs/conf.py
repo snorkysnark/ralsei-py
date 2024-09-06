@@ -68,6 +68,7 @@ rst_prolog = """\
 # -- autodoc -----------------------------------------------------------------
 autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
+autodoc2_skip_module_regexes = [r".*\._.*"]
 autodoc2_hidden_objects = ["inherited", "private"]
 autodoc2_hidden_regexes = [
     r"ralsei\.wrappers\.OneToOne",
