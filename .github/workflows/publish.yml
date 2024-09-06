@@ -34,5 +34,5 @@ jobs:
         run: pdm install
       - name: Run Tests
         env:
-          POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres
         run: pdm run pytest ./tests
