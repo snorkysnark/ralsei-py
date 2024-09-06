@@ -10,4 +10,6 @@ runs:
     - name: Fail if tag doesn't exist
       if: env.LATEST_TAG == ''
       shell: bash
-      run: exit 1
+      run: |
+        echo No version tag found
+        exit 1
