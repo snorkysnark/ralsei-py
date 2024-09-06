@@ -1,7 +1,6 @@
 name: publish
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:
@@ -9,6 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: snorkysnark/ralsei-py/.github/setup-action
+      - uses: ./.github/setup-action
       - name: Print version
         run: echo $LATEST_TAG
