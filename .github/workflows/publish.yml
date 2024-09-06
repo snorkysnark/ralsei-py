@@ -36,3 +36,30 @@ jobs:
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres
         run: pdm run pytest ./tests
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/find-latest-tag
+      - name: Checkout latest tag
+        run: git checkout $LATEST_TAG
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: 3.12
+          cache: true
+      - name: Install dependencies
+        run: pdm install
+      - name: Build
+        run: pdm build
+      - name: Github Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          prerelease: ${{ contains(github.ref, '.dev') }}
