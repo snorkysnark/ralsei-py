@@ -1,7 +1,9 @@
 name: publish
 
 on:
-  tags: v*
+  push:
+    branches: main
+    tags: v*
   workflow_dispatch:
 
 jobs:
