@@ -12,7 +12,6 @@ sys.path.append(str(Path(__file__).parent.joinpath("common")))
 
 def postgres_engine():
     db_url = os.environ.get("POSTGRES_URL", "postgresql:///ralsei_test")
-    print("POSTGRES_URL:", db_url)
     engine = SqlEngine.create(db_url)
 
     with engine.connect() as conn:
