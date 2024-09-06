@@ -41,6 +41,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
+      # For github release
+      contents: write
       # For PyPi trusted publishing
       id-token: write
 
