@@ -70,4 +70,4 @@ jobs:
           tag_name: ${{ env.LATEST_TAG }}
           prerelease: ${{ contains(env.LATEST_TAG, '.dev') }}
       - name: PyPi Release
-        run: pdm publish
+        run: pdm publish --skip-existing
