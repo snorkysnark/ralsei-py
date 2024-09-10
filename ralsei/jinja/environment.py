@@ -25,7 +25,6 @@ from ._compiler import SqlCodeGenerator
 
 if TYPE_CHECKING:
     from ralsei.sql_adapter import SqlAdapter
-    from ralsei.graph import OutputOf
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -85,6 +84,7 @@ class SqlEnvironment(jinja2.Environment):
     def __init__(self, dialect_info: BaseDialectInfo = BaseDialectInfo()):
         from ralsei.types import Sql, Column, Identifier
         from ralsei.sql_adapter import create_adapter_for_env
+        from ralsei.graph import resolve
 
         super().__init__(undefined=StrictUndefined)
 
@@ -95,7 +95,7 @@ class SqlEnvironment(jinja2.Environment):
             if isinstance(value, jinja2.Undefined):
                 return value
             else:
-                return self.adapter.to_sql(self.resolve(value))
+                return self.adapter.to_sql(resolve(self, value))
 
         def joiner(sep: str = ", ") -> Callable[[], Sql]:
             inner = jinja2.utils.Joiner(sep)
@@ -158,8 +158,7 @@ class SqlEnvironment(jinja2.Environment):
         source: str | TemplateNode,
         globals: Optional[MutableMapping[str, Any]] = None,
         template_class: None = None,
-    ) -> SqlTemplate:
-        ...
+    ) -> SqlTemplate: ...
 
     @overload
     def from_string(
@@ -167,8 +166,7 @@ class SqlEnvironment(jinja2.Environment):
         source: str | TemplateNode,
         globals: Optional[MutableMapping[str, Any]] = None,
         template_class: Optional[Type[TEMPLATE]] = None,
-    ) -> TEMPLATE:
-        ...
+    ) -> TEMPLATE: ...
 
     def from_string(
         self,
@@ -197,20 +195,9 @@ class SqlEnvironment(jinja2.Environment):
         return self.from_string(source).render_sql_split(*args, **kwargs)
 
     def getattr(self, obj: Any, attribute: str) -> Any:
-        return super().getattr(self.resolve(obj), attribute)
-
-    @overload
-    def resolve(self, value: T | "OutputOf") -> T:
-        ...
-
-    @overload
-    def resolve(self, value: Any) -> Any:
-        ...
-
-    def resolve(self, value: Any) -> Any:
         from ralsei.graph import resolve
 
-        return resolve(self, value)
+        return super().getattr(resolve(self, obj), attribute)
 
 
 __all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]
