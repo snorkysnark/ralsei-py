@@ -78,7 +78,7 @@ class MapToNewColumns(TaskDef):
             for input_row in map(
                 lambda row: row._asdict(),
                 track(
-                    conn.sqlalchemy.execute(self.__select),
+                    conn.execute_with_length_hint(self.__select),
                     description="Task progress...",
                 ),
             ):
