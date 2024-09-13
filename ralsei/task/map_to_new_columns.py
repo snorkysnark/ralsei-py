@@ -1,5 +1,4 @@
-from typing import Any, Iterable, Optional, Sequence
-from returns.maybe import Maybe
+from typing import Any, Optional, Sequence
 
 from ralsei.console import track
 from ralsei.graph import Resolves
@@ -10,9 +9,7 @@ from ralsei.types import (
     ValueColumnRendered,
     Identifier,
 )
-from ralsei.wrappers import OneToOne, FnContextOne, get_popped_fields
-from ralsei.jinja import SqlEnvironment
-from ralsei.utils import expect_optional, merge_params
+from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.connection import ConnectionEnvironment
 from ralsei import db_actions
 
@@ -54,9 +51,7 @@ class MapToNewColumns(TaskDef):
             if this.is_done_column:
                 locals["is_done"] = Identifier(this.is_done_column)
 
-            self.scripts["Select"] = self.__select = self.env.render_sql(
-                this.select, **locals
-            )
+            self.__select = self.env.render_sql(this.select, **locals)
 
             id_fields = this.id_fields or (
                 [IdColumn(name) for name in popped_fields] if popped_fields else None
@@ -71,6 +66,11 @@ class MapToNewColumns(TaskDef):
                 columns=self._columns,
                 id_fields=id_fields,
             )
+
+            self._scripts["Add columns"] = self._add_columns
+            self._scripts["Select"] = self.__select
+            self._scripts["Update"] = self.__update
+            self._scripts["Drop columns"] = self._drop_columns
 
         def _run(self, conn: ConnectionEnvironment):
             self._add_columns(conn)

@@ -22,11 +22,10 @@ class AddColumnsTask(TaskImpl):
         self._table = self.resolve(table)
 
         self._columns = [col.render(self.env, table=self._table) for col in columns]
-        # self._column_names = [col.name for col in rendered_columns]
-        self.scripts["Add Columns"] = self._add_columns = db_actions.AddColumns(
+        self._add_columns = db_actions.AddColumns(
             self.env, self._table, self._columns, if_not_exists=if_not_exists
         )
-        self.scripts["Drop Columns"] = self._drop_columns = db_actions.DropColumns(
+        self._drop_columns = db_actions.DropColumns(
             self.env, self._table, self._columns, if_exists=True
         )
 

@@ -149,7 +149,7 @@ class Ralsei:
                 )
                 == "y"
             ):
-                with group.engine.connect() as conn:
+                with ConnectionEnvironment(group.engine) as conn:
                     action(sequence, conn)
 
     def __call__(self, *args, **kwargs):

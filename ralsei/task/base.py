@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, Self, dataclass_transform
+from typing import Any, ClassVar, Iterable, Self, dataclass_transform
 from dataclasses import dataclass, field
 
 from ralsei.jinja import SqlEnvironment, ISqlEnvironment, SqlEnvironmentWrapper
@@ -8,8 +8,6 @@ from ralsei.connection import ConnectionExt, ConnectionEnvironment
 
 
 class Task(ABC):
-    scripts: dict[str, object]
-
     @abstractmethod
     def run(self, conn: ConnectionExt):
         """Run the task"""
@@ -36,6 +34,9 @@ class Task(ABC):
     def exists(self, conn: ConnectionExt) -> bool:
         """Check if task has already been done"""
 
+    def scripts(self) -> Iterable[tuple[str, object]]:
+        return []
+
 
 @dataclass_transform(kw_only_default=True)
 class TaskDefMeta(type):
@@ -47,7 +48,7 @@ class TaskImpl[D](Task):
     def __init__(self, this: D, env: ISqlEnvironment) -> None:
         self.env = env
 
-        self.scripts: dict[str, object] = {}
+        self._scripts: dict[str, object] = {}
         self.prepare(this)
 
     def prepare(self, this: D):
@@ -73,6 +74,9 @@ class TaskImpl[D](Task):
 
     @abstractmethod
     def _exists(self, conn: ConnectionEnvironment) -> bool: ...
+
+    def scripts(self) -> Iterable[tuple[str, object]]:
+        return self._scripts.items()
 
 
 class TaskDef(metaclass=TaskDefMeta):

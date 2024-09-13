@@ -29,13 +29,6 @@ class MarkerScripts:
     set_marker: TextClause
     drop_marker: db_actions.DropColumns
 
-    def describe(self):
-        return {
-            "Add Marker": self.add_marker,
-            "Set Marker": self.set_marker,
-            "Drop Marker": self.drop_marker,
-        }
-
 
 class MapToNewTable(TaskDef):
     table: Table
@@ -71,10 +64,10 @@ class MapToNewTable(TaskDef):
                     insert_columns.append(rendered)
                     definitions.append(rendered.definition)
 
-            self.scripts["Select"] = self.__select = (
+            self.__select = (
                 self.env.render_sql(this.select, **locals) if this.select else None
             )
-            self.scripts["Create"] = self.__create_table = self.env.render_sql(
+            self.__create_table = self.env.render_sql(
                 """\
                 CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                     {{ definitions | join(',\\n    ') }}
@@ -83,7 +76,7 @@ class MapToNewTable(TaskDef):
                 definitions=definitions,
                 if_not_exists=this.is_done_column is not None,
             )
-            self.scripts["Insert"] = self.__insert = self.env.render_sql(
+            self.__insert = self.env.render_sql(
                 """\
                 INSERT INTO {{table}}(
                     {{ columns | join(',\\n    ', attribute='identifier') }}
@@ -131,7 +124,15 @@ class MapToNewTable(TaskDef):
                         self.env, source_table, [is_done_column], if_exists=True
                     ),
                 )
-                self.scripts.update(self.__marker_scripts.describe())
+
+            if self.__marker_scripts:
+                self._scripts["Add marker"] = self.__marker_scripts.add_marker
+            self._scripts["Select"] = self.__select
+            self._scripts["Create table"] = self.__create_table
+            self._scripts["Insert"] = self.__insert
+            self._scripts["Drop table"] = self._drop_sql
+            if self.__marker_scripts:
+                self._scripts["Drop marker"] = self.__marker_scripts.drop_marker
 
         def _run(self, conn: ConnectionEnvironment):
             conn.sqlalchemy.execute(self.__create_table)

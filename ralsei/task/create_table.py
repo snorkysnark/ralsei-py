@@ -14,7 +14,7 @@ class CreateTableTask(TaskImpl):
 
     def _prepare_table(self, table: Table, view: bool = False):
         self._table = table
-        self.scripts["Drop"] = self._drop_sql = self.env.render_sql(
+        self._drop_sql = self.env.render_sql(
             "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
             table=table,
             view=view,

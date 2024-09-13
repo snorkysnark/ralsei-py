@@ -37,12 +37,15 @@ class AddColumnsSql(TaskDef):
                     ], None
 
             self.__sql, template_columns = render_script()
-            self.scripts["Main"] = self.__sql
             columns = expect_optional(
                 this.columns or template_columns, ValueError("Columns not specified")
             )
 
             self._prepare_columns(table, columns)
+
+            self._scripts["Add Columns"] = self._add_columns
+            self._scripts["Main"] = self.__sql
+            self._scripts["Drop Columns"] = self._drop_columns
 
         def _run(self, conn: ConnectionEnvironment):
             self._add_columns(conn)
