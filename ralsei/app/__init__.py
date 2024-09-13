@@ -4,13 +4,15 @@ import sys
 import click
 from rich.console import Console
 from rich.prompt import Prompt
-from typing import Callable, Iterable, Optional, Sequence, overload
+from typing import Callable, Iterable, Sequence, overload
+import sqlalchemy
 
-from ralsei.dialect import DEFAULT_DIALECT_REGISTRY
-from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG, NamedTask
-from ralsei.connection import SqlEngine, SqlConnection
+from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
+from ralsei.connection import create_engine, ConnectionEnvironment
 from ralsei.console import console
 from ralsei.task import ROW_CONTEXT_ATRRIBUTE
+from ralsei.jinja import SqlEnvironment
+from ralsei.dialect import get_dialect
 
 from ._parsers import TYPE_TREEPATH
 from ._decorators import extend_params
@@ -22,7 +24,7 @@ traceback_console = Console(stderr=True)
 
 @dataclass
 class GroupContext:
-    engine: SqlEngine
+    engine: sqlalchemy.Engine
     dag: DAG
 
 
@@ -43,16 +45,14 @@ class Ralsei:
         custom_cli_options: Sequence[click.Option] = [],
     ) -> None:
         if isinstance(pipeline_source, Pipeline):
-            self._pipeline_constructor = lambda: pipeline_source
+            self._pipeline_factory = lambda: pipeline_source
             self._custom_cli_options = []
         else:
-            self._pipeline_constructor = pipeline_source
+            self._pipeline_factory = pipeline_source
             self._custom_cli_options = [
                 *getattr(pipeline_source, "__click_params__", []),
                 *custom_cli_options,
             ]
-
-        self.dialect_registry = DEFAULT_DIALECT_REGISTRY.copy()
 
     def build_cli(self) -> click.Group:
         @extend_params(self._custom_cli_options)
@@ -60,13 +60,12 @@ class Ralsei:
         @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
         @click.pass_context
         def cli(ctx: click.Context, db: str, *args, **kwargs):
-            engine = SqlEngine.create(db, dialect_source=self.dialect_registry)
-            pipeline = self._pipeline_constructor(
+            engine = create_engine(db)
+            pipeline = self._pipeline_factory(
                 *args,
                 **kwargs,
             )
-            pipeline.prepare_engine(engine)
-            dag = pipeline.build_dag(engine.jinja)
+            dag = pipeline.build_dag(SqlEnvironment(get_dialect(engine.dialect.name)))
 
             ctx.obj = GroupContext(engine, dag)
 
@@ -99,7 +98,7 @@ class Ralsei:
         self,
         group: click.Group,
         name: str,
-        action: Callable[[TaskSequence, SqlConnection], None],
+        action: Callable[[TaskSequence, ConnectionEnvironment], None],
         ask: bool = False,
     ):
         @click.option(

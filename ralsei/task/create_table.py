@@ -1,25 +1,31 @@
 from typing import Any
+from sqlalchemy.sql.elements import TextClause
 
-from ralsei.db_actions import table_exists
+from ralsei import db_actions
+from ralsei.connection import ConnectionEnvironment
 from ralsei.types import Table
-from ralsei.jinja import SqlEnvironment
-from ralsei.connection import SqlConnection
+
+from .base import TaskImpl
 
 
-class CreateTableMixin:
-    def __init__(self, table: Table, env: SqlEnvironment) -> None:
+class CreateTableTask(TaskImpl):
+    _table: Table
+    _drop_sql: TextClause
+
+    def _prepare_table(self, table: Table, view: bool = False):
         self._table = table
-        self.__drop = env.render_sql("DROP TABLE IF EXISTS {{table}}", table=table)
-
-    def delete(self, conn: SqlConnection):
-        conn.sqlalchemy.execute(self.__drop)
+        self.scripts["Drop"] = self._drop_sql = self.env.render_sql(
+            "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
+            table=table,
+            view=view,
+        )
 
     @property
     def output(self) -> Any:
         return self._table
 
-    def exists(self, conn: SqlConnection) -> bool:
-        return table_exists(conn, self._table)
+    def _exists(self, conn: ConnectionEnvironment) -> bool:
+        return db_actions.table_exists(conn, self._table)
 
-
-__all__ = ["CreateTableMixin"]
+    def _delete(self, conn: ConnectionEnvironment):
+        conn.sqlalchemy.execute(self._drop_sql)

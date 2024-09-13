@@ -2,17 +2,17 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ralsei.sql_adapter import ToSql
+from .to_sql import ToSql
 
 if TYPE_CHECKING:
-    from ralsei.jinja.environment import SqlEnvironment
+    from ralsei.jinja.environment import ISqlEnvironment
 
 
 @dataclass
 class Sql(ToSql):
     value: str
 
-    def to_sql(self, env: "SqlEnvironment") -> str:
+    def to_sql(self, env: "ISqlEnvironment") -> str:
         return self.value
 
 
@@ -20,7 +20,7 @@ class Sql(ToSql):
 class Identifier(ToSql):
     value: str
 
-    def to_sql(self, env: "SqlEnvironment") -> str:
+    def to_sql(self, env: "ISqlEnvironment") -> str:
         return '"{}"'.format(self.value.replace('"', '""'))
 
 
@@ -35,7 +35,7 @@ class Table(ToSql):
         else:
             return self.name
 
-    def to_sql(self, env: "SqlEnvironment") -> str:
+    def to_sql(self, env: "ISqlEnvironment") -> str:
         return env.render(
             "{%if schema%}{{schema | identifier}}.{%endif%}{{name | identifier}}",
             name=self.name,
@@ -51,7 +51,7 @@ class Placeholder(ToSql):
         if not re.match(r"\w+", self.name):
             raise ValueError("Invalid placeholder name")
 
-    def to_sql(self, env: "SqlEnvironment") -> str:
+    def to_sql(self, env: "ISqlEnvironment") -> str:
         return f":{self.name}"
 
 

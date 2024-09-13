@@ -1,18 +1,18 @@
 import pytest
 from ralsei import (
-    SqlConnection,
-    SqlEngine,
+    ConnectionEnvironment,
     Table,
     MapToNewColumns,
     ValueColumn,
     compose_one,
     pop_id_fields,
 )
+import sqlalchemy
 
-from common.db_helper import get_rows
+from tests.db_helper import get_rows
 
 
-def test_map_columns(conn: SqlConnection):
+def test_map_columns(conn: ConnectionEnvironment):
     def double(val: int):
         return {"doubled": val * 2}
 
@@ -34,15 +34,15 @@ def test_map_columns(conn: SqlConnection):
         select="SELECT id, val FROM {{table}}",
         columns=[ValueColumn("doubled", "INT")],
         fn=compose_one(double, pop_id_fields("id")),
-    ).create(conn.jinja)
+    ).create(conn.jinja.base)
 
-    task.run(conn)
+    task.run(conn.sqlalchemy)
     assert get_rows(conn, table, order_by=["id"]) == [
         (1, 2, 4),
         (2, 5, 10),
         (3, 12, 24),
     ]
-    task.delete(conn)
+    task.delete(conn.sqlalchemy)
     assert get_rows(conn, table, order_by=["id"]) == [
         (1, 2),
         (2, 5),
@@ -50,7 +50,7 @@ def test_map_columns(conn: SqlConnection):
     ]
 
 
-def test_map_columns_resumable(engine: SqlEngine):
+def test_map_columns_resumable(engine: sqlalchemy.Engine):
     def failing(val: int):
         if val < 10:
             return {"doubled": val * 2}
@@ -58,7 +58,7 @@ def test_map_columns_resumable(engine: SqlEngine):
             raise RuntimeError()
 
     table = Table("test_map_columns_resumable")
-    with engine.connect() as conn:
+    with ConnectionEnvironment(engine) as conn:
         conn.render_executescript(
             [
                 """\
@@ -77,18 +77,18 @@ def test_map_columns_resumable(engine: SqlEngine):
             columns=[ValueColumn("doubled", "INT")],
             fn=compose_one(failing, pop_id_fields("id")),
             is_done_column="__success",
-        ).create(conn.jinja)
+        ).create(conn.jinja.base)
 
         with pytest.raises(RuntimeError):
-            task.run(conn)
+            task.run(conn.sqlalchemy)
 
-    with engine.connect() as conn:
+    with ConnectionEnvironment(engine) as conn:
         assert get_rows(conn, table, order_by=["id"]) == [
             (1, 2, 4, True),
             (2, 5, 10, True),
             (3, 12, None, False),
         ]
-        task.delete(conn)
+        task.delete(conn.sqlalchemy)
         assert get_rows(conn, table, order_by=["id"]) == [
             (1, 2),
             (2, 5),
@@ -96,7 +96,7 @@ def test_map_columns_resumable(engine: SqlEngine):
         ]
 
 
-def test_map_columns_continue(conn: SqlConnection):
+def test_map_columns_continue(conn: ConnectionEnvironment):
     table = Table("resumable")
     conn.render_executescript(
         """\
@@ -121,9 +121,9 @@ def test_map_columns_continue(conn: SqlConnection):
         columns=[ValueColumn("doubled", "INT")],
         is_done_column="__done",
         fn=compose_one(double, pop_id_fields("num", keep=True)),
-    ).create(conn.jinja)
+    ).create(conn.jinja.base)
 
-    assert not task.exists(conn)
-    task.run(conn)
-    assert task.exists(conn)
+    assert not task.exists(conn.sqlalchemy)
+    task.run(conn.sqlalchemy)
+    assert task.exists(conn.sqlalchemy)
     assert get_rows(conn, table) == [(2, 4, True), (3, 6, True)]

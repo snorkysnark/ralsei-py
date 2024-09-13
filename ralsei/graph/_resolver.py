@@ -11,7 +11,7 @@ from ._flattened import FlattenedPipeline
 
 if TYPE_CHECKING:
     from ralsei.task import Task
-    from ralsei.jinja import SqlEnvironment
+    from ralsei.jinja import ISqlEnvironment
     from .pipeline import Pipeline
 
 RESOLVER_CONTEXT: ContextVar[DependencyResolver] = ContextVar("RESOLVER_CONTEXT")
@@ -58,7 +58,7 @@ class DependencyResolver:
     def sub_resolver(self, task_path: TreePath) -> DependencyResolver:
         return DependencyResolver(self._graph, self._call_stack.push(task_path))
 
-    def resolve_path(self, env: "SqlEnvironment", task_path: TreePath) -> "Task":
+    def resolve_path(self, env: "ISqlEnvironment", task_path: TreePath) -> "Task":
         if last_caller := self._call_stack.last_caller:
             self._graph.relations[task_path].add(last_caller)
 
@@ -67,7 +67,9 @@ class DependencyResolver:
 
         reset_token = RESOLVER_CONTEXT.set(self.sub_resolver(task_path))
         try:
-            task = self._graph.definition.task_definitions[task_path].task.create(env)
+            task = self._graph.definition.task_definitions[task_path].task.create(
+                env.base
+            )
         finally:
             RESOLVER_CONTEXT.reset(reset_token)
 
@@ -76,7 +78,7 @@ class DependencyResolver:
 
     def resolve_relative_path(
         self,
-        env: "SqlEnvironment",
+        env: "ISqlEnvironment",
         pipeline: "Pipeline",
         relative_path: TreePath,
     ) -> "Task":
@@ -85,7 +87,7 @@ class DependencyResolver:
             TreePath(*self._graph.definition.pipeline_paths[pipeline], *relative_path),
         )
 
-    def resolve(self, env: "SqlEnvironment", outputof: OutputOf) -> Any:
+    def resolve(self, env: "ISqlEnvironment", outputof: OutputOf) -> Any:
         task_paths = iter(outputof.task_paths)
         first_output = self.resolve_relative_path(
             env, outputof.pipeline, next(task_paths)
@@ -102,7 +104,7 @@ class DependencyResolver:
 
         return first_output
 
-    def build_dag(self, env: "SqlEnvironment") -> DAG:
+    def build_dag(self, env: "ISqlEnvironment") -> DAG:
         for task_path in self._graph.definition.task_definitions:
             self.resolve_path(env, task_path)
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from .path import TreePath
 
@@ -17,6 +17,7 @@ class OutputOf:
             raise ValueError("Must name at least one task")
 
 
-T = TypeVar("T")
+type Resolves[T] = T | OutputOf
 
-__all__ = ["OutputOf"]
+
+__all__ = ["OutputOf", "Resolves"]

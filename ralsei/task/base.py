@@ -1,22 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Self, Self, TypeVar, Generic
+from typing import Any, ClassVar, Self, dataclass_transform
+from dataclasses import dataclass, field
 
-from ralsei.jinja import SqlEnvironment
-from ralsei.connection import SqlConnection
+from ralsei.jinja import SqlEnvironment, ISqlEnvironment, SqlEnvironmentWrapper
+from ralsei.graph import Resolves, resolve
+from ralsei.connection import ConnectionExt, ConnectionEnvironment
 
 
 class Task(ABC):
-    """Task base class"""
+    scripts: dict[str, object]
 
     @abstractmethod
-    def run(self, conn: SqlConnection):
+    def run(self, conn: ConnectionExt):
         """Run the task"""
 
     @abstractmethod
-    def delete(self, conn: SqlConnection):
+    def delete(self, conn: ConnectionExt):
         """Delete whatever :py:meth:`~run` has created"""
 
-    def redo(self, conn: SqlConnection):
+    def redo(self, conn: ConnectionExt):
         """Calls :py:meth:`~delete` and then :py:meth:`~run`"""
         self.delete(conn)
         self.run(conn)
@@ -31,43 +33,52 @@ class Task(ABC):
         """
 
     @abstractmethod
-    def exists(self, conn: SqlConnection) -> bool:
+    def exists(self, conn: ConnectionExt) -> bool:
         """Check if task has already been done"""
 
-    def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
-        """Get named SQL scripts rendered by this task
 
-        Returns:
-            Pairs of (name, **SQL statement** | list[**SQL statement**]), |br|
-            where a **SQL statement** is anything that, when casted to string, turns into valid SQL
-
-            Examples are: :py:class:`str`, :py:class:`sqlalchemy.sql.expression.TextClause`,
-            :py:class:`sqlalchemy.engine.Compiled`
-        """
-
-        return []
+@dataclass_transform(kw_only_default=True)
+class TaskDefMeta(type):
+    def __new__(cls, name, bases, attrs):
+        return dataclass(kw_only=True)(super().__new__(cls, name, bases, attrs))
 
 
-T = TypeVar("T")
+class TaskImpl[D](Task):
+    def __init__(self, this: D, env: ISqlEnvironment) -> None:
+        self.env = env
 
+        self.scripts: dict[str, object] = {}
+        self.prepare(this)
 
-class TaskImpl(Task, Generic[T]):
-    """Task with a predefined constructor"""
+    def prepare(self, this: D):
+        pass
+
+    def resolve[T](self, value: Resolves[T]) -> T:
+        return resolve(self.env, value)
+
+    def run(self, conn: ConnectionExt):
+        return self._run(ConnectionEnvironment(conn, self.env))
 
     @abstractmethod
-    def __init__(self, this: T, env: SqlEnvironment) -> None: ...
+    def _run(self, conn: ConnectionEnvironment): ...
+
+    def delete(self, conn: ConnectionExt):
+        self._delete(ConnectionEnvironment(conn, self.env))
+
+    @abstractmethod
+    def _delete(self, conn: ConnectionEnvironment): ...
+
+    def exists(self, conn: ConnectionExt) -> bool:
+        return self._exists(ConnectionEnvironment(conn, self.env))
+
+    @abstractmethod
+    def _exists(self, conn: ConnectionEnvironment) -> bool: ...
 
 
-class TaskDef:
-    """Holds constructor arguments for a task that will be instantiated later"""
+class TaskDef(metaclass=TaskDefMeta):
+    Impl: ClassVar[type[TaskImpl[Self]]]
 
-    Impl: type[TaskImpl[Self]]
-    """The actual task class"""
+    locals: dict[str, Any] = field(default_factory=dict)
 
     def create(self, env: SqlEnvironment) -> TaskImpl[Self]:
-        """Instantiate the task"""
-
-        return self.Impl(self, env)
-
-
-__all__ = ["Task", "TaskImpl", "TaskDef"]
+        return self.Impl(self, SqlEnvironmentWrapper(env, self.locals))

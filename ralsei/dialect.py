@@ -1,7 +1,7 @@
 from typing import Callable
 
-from ralsei.sql_adapter import ToSql
-from ralsei.types import Sql
+from ralsei.types import Sql, ToSql
+from ralsei.console import console
 
 
 class BaseDialectInfo:
@@ -10,17 +10,26 @@ class BaseDialectInfo:
     supports_rowcount: bool = True
 
 
-type DialectLike = BaseDialectInfo | type[BaseDialectInfo]
-
-dialect_registry: dict[str, DialectLike] = {}
+type DialectInfo = BaseDialectInfo | type[BaseDialectInfo]
 
 
-def register_dialect[T: DialectLike](driver: str) -> Callable[[T], T]:
-    def wrapper(dialect: T):
-        dialect_registry[driver] = dialect
+_dialect_map: dict[str, DialectInfo] = {}
+
+
+def register_dialect[D: DialectInfo](driver: str) -> Callable[[D], D]:
+    def decorator(dialect: D):
+        _dialect_map[driver] = dialect
         return dialect
 
-    return wrapper
+    return decorator
+
+
+def get_dialect(driver: str) -> DialectInfo:
+    if dialect := _dialect_map.get(driver, None):
+        return dialect
+    else:
+        console.log("Unknown sql driver:", driver)
+        return BaseDialectInfo
 
 
 @register_dialect("postgresql")
@@ -40,5 +49,7 @@ __all__ = [
     "BaseDialectInfo",
     "PostgresDialectInfo",
     "SqliteDialectInfo",
+    "DialectInfo",
     "register_dialect",
+    "get_dialect",
 ]

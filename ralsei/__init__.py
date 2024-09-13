@@ -1,4 +1,4 @@
-from .connection import SqlConnection, SqlEngine
+from .connection import ConnectionEnvironment, create_engine
 from .types import (
     Sql,
     Identifier,
@@ -22,8 +22,8 @@ from .app import Ralsei
 from .utils import folder
 
 __all__ = [
-    "SqlConnection",
-    "SqlEngine",
+    "ConnectionEnvironment",
+    "create_engine",
     "Sql",
     "Identifier",
     "Table",

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Iterable,
@@ -8,7 +7,6 @@ from typing import (
     MutableMapping,
     Optional,
     Type,
-    TypeVar,
     overload,
 )
 import textwrap
@@ -19,12 +17,13 @@ from jinja2.nodes import Template as TemplateNode
 import itertools
 from sqlalchemy import TextClause
 
-from ralsei.dialect import BaseDialectInfo
+from ralsei.dialect import DialectInfo, BaseDialectInfo
+from ralsei.types import ToSql, Sql, Column, Identifier
+from ralsei.graph import resolve
+
+from .adapter import SqlAdapter
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
-
-if TYPE_CHECKING:
-    from ralsei.sql_adapter import SqlAdapter
 
 
 def _render_split(chunks: Iterable[str]) -> list[str]:
@@ -52,6 +51,15 @@ class SqlTemplateModule(TemplateModule):
 
 
 class SqlTemplate(jinja2.Template):
+    @classmethod
+    def _from_namespace(
+        cls,
+        environment: jinja2.Environment,
+        namespace: MutableMapping[str, Any],
+        globals: MutableMapping[str, Any],
+    ) -> jinja2.Template:
+        return super(SqlTemplate, cls)._from_namespace(environment, namespace, globals)
+
     def render_sql(self, *args: Any, **kwargs: Any) -> TextClause:
         return TextClause(self.render(*args, **kwargs))
 
@@ -76,19 +84,22 @@ class SqlTemplate(jinja2.Template):
         return SqlTemplateModule(self, ctx)
 
 
-T = TypeVar("T")
-TEMPLATE = TypeVar("TEMPLATE", bound=jinja2.Template)
+def create_adapter(env: SqlEnvironment):
+    adapter = SqlAdapter()
+    adapter.register_type(str, lambda value: "'{}'".format(value.replace("'", "''")))
+    adapter.register_type(int, str)
+    adapter.register_type(float, str)
+    adapter.register_type(type(None), lambda value: "NULL")
+    adapter.register_type(ToSql, lambda value: value.to_sql(env))
+
+    return adapter
 
 
 class SqlEnvironment(jinja2.Environment):
-    def __init__(self, dialect_info: BaseDialectInfo = BaseDialectInfo()):
-        from ralsei.types import Sql, Column, Identifier
-        from ralsei.sql_adapter import create_adapter_for_env
-        from ralsei.graph import resolve
-
+    def __init__(self, dialect_info: DialectInfo = BaseDialectInfo):
         super().__init__(undefined=StrictUndefined)
 
-        self._adapter = create_adapter_for_env(self)
+        self._adapter = create_adapter(self)
         self._dialect_info = dialect_info
 
         def finalize(value: Any) -> str | jinja2.Undefined:
@@ -136,21 +147,13 @@ class SqlEnvironment(jinja2.Environment):
 
         self.add_extension(SplitTag)
 
-    def __repr__(self) -> str:
-        return super().__repr__()
-
     @property
-    def adapter(self) -> "SqlAdapter":
+    def adapter(self) -> SqlAdapter:
         return self._adapter
 
     @property
-    def dialect_info(self) -> BaseDialectInfo:
+    def dialect_info(self) -> DialectInfo:
         return self._dialect_info
-
-    @dialect_info.setter
-    def dialect_info(self, value: BaseDialectInfo):
-        self._dialect_info = value
-        self.globals["dialect"] = value
 
     @overload
     def from_string(
@@ -161,11 +164,13 @@ class SqlEnvironment(jinja2.Environment):
     ) -> SqlTemplate: ...
 
     @overload
-    def from_string(
+    def from_string[
+        TEMPLATE: jinja2.Template
+    ](
         self,
         source: str | TemplateNode,
         globals: Optional[MutableMapping[str, Any]] = None,
-        template_class: Optional[Type[TEMPLATE]] = None,
+        template_class: Optional[type[TEMPLATE]] = None,
     ) -> TEMPLATE: ...
 
     def from_string(
@@ -195,9 +200,11 @@ class SqlEnvironment(jinja2.Environment):
         return self.from_string(source).render_sql_split(*args, **kwargs)
 
     def getattr(self, obj: Any, attribute: str) -> Any:
-        from ralsei.graph import resolve
-
         return super().getattr(resolve(self, obj), attribute)
+
+    @property
+    def base(self) -> SqlEnvironment:
+        return self
 
 
 __all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]

@@ -1,23 +1,23 @@
 import os
-import sys
 from pathlib import Path
 from pytest import fixture, FixtureRequest
 
-from ralsei.connection import SqlEngine
+import sqlalchemy
+from ralsei.connection import create_engine, ConnectionExt, ConnectionEnvironment
 
 
 # Helper module used in multiple tests
-sys.path.append(str(Path(__file__).parent.joinpath("common")))
+# sys.path.append(str(Path(__file__).parent.joinpath("common")))
 
 
 def postgres_engine():
     db_url = os.environ.get("POSTGRES_URL", "postgresql:///ralsei_test")
-    engine = SqlEngine.create(db_url)
+    engine = create_engine(db_url)
 
-    with engine.connect() as conn:
-        conn.sqlalchemy.execute_text("DROP SCHEMA public CASCADE;")
-        conn.sqlalchemy.execute_text("CREATE SCHEMA public;")
-        conn.sqlalchemy.commit()
+    with ConnectionExt(engine) as conn:
+        conn.execute_text("DROP SCHEMA public CASCADE;")
+        conn.execute_text("CREATE SCHEMA public;")
+        conn.commit()
 
     return engine
 
@@ -25,7 +25,7 @@ def postgres_engine():
 def sqlite_engine():
     Path("ralsei_test.sqlite").unlink(missing_ok=True)
 
-    return SqlEngine.create("sqlite:///ralsei_test.sqlite")
+    return create_engine("sqlite:///ralsei_test.sqlite")
 
 
 @fixture(params=[postgres_engine, sqlite_engine])
@@ -34,6 +34,6 @@ def engine(request: FixtureRequest):
 
 
 @fixture()
-def conn(engine: SqlEngine):
-    with engine.connect() as conn:
+def conn(engine: sqlalchemy.Engine):
+    with ConnectionEnvironment(engine) as conn:
         yield conn

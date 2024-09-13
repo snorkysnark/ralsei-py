@@ -2,12 +2,12 @@ from typing import Iterable
 from sqlalchemy import inspect
 from sqlalchemy import TextClause
 
-from ralsei.connection import SqlConnection
+from ralsei.connection import ConnectionEnvironment
 from ralsei.types import Table, ColumnRendered
-from ralsei.jinja import SqlEnvironment
+from ralsei.jinja import ISqlEnvironment
 
 
-def _get_column_names(conn: SqlConnection, table: Table):
+def _get_column_names(conn: ConnectionEnvironment, table: Table):
     if table_exists(conn, table):
         return set(
             map(
@@ -19,11 +19,13 @@ def _get_column_names(conn: SqlConnection, table: Table):
         return set()
 
 
-def table_exists(conn: SqlConnection, table: Table) -> bool:
+def table_exists(conn: ConnectionEnvironment, table: Table) -> bool:
     return inspect(conn.sqlalchemy).has_table(table.name, table.schema)
 
 
-def columns_exist(conn: SqlConnection, table: Table, columns: Iterable[str]) -> bool:
+def columns_exist(
+    conn: ConnectionEnvironment, table: Table, columns: Iterable[str]
+) -> bool:
     existing = _get_column_names(conn, table)
 
     for column in columns:
@@ -35,7 +37,7 @@ def columns_exist(conn: SqlConnection, table: Table, columns: Iterable[str]) -> 
 class AddColumns:
     def __init__(
         self,
-        env: SqlEnvironment,
+        env: ISqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_not_exists: bool = False,
@@ -56,7 +58,7 @@ class AddColumns:
         self._table, self._columns = table, columns
         self._if_not_exists = if_not_exists
 
-    def __call__(self, conn: SqlConnection):
+    def __call__(self, conn: ConnectionEnvironment):
         if self._if_not_exists and not conn.dialect_info.supports_column_if_not_exists:
             existing = _get_column_names(conn, self._table)
             for column, statement in zip(self._columns, self.statements):
@@ -65,11 +67,14 @@ class AddColumns:
         else:
             conn.sqlalchemy.executescript(self.statements)
 
+    def __str__(self) -> str:
+        return "\n".join(map(str, self.statements))
+
 
 class DropColumns:
     def __init__(
         self,
-        env: SqlEnvironment,
+        env: ISqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_exists: bool = False,
@@ -89,7 +94,7 @@ class DropColumns:
         self._table, self._columns = table, columns
         self._if_exists = if_exists
 
-    def __call__(self, conn: SqlConnection):
+    def __call__(self, conn: ConnectionEnvironment):
         if self._if_exists and not table_exists(conn, self._table):
             return
 
@@ -100,6 +105,9 @@ class DropColumns:
                     conn.sqlalchemy.execute(statement)
         else:
             conn.sqlalchemy.executescript(self.statements)
+
+    def __str__(self) -> str:
+        return "\n".join(map(str, self.statements))
 
 
 __all__ = ["table_exists", "columns_exist", "AddColumns", "DropColumns"]

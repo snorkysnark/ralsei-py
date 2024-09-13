@@ -21,7 +21,7 @@ class RalseiConsole(Console):
     ) -> None:
         from ralsei.task import ROW_CONTEXT_VAR
 
-        if row_ctx := ROW_CONTEXT_VAR.get():
+        if row_ctx := ROW_CONTEXT_VAR.get(None):
             objects = (row_ctx, *objects)
 
         super().log(

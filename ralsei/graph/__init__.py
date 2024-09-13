@@ -1,16 +1,16 @@
-from .pipeline import Pipeline, SimplePipeline
+from .pipeline import Pipeline
 from .dag import DAG
 from .path import TreePath
-from .outputof import OutputOf
+from .outputof import OutputOf, Resolves
 from .resolver_context import resolve, ResolverContextError, CyclicGraphError
 from .sequence import NamedTask, TaskSequence
 
 __all__ = [
     "Pipeline",
-    "SimplePipeline",
     "DAG",
     "TreePath",
     "OutputOf",
+    "Resolves",
     "resolve",
     "ResolverContextError",
     "CyclicGraphError",

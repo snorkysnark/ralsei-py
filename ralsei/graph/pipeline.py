@@ -2,8 +2,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Iterable, Mapping, Union
 
-from ralsei.connection import SqlEngine
-
 from ._resolver import DependencyResolver
 from ._flattened import ScopedTaskDef, FlattenedPipeline
 from .path import TreePath
@@ -34,9 +32,6 @@ def _iter_tasks_flattened(
 class Pipeline(ABC):
     @abstractmethod
     def create_tasks(self) -> Tasks: ...
-
-    def prepare_engine(self, engine: SqlEngine):
-        pass
 
     def outputof(self, *task_paths: str | TreePath) -> OutputOf:
         return OutputOf(

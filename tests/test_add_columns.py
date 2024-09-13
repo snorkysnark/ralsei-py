@@ -1,9 +1,9 @@
-from ralsei import SqlConnection, Table, AddColumnsSql, Column
+from ralsei import ConnectionEnvironment, Table, AddColumnsSql, Column
 
-from common.db_helper import get_rows
+from tests.db_helper import get_rows
 
 
-def create_table(conn: SqlConnection, table: Table):
+def create_table(conn: ConnectionEnvironment, table: Table):
     conn.render_executescript(
         [
             """\
@@ -16,7 +16,7 @@ def create_table(conn: SqlConnection, table: Table):
     )
 
 
-def test_add_columns(conn: SqlConnection):
+def test_add_columns(conn: ConnectionEnvironment):
     table = Table("test_add_column")
     create_table(conn, table)
 
@@ -27,18 +27,18 @@ def test_add_columns(conn: SqlConnection):
         ],
         table=table,
         columns=[Column("b", "INT"), Column("c", "TEXT")],
-    ).create(conn.jinja)
+    ).create(conn.jinja.base)
 
-    task.run(conn)
+    task.run(conn.sqlalchemy)
     assert get_rows(conn, table) == [
         (2, 4, "2-4"),
         (5, 10, "5-10"),
     ]
-    task.delete(conn)
+    task.delete(conn.sqlalchemy)
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_add_columns_jinja_var(conn: SqlConnection):
+def test_add_columns_jinja_var(conn: ConnectionEnvironment):
     table = Table("test_add_column")
     create_table(conn, table)
 
@@ -53,18 +53,18 @@ def test_add_columns_jinja_var(conn: SqlConnection):
         {%-split-%}
         UPDATE {{ table }} SET c = a || '-' || b;""",
         table=table,
-    ).create(conn.jinja)
+    ).create(conn.jinja.base)
 
-    task.run(conn)
+    task.run(conn.sqlalchemy)
     assert get_rows(conn, table) == [
         (2, 4, "2-4"),
         (5, 10, "5-10"),
     ]
-    task.delete(conn)
+    task.delete(conn.sqlalchemy)
     assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_column_template(conn: SqlConnection):
+def test_column_template(conn: ConnectionEnvironment):
     table = Table("test_add_column")
     create_table(conn, table)
 
@@ -72,10 +72,10 @@ def test_column_template(conn: SqlConnection):
         sql="",
         table=table,
         columns=[Column("b", "TEXT DEFAULT {{ default }}")],
-        params={"default": "Hello"},
-    ).create(conn.jinja)
+        locals={"default": "Hello"},
+    ).create(conn.jinja.base)
 
-    task.run(conn)
+    task.run(conn.sqlalchemy)
     assert get_rows(conn, table) == [(2, "Hello"), (5, "Hello")]
-    task.delete(conn)
+    task.delete(conn.sqlalchemy)
     assert get_rows(conn, table) == [(2,), (5,)]
