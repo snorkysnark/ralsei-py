@@ -8,7 +8,7 @@ from typing import Callable, Iterable, Sequence, overload
 import sqlalchemy
 
 from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
-from ralsei.connection import create_engine, ConnectionEnvironment
+from ralsei.connection import create_engine, ConnectionExt
 from ralsei.console import console
 from ralsei.task import ROW_CONTEXT_ATRRIBUTE
 from ralsei.jinja import SqlEnvironment
@@ -98,7 +98,7 @@ class Ralsei:
         self,
         group: click.Group,
         name: str,
-        action: Callable[[TaskSequence, ConnectionEnvironment], None],
+        action: Callable[[TaskSequence, ConnectionExt], None],
         ask: bool = False,
     ):
         @click.option(
@@ -149,7 +149,7 @@ class Ralsei:
                 )
                 == "y"
             ):
-                with ConnectionEnvironment(group.engine) as conn:
+                with ConnectionExt(group.engine) as conn:
                     action(sequence, conn)
 
     def __call__(self, *args, **kwargs):

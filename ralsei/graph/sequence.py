@@ -5,7 +5,7 @@ from ralsei.console import console, track
 from .path import TreePath
 
 if TYPE_CHECKING:
-    from ralsei.connection import ConnectionEnvironment
+    from ralsei.connection import ConnectionExt
     from ralsei.task import Task
 
 
@@ -23,7 +23,7 @@ class TaskSequence:
     def __init__(self, steps: list[NamedTask]) -> None:
         self.steps = steps
 
-    def run(self, conn: "ConnectionEnvironment"):
+    def run(self, conn: "ConnectionExt"):
         for named_task in track(self.steps, description="Running tasks..."):
             if named_task.task.exists(conn):
                 console.print(
@@ -33,16 +33,16 @@ class TaskSequence:
                 console.print(f"Running [bold green]{named_task.name}")
 
                 named_task.task.run(conn)
-                conn.sqlalchemy.commit()
+                conn.commit()
 
-    def delete(self, conn: "ConnectionEnvironment"):
+    def delete(self, conn: "ConnectionExt"):
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
             console.print(f"Deleting [bold green]{named_task.name}")
 
             named_task.task.delete(conn)
-            conn.sqlalchemy.commit()
+            conn.commit()
 
-    def redo(self, conn: "ConnectionEnvironment"):
+    def redo(self, conn: "ConnectionExt"):
         self.delete(conn)
         self.run(conn)
 
