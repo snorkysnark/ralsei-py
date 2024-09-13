@@ -1,4 +1,4 @@
-from .pipeline import Pipeline, SimplePipeline
+from .pipeline import Pipeline
 from .dag import DAG
 from .path import TreePath
 from .outputof import OutputOf
@@ -7,7 +7,6 @@ from .sequence import NamedTask, TaskSequence
 
 __all__ = [
     "Pipeline",
-    "SimplePipeline",
     "DAG",
     "TreePath",
     "OutputOf",
