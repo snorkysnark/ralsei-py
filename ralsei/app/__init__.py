@@ -7,7 +7,11 @@ from rich.prompt import Prompt
 import sqlalchemy
 
 from ralsei.graph import Pipeline, TreePath, TaskSequence
-from ralsei.connection import create_engine, ConnectionEnvironment, ConnectionExt
+from ralsei.connection import (
+    create_engine as create_engine_default,
+    ConnectionEnvironment,
+    ConnectionExt,
+)
 from ralsei.task import ROW_CONTEXT_ATRRIBUTE
 from ralsei.jinja import SqlEnvironment
 from ralsei.dialect import get_dialect
@@ -33,13 +37,16 @@ def confirm_sequence(sequence: TaskSequence):
 class Ralsei:
     def __init__(self, url: sqlalchemy.URL, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
-        self.engine = create_engine(url)
+        self.engine = self._create_engine(url)
 
         env = SqlEnvironment(get_dialect(self.engine.dialect.name))
         self._prepare_env(env)
         self.env = env
 
         self.dag = pipeline.build_dag(self.env)
+
+    def _create_engine(self, url: sqlalchemy.URL):
+        return create_engine_default(url)
 
     def _prepare_env(self, env: SqlEnvironment):
         pass
