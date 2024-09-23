@@ -21,7 +21,7 @@ def _print_separated(statements: list[object]):
         _print_sql(statement)
 
 
-def print_task_info(task: Task):
+def print_task_scripts(task: Task):
     for name, script in task.scripts():
         if script is None:
             continue

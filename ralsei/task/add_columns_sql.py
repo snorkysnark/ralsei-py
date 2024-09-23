@@ -3,7 +3,7 @@ from sqlalchemy import TextClause
 
 from ralsei.graph import Resolves
 from ralsei.types import Table, ColumnBase
-from ralsei.utils import expect_optional
+from ralsei.utils import expect
 from ralsei.connection import ConnectionEnvironment
 
 from .base import TaskDef
@@ -37,7 +37,7 @@ class AddColumnsSql(TaskDef):
                     ], None
 
             self.__sql, template_columns = render_script()
-            columns = expect_optional(
+            columns = expect(
                 this.columns or template_columns, ValueError("Columns not specified")
             )
 
