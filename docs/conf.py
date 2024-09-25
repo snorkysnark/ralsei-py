@@ -69,31 +69,20 @@ rst_prolog = """\
 autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_skip_module_regexes = [r".*\._.*"]
-autodoc2_hidden_objects = ["inherited", "private"]
-autodoc2_hidden_regexes = [
-    r"ralsei\.wrappers\.OneToOne",
-    r"ralsei\.wrappers\.OneToMany",
-    r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
-    r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
-    r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
-    r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
-]
+
 autodoc2_replace_annotations = [
+    ("ralsei.graph.Resolves", "ralsei.graph.OutputOf | "),
     (
-        "ralsei.wrappers.OneToOne",
-        "collections.abc.Callable[..., dict[str, typing.Any]]",
+        "ralsei.dialect.DialectInfo",
+        "ralsei.dialect.BaseDialectInfo | type[ralsei.dialect.BaseDialectInfo]",
     ),
     (
-        "ralsei.wrappers.OneToMany",
-        "collections.abc.Callable[..., collections.abc.Iterator[dict[str, typing.Any]]]",
+        "sqlalchemy.Engine",
+        "sqlalchemy.engine.Engine",
     ),
     (
-        "sqlalchemy.TextClause",
-        "sqlalchemy.sql.expression.TextClause",
-    ),
-    (
-        "sqlalchemy.Executable",
-        "sqlalchemy.sql.expression.Executable",
+        "sqlalchemy.URL",
+        "sqlalchemy.engine.URL",
     ),
     (
         "sqlalchemy.CursorResult",
@@ -104,12 +93,12 @@ autodoc2_replace_annotations = [
         "sqlalchemy.engine.Row",
     ),
     (
-        "sqlalchemy.Engine",
-        "sqlalchemy.engine.Engine",
+        "sqlalchemy.Executable",
+        "sqlalchemy.sql.expression.Executable",
     ),
     (
-        "sqlalchemy.URL",
-        "sqlalchemy.engine.URL",
+        "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",
+        "typing.Mapping[str, typing.Any]",
     ),
 ]
 autodoc2_replace_bases = [
@@ -118,6 +107,7 @@ autodoc2_replace_bases = [
         "sqlalchemy.engine.Connection",
     ),
 ]
+
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]
 
 napoleon_use_admonition_for_examples = False
@@ -128,4 +118,5 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
     "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
+    "jinja2": ("https://jinja.palletsprojects.com/en/3.1.x/", None),
 }

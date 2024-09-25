@@ -29,3 +29,6 @@ class CreateTableTask(TaskImpl):
 
     def _delete(self, conn: ConnectionEnvironment):
         conn.sqlalchemy.execute(self._drop_sql)
+
+
+__all__ = ["CreateTableTask"]

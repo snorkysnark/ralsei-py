@@ -26,3 +26,6 @@ class CreateTableSql(TaskDef):
 
         def _run(self, conn: ConnectionEnvironment):
             conn.sqlalchemy.executescript(self.__sql)
+
+
+__all__ = ["CreateTableSql"]

@@ -86,3 +86,6 @@ class TaskDef(metaclass=TaskDefMeta):
 
     def create(self, env: SqlEnvironment) -> TaskImpl[Self]:
         return self.Impl(self, SqlEnvironmentWrapper(env, self.locals))
+
+
+__all__ = ["Task", "TaskImpl", "TaskDef"]

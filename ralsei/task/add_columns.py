@@ -40,3 +40,6 @@ class AddColumnsTask(TaskImpl):
 
     def _delete(self, conn: ConnectionEnvironment):
         self._drop_columns(conn)
+
+
+__all__ = ["AddColumnsTask"]
