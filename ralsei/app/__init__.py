@@ -61,6 +61,11 @@ class Ralsei:
 
     @classmethod
     def build_cli(cls) -> click.Group:
+        custom_args = getattr(cls, "__click_params__", [])
+        for arg in custom_args:
+            if not isinstance(arg, click.Option):
+                raise ValueError("Only Option arguments are permitted")
+
         @extend_params(getattr(cls, "__click_params__", []))
         @click.option(
             "--db",
@@ -71,8 +76,8 @@ class Ralsei:
         )
         @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
         @click.pass_context
-        def cli(ctx: click.Context, db: sqlalchemy.URL, *args, **kwargs):
-            ctx.obj = cls(db, *args, **kwargs)
+        def cli(ctx: click.Context, db: sqlalchemy.URL, **kwargs):
+            ctx.obj = cls(db, **kwargs)
 
         cls.__build_subcommand(cli, "run", TaskSequence.run)
         cls.__build_subcommand(cli, "delete", TaskSequence.delete, ask=True)
