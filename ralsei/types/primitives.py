@@ -5,11 +5,13 @@ from typing import TYPE_CHECKING, Optional
 from .to_sql import ToSql
 
 if TYPE_CHECKING:
-    from ralsei.jinja.environment import ISqlEnvironment
+    from ralsei.jinja import ISqlEnvironment
 
 
 @dataclass
 class Sql(ToSql):
+    """Raw SQL string, inserted into the template as-is"""
+
     value: str
 
     def to_sql(self, env: "ISqlEnvironment") -> str:
@@ -18,6 +20,8 @@ class Sql(ToSql):
 
 @dataclass
 class Identifier(ToSql):
+    """A SQL identifier, like ``\"table_name\"``"""
+
     value: str
 
     def to_sql(self, env: "ISqlEnvironment") -> str:
@@ -26,6 +30,8 @@ class Identifier(ToSql):
 
 @dataclass
 class Table(ToSql):
+    """Table identifier, like ``\"schema_name\".\"table_name\"``"""
+
     name: str
     schema: Optional[str] = None
 
@@ -45,6 +51,10 @@ class Table(ToSql):
 
 @dataclass
 class Placeholder(ToSql):
+    """Placeholder for a bind parameter, like ``:value``
+
+    Must not any spaces or special characters"""
+
     name: str
 
     def __post_init__(self):

@@ -6,8 +6,11 @@ if TYPE_CHECKING:
 
 
 class ToSql(ABC):
+    """Interface for an object that renders to SQL inside a jinja template"""
+
     @abstractmethod
-    def to_sql(self, env: "ISqlEnvironment") -> str: ...
+    def to_sql(self, env: "ISqlEnvironment") -> str:
+        """Render to SQL string"""
 
 
 __all__ = ["ToSql"]
