@@ -97,6 +97,10 @@ autodoc2_replace_annotations = [
         "sqlalchemy.sql.expression.Executable",
     ),
     (
+        "sqlalchemy.TextClause",
+        "sqlalchemy.sql.elements.TextClause",
+    ),
+    (
         "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",
         "typing.Mapping[str, typing.Any]",
     ),
@@ -106,6 +110,10 @@ autodoc2_replace_bases = [
         "sqlalchemy.Connection",
         "sqlalchemy.engine.Connection",
     ),
+]
+autodoc2_hidden_regexes = [
+    r"ralsei\.jinja\.environment\.SqlTemplate\._from_namespace",
+    r"ralsei\.jinja\.environment\.SqlEnvironment\.getattr",
 ]
 
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]

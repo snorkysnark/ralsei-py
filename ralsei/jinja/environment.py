@@ -37,16 +37,29 @@ def _render_split(chunks: Iterable[str]) -> list[str]:
 
 
 class SqlTemplateModule(TemplateModule):
+    """Represents an imported template (see :py:attr:`jinja2.Template.module`)
+
+    All the exported names of the template are available as attributes on this object.
+    """
+
     def render(self) -> str:
+        """Render as string"""
+
         return str(self)
 
     def render_sql(self) -> TextClause:
+        """Render and wrap with :py:func:`sqlalchemy.sql.expression.text`"""
+
         return TextClause(str(self))
 
     def render_split(self) -> list[str]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag"""
+
         return _render_split(self._body_stream)
 
     def render_sql_split(self) -> list[TextClause]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag, wrap with :py:func:`sqlalchemy.sql.expression.text`"""
+
         return list(map(TextClause, self.render_split()))
 
 
@@ -61,9 +74,13 @@ class SqlTemplate(jinja2.Template):
         return super(SqlTemplate, cls)._from_namespace(environment, namespace, globals)
 
     def render_sql(self, *args: Any, **kwargs: Any) -> TextClause:
+        """Render and wrap in :py:func:`sqlalchemy.sql.expression.text`"""
+
         return TextClause(self.render(*args, **kwargs))
 
     def render_split(self, *args: Any, **kwargs: Any) -> list[str]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag"""
+
         ctx = self.new_context(dict(*args, **kwargs))
 
         try:
@@ -72,6 +89,8 @@ class SqlTemplate(jinja2.Template):
             self.environment.handle_exception()
 
     def render_sql_split(self, *args: Any, **kwargs: Any) -> list[TextClause]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag, wrap in :py:func:`sqlalchemy.sql.expression.text`"""
+
         return list(map(TextClause, self.render_split(*args, **kwargs)))
 
     def make_module(
@@ -80,6 +99,8 @@ class SqlTemplate(jinja2.Template):
         shared: bool = False,
         locals: Optional[Mapping[str, Any]] = None,
     ) -> SqlTemplateModule:
+        """The template as a module, use this to access exported template variables"""
+
         ctx = self.new_context(vars, shared, locals)
         return SqlTemplateModule(self, ctx)
 
@@ -96,6 +117,12 @@ def create_adapter(env: SqlEnvironment):
 
 
 class SqlEnvironment(jinja2.Environment):
+    """Type-aware jinja environment for rendering SQL
+
+    Args:
+        dialect_info: dialect-specific settings
+    """
+
     def __init__(self, dialect_info: DialectInfo = BaseDialectInfo):
         super().__init__(undefined=StrictUndefined)
 
@@ -149,10 +176,14 @@ class SqlEnvironment(jinja2.Environment):
 
     @property
     def adapter(self) -> SqlAdapter:
+        """Type adapter that turns values in braces (like ``{{value}}``) into SQL strings"""
+
         return self._adapter
 
     @property
     def dialect_info(self) -> DialectInfo:
+        """Dialect-specific settings"""
+
         return self._dialect_info
 
     @overload
@@ -179,6 +210,11 @@ class SqlEnvironment(jinja2.Environment):
         globals: Optional[MutableMapping[str, Any]] = None,
         template_class: Optional[Type[jinja2.Template]] = None,
     ) -> jinja2.Template:
+        """See :py:meth:`jinja2.Environment.from_string`
+
+        By default, the template class will be :py:class:`SqlTemplate`
+        """
+
         return super().from_string(
             textwrap.dedent(source).strip() if isinstance(source, str) else source,
             globals,
@@ -186,17 +222,25 @@ class SqlEnvironment(jinja2.Environment):
         )
 
     def render(self, source: str, /, *args: Any, **kwargs: Any) -> str:
+        """Render template once, shorthand for ``self.from_string().render()``"""
+
         return self.from_string(source).render(*args, **kwargs)
 
     def render_sql(self, source: str, /, *args: Any, **kwargs: Any) -> TextClause:
+        """Render and wrap with :py:func:`sqlalchemy.sql.expression.text`"""
+
         return self.from_string(source).render_sql(*args, **kwargs)
 
     def render_split(self, source: str, /, *args: Any, **kwargs: Any) -> list[str]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag"""
+
         return self.from_string(source).render_split(*args, **kwargs)
 
     def render_sql_split(
         self, source: str, /, *args: Any, **kwargs: Any
     ) -> list[TextClause]:
+        """Render as multiple statements, splitting on ``{%split%}`` tag, wrap with :py:func:`sqlalchemy.sql.expression.text`"""
+
         return self.from_string(source).render_sql_split(*args, **kwargs)
 
     def getattr(self, obj: Any, attribute: str) -> Any:
