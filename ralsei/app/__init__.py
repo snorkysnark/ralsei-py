@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 import sqlalchemy
 
-from ralsei.graph import Pipeline, TreePath, TaskSequence
+from ralsei.graph import Pipeline, TreePath, TaskSequence, DAG
 from ralsei.connection import (
     create_engine as create_engine_default,
     ConnectionEnvironment,
@@ -35,6 +35,39 @@ def confirm_sequence(sequence: TaskSequence):
 
 
 class Ralsei:
+    """The pipeline-running CLI application
+
+    Decorate your subclass with :py:func:`click.option` decorator
+    to add custom `CLI options <https://click.palletsprojects.com/en/8.1.x/options/>`_.
+    Positional arguments are not allowed
+
+    Args:
+        url: When the class constructor is called by the CLI,
+            the URL is provided as the first argument
+        pipeline: The CLI **does not** give you the pipeline,
+            you must create one in your subclass and pass it to ``super().__init__()``
+
+    Example:
+
+        .. code-block:: python
+
+            @click.option("-s", "--schema", help="Database schema")
+            class App(Ralsei):
+                def __init__(
+                    url: sqlalchemy.URL, # First argument must always be the url
+                    schema: str | None, # Custom argument added with the click decorator
+                ):
+                    super().__init__(url, MyPipeline(schema))
+
+            if __name__ == "__main__":
+                App.run_cli()
+    """
+
+    pipeline: Pipeline
+    engine: sqlalchemy.Engine
+    env: SqlEnvironment
+    dag: DAG
+
     def __init__(self, url: sqlalchemy.URL, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
         self.engine = self._create_engine(url)
@@ -45,22 +78,28 @@ class Ralsei:
 
         self.dag = pipeline.build_dag(self.env)
 
-    def _create_engine(self, url: sqlalchemy.URL):
+    def _create_engine(self, url: sqlalchemy.URL) -> sqlalchemy.Engine:
+        """Override this to customize engine creation"""
+
         return create_engine_default(url)
 
     def _prepare_env(self, env: SqlEnvironment):
-        pass
+        """Here you can add your own filters/globals to the jinja environment"""
 
     def connect(self) -> ConnectionEnvironment:
+        """Creates a new connection, returns connection + jinja env"""
+
         conn = ConnectionEnvironment(self.engine, self.env)
         self._on_connect(conn)
         return conn
 
     def _on_connect(self, conn: ConnectionEnvironment):
-        pass
+        """Run custom code after database connection"""
 
     @classmethod
     def build_cli(cls) -> click.Group:
+        """Create a click CLI based on this class"""
+
         custom_args = getattr(cls, "__click_params__", [])
         for arg in custom_args:
             if not isinstance(arg, click.Option):
@@ -144,6 +183,8 @@ class Ralsei:
 
     @classmethod
     def run_cli(cls, *args, **kwargs):
+        """Build and run click CLI, print traceback in case of exception"""
+
         try:
             cls.build_cli()(*args, **kwargs)
         except Exception as err:

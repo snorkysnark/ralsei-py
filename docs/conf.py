@@ -114,6 +114,7 @@ autodoc2_replace_bases = [
 autodoc2_hidden_regexes = [
     r"ralsei\.jinja\.environment\.SqlTemplate\._from_namespace",
     r"ralsei\.jinja\.environment\.SqlEnvironment\.getattr",
+    r"ralsei\.app\.Ralsei\.__build_subcommand",
 ]
 
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]
