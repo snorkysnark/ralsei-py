@@ -3,8 +3,12 @@ from typing import Self
 
 
 class TreePath(tuple[str, ...]):
-    def __new__(cls, *args: str) -> Self:
-        return super().__new__(cls, args)
+    def __new__(cls, *parts: str) -> Self:
+        for part in parts:
+            if "." in part:
+                raise ValueError(f"TreePath element cannot contain a '.': {part}")
+
+        return super().__new__(cls, parts)
 
     @staticmethod
     def parse(string: str) -> TreePath:
