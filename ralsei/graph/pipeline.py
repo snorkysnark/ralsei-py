@@ -30,6 +30,8 @@ def _iter_tasks_flattened(
 
 
 class Pipeline(ABC):
+    """"""
+
     @abstractmethod
     def create_tasks(self) -> Tasks: ...
 
@@ -42,13 +44,13 @@ class Pipeline(ABC):
             ],
         )
 
-    def _flatten(self) -> FlattenedPipeline:
+    def __flatten(self) -> FlattenedPipeline:
         task_definitions: dict[TreePath, ScopedTaskDef] = {}
         pipeline_to_path: dict[Pipeline, TreePath] = {self: TreePath()}
 
         for name, value in _iter_tasks_flattened(self.create_tasks()):
             if isinstance(value, Pipeline):
-                subtree = value._flatten()
+                subtree = value.__flatten()
 
                 for relative_path, definition in subtree.task_definitions.items():
                     task_definitions[TreePath(*name, *relative_path)] = definition
@@ -66,7 +68,7 @@ class Pipeline(ABC):
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
     def build_dag(self, env: "SqlEnvironment") -> DAG:
-        return DependencyResolver.from_definition(self._flatten()).build_dag(env)
+        return DependencyResolver.from_definition(self.__flatten()).build_dag(env)
 
 
 __all__ = ["Pipeline"]
