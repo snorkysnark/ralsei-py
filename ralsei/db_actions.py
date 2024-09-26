@@ -20,12 +20,15 @@ def _get_column_names(conn: ConnectionEnvironment, table: Table):
 
 
 def table_exists(conn: ConnectionEnvironment, table: Table) -> bool:
+    """Check if table exists"""
     return inspect(conn.sqlalchemy).has_table(table.name, table.schema)
 
 
 def columns_exist(
     conn: ConnectionEnvironment, table: Table, columns: Iterable[str]
 ) -> bool:
+    """Check if all columns exist on a table"""
+
     existing = _get_column_names(conn, table)
 
     for column in columns:
@@ -35,6 +38,15 @@ def columns_exist(
 
 
 class AddColumns:
+    """Action for adding columns to a table
+
+    Args:
+        env: jinja environment
+        table: target table
+        columns: columns to add
+        if_not_exists: use ``IF NOT EXISTS`` check
+    """
+
     def __init__(
         self,
         env: ISqlEnvironment,
@@ -59,6 +71,7 @@ class AddColumns:
         self._if_not_exists = if_not_exists
 
     def __call__(self, conn: ConnectionEnvironment):
+        """Execute action"""
         if self._if_not_exists and not conn.dialect_info.supports_column_if_not_exists:
             existing = _get_column_names(conn, self._table)
             for column, statement in zip(self._columns, self.statements):
@@ -72,6 +85,15 @@ class AddColumns:
 
 
 class DropColumns:
+    """Action for dropping columns from a table
+
+    Args:
+        env: jinja environment
+        table: target table
+        columns: columns to drop
+        if_exists: use ``IF EXISTS`` check
+    """
+
     def __init__(
         self,
         env: ISqlEnvironment,
@@ -95,6 +117,7 @@ class DropColumns:
         self._if_exists = if_exists
 
     def __call__(self, conn: ConnectionEnvironment):
+        """Execute action"""
         if self._if_exists and not table_exists(conn, self._table):
             return
 
