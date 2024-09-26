@@ -45,13 +45,17 @@ class TopologicalSort:
 
 @dataclass
 class DAG:
-    tasks: dict[TreePath, "Task"]
-    relations: dict[TreePath, set[TreePath]]
+    """A graph of tasks"""
 
-    def tasks_str(self):
+    tasks: dict[TreePath, "Task"]
+    """All tasks by name"""
+    relations: dict[TreePath, set[TreePath]]
+    """``from -> to`` relations (left task is executed first)"""
+
+    def tasks_str(self) -> dict[str, "Task"]:
         return {str(path): task for path, task in self.tasks.items()}
 
-    def relations_str(self):
+    def relations_str(self) -> dict[str, set[str]]:
         return {
             str(parent): set(str(child) for child in children)
             for parent, children in self.relations.items()
@@ -60,11 +64,28 @@ class DAG:
     def topological_sort(
         self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
     ) -> TaskSequence:
+        """Topological sort
+
+        Args:
+            constrain_starting_nodes: If set, will filter out everything except these nodes and their descendants.
+                Otherwise, perform topological sort on the whole graph
+        """
         return TopologicalSort(self).run(constrain_starting_nodes)
 
     def sort_filtered(
         self, from_filters: Sequence[TreePath], single_filters: Sequence[TreePath]
     ) -> TaskSequence:
+        """Perform topological sort and apply a set of filters.
+        See example in the CLI section.
+
+        Filters are combined as a union of both sets of tasks.
+        If both filters are empty, returns the whole graph.
+
+        Args:
+            from_filters: same as ``--from`` in the CLI, means "this task and its descendants"
+            single_filters: same as ``--one`` in the CLI, means "only this task"
+        """
+
         sequence = self.topological_sort()
 
         if from_filters or single_filters:
@@ -84,6 +105,8 @@ class DAG:
         return sequence
 
     def graphviz(self) -> Digraph:
+        """Generate graphviz diagram"""
+
         dot = Digraph()
         dot.attr("node", shape="box")
 

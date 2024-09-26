@@ -11,19 +11,26 @@ if TYPE_CHECKING:
 
 @dataclass
 class NamedTask:
+    """Name and task pair"""
+
     path: TreePath
     task: "Task"
 
     @property
     def name(self) -> str:
+        """:py:attr:`~NamedTask.path` as a string"""
         return str(self.path)
 
 
 class TaskSequence:
+    """An executable sequence of tasks"""
+
     def __init__(self, steps: list[NamedTask]) -> None:
         self.steps = steps
 
     def run(self, conn: "ConnectionExt"):
+        """Run, committing after each successful task"""
+
         for named_task in track(self.steps, description="Running tasks..."):
             if named_task.task.exists(conn):
                 console.print(
@@ -36,6 +43,7 @@ class TaskSequence:
                 conn.commit()
 
     def delete(self, conn: "ConnectionExt"):
+        """Delete, committing after each successful task"""
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
             console.print(f"Deleting [bold green]{named_task.name}")
 
@@ -43,6 +51,7 @@ class TaskSequence:
             conn.commit()
 
     def redo(self, conn: "ConnectionExt"):
+        """:py:meth:`~TaskSequence.delete` + :py:meth:`~TaskSequence.run`"""
         self.delete(conn)
         self.run(conn)
 

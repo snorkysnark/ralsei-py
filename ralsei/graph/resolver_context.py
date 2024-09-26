@@ -1,20 +1,15 @@
-from typing import TYPE_CHECKING, Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from .outputof import OutputOf
-from ._resolver import RESOLVER_CONTEXT, CyclicGraphError
+from .error import ResolverContextError
+from ._resolver import RESOLVER_CONTEXT
 
 if TYPE_CHECKING:
     from ralsei.jinja import ISqlEnvironment
 
-T = TypeVar("T")
-
-
-class ResolverContextError(RuntimeError):
-    pass
-
 
 @overload
-def resolve(env: "ISqlEnvironment", value: T | OutputOf) -> T: ...
+def resolve[T](env: "ISqlEnvironment", value: T | OutputOf) -> T: ...
 
 
 @overload
@@ -22,6 +17,10 @@ def resolve(env: "ISqlEnvironment", value: Any) -> Any: ...
 
 
 def resolve(env: "ISqlEnvironment", value: Any) -> Any:
+    """If ``value`` is :py:class:`ralsei.graph.OutputOf`, resolve it. Otherwise, returns ``value``
+
+    Can only be called from :py:meth:`ralsei.task.TaskImpl.prepare`"""
+
     if not isinstance(value, OutputOf):
         return value
     elif resolver := RESOLVER_CONTEXT.get(None):
@@ -32,4 +31,4 @@ def resolve(env: "ISqlEnvironment", value: Any) -> Any:
         )
 
 
-__all__ = ["resolve", "ResolverContextError", "CyclicGraphError"]
+__all__ = ["resolve"]

@@ -64,6 +64,8 @@ class SqlTemplateModule(TemplateModule):
 
 
 class SqlTemplate(jinja2.Template):
+    """Compiled jinja template that can be rendered"""
+
     @classmethod
     def _from_namespace(
         cls,

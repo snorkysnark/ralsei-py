@@ -7,6 +7,7 @@ from contextvars import ContextVar
 from .dag import DAG
 from .path import TreePath
 from .outputof import OutputOf
+from .error import CyclicGraphError
 from ._flattened import FlattenedPipeline
 
 if TYPE_CHECKING:
@@ -24,10 +25,6 @@ class GraphBuilder:
     relations: defaultdict[TreePath, set[TreePath]] = field(
         default_factory=lambda: defaultdict(set)
     )
-
-
-class CyclicGraphError(RuntimeError):
-    pass
 
 
 @dataclass
@@ -109,6 +106,3 @@ class DependencyResolver:
             self.resolve_path(env, task_path)
 
         return DAG(self._graph.tasks, dict(self._graph.relations))
-
-
-__all__ = ["RESOLVER_CONTEXT", "DependencyResolver", "CyclicGraphError"]

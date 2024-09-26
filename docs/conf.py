@@ -101,6 +101,10 @@ autodoc2_replace_annotations = [
         "sqlalchemy.sql.elements.TextClause",
     ),
     (
+        "ralsei.graph.pipeline.Tasks",
+        "typing.Mapping[str, ralsei.task.TaskDef | ralsei.graph.Pipeline | recursive]",
+    ),
+    (
         "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",
         "typing.Mapping[str, typing.Any]",
     ),
@@ -119,6 +123,7 @@ autodoc2_hidden_regexes = [
     r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
     r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
     r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
+    r"ralsei\.graph\.pipeline\.Pipeline\.__flatten",
 ]
 
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]
@@ -132,4 +137,5 @@ intersphinx_mapping = {
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
     "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
     "jinja2": ("https://jinja.palletsprojects.com/en/3.1.x/", None),
+    "graphviz": ("https://graphviz.readthedocs.io/en/stable/", None),
 }
