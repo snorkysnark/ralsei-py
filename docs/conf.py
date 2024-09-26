@@ -138,4 +138,5 @@ intersphinx_mapping = {
     "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
     "jinja2": ("https://jinja.palletsprojects.com/en/3.1.x/", None),
     "graphviz": ("https://graphviz.readthedocs.io/en/stable/", None),
+    "rich": ("https://rich.readthedocs.io/en/stable/", None),
 }

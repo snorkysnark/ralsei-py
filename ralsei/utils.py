@@ -4,6 +4,8 @@ from typing import Optional
 
 
 def expect[T](value: Optional[T], error: Exception) -> T:
+    """Ensure ``value`` is not ``None``, throw exception otherwise"""
+
     if value is None:
         raise error
     else:
@@ -11,6 +13,7 @@ def expect[T](value: Optional[T], error: Exception) -> T:
 
 
 def folder() -> Path:
+    """Get the parent directory of the file that called this function"""
     return Path(inspect.stack()[1].filename).parent
 
 

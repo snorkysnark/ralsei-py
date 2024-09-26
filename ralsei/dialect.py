@@ -5,6 +5,8 @@ from ralsei.console import console
 
 
 class BaseDialectInfo:
+    """SQL dialect settings"""
+
     autoincrement_key: ToSql = Sql("SERIAL PRIMARY KEY")
     supports_column_if_not_exists: bool = True
     supports_rowcount: bool = True
@@ -17,6 +19,16 @@ _dialect_map: dict[str, DialectInfo] = {}
 
 
 def register_dialect[D: DialectInfo](driver: str) -> Callable[[D], D]:
+    """Decorator for registering a custom dialect
+
+    Example:
+        .. code-block:: python
+
+            @register_dialect("duckdb")
+            class DuckdbDialectInfo(BaseDialectInfo):
+                pass
+    """
+
     def decorator(dialect: D):
         _dialect_map[driver] = dialect
         return dialect
@@ -25,6 +37,8 @@ def register_dialect[D: DialectInfo](driver: str) -> Callable[[D], D]:
 
 
 def get_dialect(driver: str) -> DialectInfo:
+    """Get DialectInfo for a given sqlalchemy dialect name"""
+
     if dialect := _dialect_map.get(driver, None):
         return dialect
     else:
