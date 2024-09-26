@@ -11,9 +11,45 @@ from .add_columns import AddColumnsTask
 
 
 class AddColumnsSql(TaskDef):
+    """Adds the specified Columns to an existing Table
+    and runs the SQL script to fill them with data
+
+    Variables passed to the template: :py:attr:`~table` |br|
+    Columns can be defined in the template itself, using ``{% set columns = [...] %}``
+
+    Example:
+
+        **postprocess.sql**
+
+        .. code-block:: sql
+
+            {% set columns = [Column("name_upper", "TEXT")] -%}
+
+            UPDATE {{table}}
+            SET name_upper = UPPER(name);
+
+        **pipeline.py**
+
+        .. code-block:: python
+
+            "postprocess": AddColumnsSql(
+                sql=Path("./postprocess.sql").read_text(),
+                table=Table("people"),
+            )
+    """
+
     sql: str | list[str]
+    """Sql template strings
+
+    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
+    """
     table: Resolves[Table]
+    """Table to add columns to
+
+    May be the output of another task
+    """
     columns: Optional[Sequence[ColumnBase]] = None
+    """these column definitions take precedence over those defined in the template"""
 
     class Impl(AddColumnsTask):
         def prepare(self, this: "AddColumnsSql"):

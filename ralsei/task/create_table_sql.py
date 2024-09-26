@@ -6,9 +6,45 @@ from .create_table import CreateTableTask
 
 
 class CreateTableSql(TaskDef):
+    """Runs a ``CREATE TABLE`` sql script
+
+    Variables passed to the template: :py:attr:`~table`, :py:attr:`~view`
+
+    Example:
+
+        **unnest.sql**
+
+        .. code-block:: sql
+
+            CREATE TABLE {{table}}(
+                id SERIAL PRIMARY KEY,
+                name TEXT
+            );
+            {%-split-%}
+            INSERT INTO {{table}}(name)
+            SELECT json_array_elements_text(json->'names')
+            FROM {{sources}};
+
+        **pipeline.py**
+
+        .. code-block:: python
+
+            "unnest": CreateTableSql(
+                sql=Path("./unnest.sql").read_text(),
+                table=Table("new_table"),
+                locals={"sources": self.outputof("other")},
+            )
+    """
+
     sql: str | list[str]
+    """Sql template strings
+
+    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
+    """
     table: Table
+    """Table being created"""
     view: bool = False
+    """whether this is a ``VIEW`` instead of a ``TABLE``"""
 
     class Impl(CreateTableTask):
         def prepare(self, this: "CreateTableSql"):

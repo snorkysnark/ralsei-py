@@ -115,6 +115,10 @@ autodoc2_hidden_regexes = [
     r"ralsei\.jinja\.environment\.SqlTemplate\._from_namespace",
     r"ralsei\.jinja\.environment\.SqlEnvironment\.getattr",
     r"ralsei\.app\.Ralsei\.__build_subcommand",
+    r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
+    r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
+    r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
+    r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
 ]
 
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]

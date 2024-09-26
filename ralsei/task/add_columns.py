@@ -9,8 +9,18 @@ from .base import TaskImpl
 
 
 class AddColumnsTask(TaskImpl):
+    """Base class for a task that adds columns to a table
+
+    All you have to do is call :py:meth:`~_prepare_columns` from within :py:meth:`ralsei.task.TaskImpl.prepare`.
+
+    :py:attr:`~output`, :py:meth:`~_exists` and :py:meth:`~_delete` are implemented for you,
+    leaving only the :py:meth:`ralsei.task.TaskImpl._run` part
+    """
+
     _table: Table
     _columns: list[ColumnRendered]
+    _add_columns: db_actions.AddColumns
+    _drop_columns: db_actions.DropColumns
 
     def _prepare_columns(
         self,

@@ -31,13 +31,141 @@ class MarkerScripts:
 
 
 class MapToNewTable(TaskDef):
+    """Applies the provided map function to a query result,
+    mapping a single row to one or more rows in a new table
+
+    Variables passed to jinja:
+
+    - `table=`:py:attr:`~table`
+    - `source=`:py:attr:`~source_table`
+    - `is_done=`:py:attr:`~is_done_column` (as :py:class:`ralsei.types.Identifier`)
+
+    Example:
+        .. code-block:: python
+
+            from parsel import Selector
+            from ralsei import (
+                Pipeline,
+                MapToNewTable,
+                Table,
+                ValueColumn,
+                Placeholder,
+                compose,
+                add_to_input,
+                pop_id_fields,
+            )
+
+            # Find subjects on the hub page
+            def find_subjects(hub_url: str):
+                html = download(hub_url)
+                sel = Selector(html)
+
+                for row in sel.xpath("//table/tr"):
+                    yield {
+                        "subject": row.xpath("a/text()").get(),
+                        "url": row.xpath("a/@href").get()
+                    }
+
+            # Download all pages in a subject rating
+            def download_pages(url: str):
+                next_url = url
+                page = 1
+
+                while next_url is not None:
+                    html = download(next_url)
+                    yield { "page": page, "html": html }
+
+                    sel = Selector(html)
+                    next_url = sel.xpath("//a[@id = 'next']").get()
+                    page += 1
+
+
+            class MyPipeline(Pipeline):
+                def create_tasks(self):
+                    return {
+                        "subjects": MapToNewTable(
+                            table=Table("subjects"),
+                            columns=[ # (1)
+                                "id SERIAL PRIMARY KEY",
+                                ValueColumn("subject", "TEXT"),
+                                ValueColumn("url", "TEXT"),
+                            ],
+                            fn=compose(
+                                find_subjects,
+                                add_to_input(hub_url="https://rating.com/2022")
+                            )
+                        ),
+                        "pages": MapToNewTable(
+                            source_table=self.outputof("subjects"),
+                            select="\""\\
+                            SELECT id, url FROM {{source}}
+                            WHERE NOT {{is_done}}"\"",
+                            table=Table("pages"),
+                            columns=[
+                                ValueColumn(
+                                    "subject_id",
+                                    "INT REFERENCES {{source}}(id)",
+                                    Placeholder("id")
+                                ),
+                                ValueColumn("page", "INT"),
+                                ValueColumn("html", "TEXT"),
+                                "date_downloaded DATE DEFAULT NOW()",
+                            ],
+                            is_done_column="__downloaded",
+                            fn=compose(download_pages, pop_id_fields("id"))
+                        )
+                    }
+
+        .. code-annotations::
+            1.  Table body is generated from all :py:attr:`~columns`,
+                ``INSERT`` statement - only from :py:class:`ralsei.types.ValueColumnBase`
+    """
+
     table: Table
+    """The new table being created"""
     columns: Sequence[str | ValueColumnBase]
+    """Columns (and constraints) that make up the table definition
+
+    Additionally, :py:attr:`ralsei.types.ValueColumnBase.value` field
+    is used for ``INSERT`` statement generation
+
+    :py:class:`str` columns and :py:class:`ralsei.types.ValueColumn`'s `type`
+    are passed through the jinja renderer
+    """
     fn: OneToMany
+    """A generator function, mapping one row to many rows
+
+    If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
+    from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`"""
     select: Optional[str] = None
+    """The ``SELECT`` statement
+    that generates rows passed to :py:attr:`~fn` as arguments
+
+    If not specified, ``fn`` will only run once with 0 arguments.
+    """
     source_table: Optional[Resolves[Table]] = None
+    """The table where the input rows come from
+
+    If not creating :py:attr:`~is_done_column`, you can leave it as ``None``. |br|
+    May be the output of another task.
+    """
     is_done_column: Optional[str] = None
+    """Create a boolean column with the given name
+    in :py:attr:`~source_table` that tracks which rows have been processed
+
+    If set, the task will commit after each successful run of :py:attr:`~fn`,
+    allowing you to stop and resume from the same place.
+
+    Note:
+        Make sure to include ``WHERE NOT {{is_done}}`` in your :py:attr:`~select` statement
+    """
     id_fields: Optional[list[IdColumn]] = None
+    """Columns that uniquely identify a row in :py:attr:`~source_table`,
+    so that you can update :py:attr:`~is_done_column`
+
+    This argument takes precedence over ``id_fields`` inferred from
+    :py:attr:`~fn`'s metadata
+    """
 
     class Impl(CreateTableTask):
         def prepare(self, this: "MapToNewTable"):

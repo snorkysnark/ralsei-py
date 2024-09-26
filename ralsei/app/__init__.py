@@ -48,7 +48,6 @@ class Ralsei:
             you must create one in your subclass and pass it to ``super().__init__()``
 
     Example:
-
         .. code-block:: python
 
             @click.option("-s", "--schema", help="Database schema")

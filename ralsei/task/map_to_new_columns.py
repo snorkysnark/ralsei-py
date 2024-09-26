@@ -19,13 +19,105 @@ from .add_columns import AddColumnsTask
 
 
 class MapToNewColumns(TaskDef):
+    """Applies the provided map function to a query result,
+    saving outputs into new columns on the same row
+
+    Variables passed to jinja:
+
+    - `table=`:py:attr:`~table`
+    - `is_done=`:py:attr:`~is_done_column` (as :py:class:`ralsei.types.Identifier`)
+
+    Example:
+        .. code-block:: python
+
+            import requests
+            from parsel import Selector
+            from ralsei import (
+                Pipeline,
+                MapToNewColumns,
+                Table,
+                ValueColumn,
+                Sql,
+                compose_one,
+                pop_id_fields,
+            )
+
+            def download(url: str):
+                response = requests.get(url)
+                response.raise_for_status()
+                return {"html": response.text}
+
+            def parse(html: str):
+                sel = Selector(html)
+                return {
+                    "title": sel.xpath("//h1/text()").get(),
+                    "rating": sel.xpath("//div[@id='rating']/text()").get(),
+                }
+
+
+            class MyPipeline(Pipeline):
+                def create_tasks(self):
+                    return {
+                        "download": MapToNewColumns(
+                            table=Table("pages"),
+                            select="SELECT id, url FROM {{table}} WHERE NOT {{is_done}}",
+                            columns=[
+                                ValueColumn("html", "TEXT"),
+                                ValueColumn("date_downloaded", "DATE", Sql("NOW()")),
+                            ],
+                            is_done_column="__downloaded",
+                            fn=compose_one(download, pop_id_fields("id")),
+                        ),
+                        "parse": MapToNewColumns(
+                            table=self.outputof("download"),
+                            select="SELECT id, html FROM {{table}}",
+                            columns=[
+                                ValueColumn("title", "TEXT"),
+                                ValueColumn("rating", "TEXT"),
+                            ],
+                            fn=compose_one(parse, pop_id_fields("id")),
+                        ),
+                    }
+    """
+
     select: str
+    """The ``SELECT`` statement that generates input rows
+    passed to :py:attr:`~fn` as arguments
+    """
     table: Resolves[Table]
+    """Table to add columns to
+
+    May be the output of another task
+    """
     columns: Sequence[ValueColumnBase]
+    """List of new columns
+
+    Used for ``ADD COLUMN`` and ``UPDATE`` statement generation.
+    """
     fn: OneToOne
+    """Function that maps one row to values of the new columns
+    in the same row
+
+    If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
+    from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`
+    """
     is_done_column: Optional[str] = None
+    """Create a boolean column with the given name
+    in :py:attr:`~table` that tracks which rows have been processed
+
+    If set, the task will commit after each successful run of :py:attr:`~fn`,
+    allowing you to stop and resume from the same place.
+
+    Note:
+        Make sure to include ``WHERE NOT {{is_done}}`` in your :py:attr:`~select` statement
+    """
     id_fields: Optional[list[IdColumn]] = None
-    yield_per: Optional[int] = None
+    """Columns that uniquely identify a row in :py:attr:`~table`,
+    so that you can update :py:attr:`~is_done_column`
+
+    This argument takes precedence over ``id_fields`` inferred from
+    :py:attr:`~fn`'s metadata
+    """
 
     class Impl(AddColumnsTask):
         def prepare(self, this: "MapToNewColumns"):

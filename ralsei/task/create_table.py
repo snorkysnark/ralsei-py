@@ -9,6 +9,37 @@ from .base import TaskImpl
 
 
 class CreateTableTask(TaskImpl):
+    """Base class for a task that performs table creation
+
+    All you have to do is call :py:meth:`~_prepare_table` from within :py:meth:`ralsei.task.TaskImpl.prepare`.
+
+    :py:attr:`~output`, :py:meth:`~_exists` and :py:meth:`~_delete` are implemented for you,
+    leaving only the :py:meth:`ralsei.task.TaskImpl._run` part
+
+    Example:
+        .. code-block:: python
+
+            import pandas as pd
+
+            class UploadCsv(TaskDef):
+                table: Table
+                path: Path
+
+                class Impl(CreateTableTask):
+                    def prepare(self, this: "UploadCsv"):
+                        self._prepare_table(this.table)
+                        self.__path = this.path
+
+                    def _run(self, conn: ConnectionEnvironment):
+                        with self.__path.open() as file:
+                            pd.read_csv(file).to_sql(
+                                self._table.name,
+                                conn.sqlalchemy,
+                                schema=self._table.schema
+                            )
+
+    """
+
     _table: Table
     _drop_sql: TextClause
 
