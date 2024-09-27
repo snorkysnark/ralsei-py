@@ -5,10 +5,6 @@ from typing import Self
 class TreePath(tuple[str, ...]):
     """Tuple subclass representing a path in nested dictionary/pipeline"""
 
-    def __init__(self) -> None:
-        """"""  # Hide __init__ docstring from documentation
-        super().__init__()
-
     def __new__(cls, *parts: str) -> Self:
         """
         Args:
