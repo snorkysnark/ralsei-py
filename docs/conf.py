@@ -104,6 +104,11 @@ autodoc2_replace_annotations = [
         "ralsei.graph.pipeline.Tasks",
         "typing.Mapping[str, ralsei.task.TaskDef | ralsei.graph.Pipeline | recursive]",
     ),
+    ("ralsei.wrappers.OneToOne", "typing.Callable[..., dict[str, typing.Any]]"),
+    (
+        "ralsei.wrappers.OneToMany",
+        "typing.Callable[..., typing.Iterator[dict[str, typing.Any]]]",
+    ),
     (
         "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",
         "typing.Mapping[str, typing.Any]",

@@ -1,23 +1,39 @@
-from abc import ABC, abstractmethod
-import contextlib
+"""
+.. py:type:: OneToOne
+    :canonical: typing.Callable[..., dict[str, typing.Any]]
+
+.. code-block:: python
+
+    def example(html: str):
+        return {"name": get_name(html)}
+
+.. py:type:: OneToMany
+    :canonical: typing.Callable[..., typing.Iterator[dict[str, typing.Any]]]
+
+.. code-block:: python
+
+    def example(html: str):
+        for name in get_names(html):
+            yield {"name": name}
+"""
+
 from typing import (
     Any,
     Callable,
-    Generic,
     Iterator,
     Optional,
-    TypeVar,
-    overload,
 )
 from functools import wraps
 
 POPPED_FIELDS_ATTR = "__ralsei_popped_fields"
 
-OneToOne = Callable[..., dict[str, Any]]
-OneToMany = Callable[..., Iterator[dict[str, Any]]]
+type OneToOne = Callable[..., dict[str, Any]]
+type OneToMany = Callable[..., Iterator[dict[str, Any]]]
 
 
 def into_many(fn: OneToOne) -> OneToMany:
+    """Turn :py:type:`~OneToOne` mapping function into :py:type:`~OneToMany`"""
+
     @wraps(fn)
     def wrapper(**kwargs: Any):
         yield fn(**kwargs)
@@ -26,6 +42,11 @@ def into_many(fn: OneToOne) -> OneToMany:
 
 
 def into_one(fn: OneToMany) -> OneToOne:
+    """Turn :py:type:`~OneToMany` mapping function into :py:type:`~OneToOne`
+
+    Would throw an error if the input function yields more than one row
+    """
+
     @wraps(fn)
     def wrapper(**kwargs: Any):
         generator = fn(**kwargs)
@@ -42,7 +63,41 @@ def into_one(fn: OneToMany) -> OneToOne:
     return wrapper
 
 
-def pop_id_fields(*id_fields: str, keep: bool = False):
+def pop_id_fields(
+    *id_fields: str, keep: bool = False
+) -> Callable[[OneToMany], OneToMany]:
+    """Create function wrapper that 'pops' ``id_fields`` off the keyword arguments,
+    calls the inner function without them, then re-inserts them into the output rows
+
+    .. code-block:: pycon
+
+        >>> @pop_id_fields("id")
+        >>> def foo(a: int):
+        >>>     yield {"b": a * 2}
+        >>>
+        >>> next(foo(id=5, a=3))
+        {"id": 5, "b": 6}
+
+    Additionally, popped field names are saved into the function's metadata,
+    so that tasks can use them for inferring :py:class:`IdColumns <ralsei.types.IdColumn>`
+
+    Args:
+        id_fields: keyword arguments to pop
+        keep: if ``True``, the popped arguments would **still** be passed to the inner function
+
+            .. code-block:: pycon
+
+                >>> @pop_id_fields("year")
+                >>> def foo(year: int, name: str):
+                >>>     yield {"html": download(year, name) }
+                >>>
+                >>> next(foo(year=2015, name="Tokyo"))
+                {"year": 2015, "json": {...}}
+
+    Returns:
+        typing.Callable[[OneToMany], OneToMany]:
+    """
+
     def decorator(fn: OneToMany) -> OneToMany:
         @wraps(fn)
         def wrapper(**kwargs):
@@ -62,34 +117,77 @@ def pop_id_fields(*id_fields: str, keep: bool = False):
     return decorator
 
 
-def rename_input(mapping: dict[str, str] | Callable[[str], str]):
-    remap = (lambda key: mapping[key]) if isinstance(mapping, dict) else mapping
+def rename_input(**mapping: str) -> Callable[[OneToMany], OneToMany]:
+    """Create function wrapper that remaps keyword argument names
+
+    .. code-block:: python
+
+        @rename_input(a="b")
+        def foo(b: int):
+            yield {...}
+
+        foo(a=10)
+
+
+    Returns:
+        typing.Callable[[OneToMany], OneToMany]:
+    """
 
     def decorator(fn: OneToMany) -> OneToMany:
         @wraps(fn)
         def wrapper(**kwargs):
-            yield from fn(**{remap(key): value for key, value in kwargs.items()})
+            yield from fn(
+                **{mapping.get(key, key): value for key, value in kwargs.items()}
+            )
 
         return wrapper
 
     return decorator
 
 
-def rename_output(mapping: dict[str, str] | Callable[[str], str]):
-    remap = (lambda key: mapping[key]) if isinstance(mapping, dict) else mapping
+def rename_output(**mapping: str) -> Callable[[OneToMany], OneToMany]:
+    """Create function wrapper that remaps fields in the output dictionary
+
+    .. code-block:: pycon
+
+        >>> @rename_output(a="b")
+        >>> def foo():
+        >>>     yield {"a": 5}
+        >>>
+        >>> next(foo())
+        {"b": 5}
+
+
+    Returns:
+        typing.Callable[[OneToMany], OneToMany]:
+    """
 
     def decorator(fn: OneToMany) -> OneToMany:
         @wraps(fn)
         def wrapper(**kwargs):
             for row in fn(**kwargs):
-                yield {remap(key): value for key, value in row.items()}
+                yield {mapping.get(key, key): value for key, value in row.items()}
 
         return wrapper
 
     return decorator
 
 
-def add_to_input(**add_values):
+def add_to_input(**add_values: Any) -> Callable[[OneToMany], OneToMany]:
+    """Create function wrapper that adds to the keyword arguments
+
+    .. code-block:: python
+
+        @add_to_input(b="meow")
+        def foo(a: int, b: str):
+            yield {...}
+
+        foo(a=5)
+
+    Returns:
+        typing.Callable[[OneToMany], OneToMany]:
+    """
+
     def decorator(fn: OneToMany) -> OneToMany:
         @wraps(fn)
         def wrapper(**kwargs):
@@ -100,7 +198,22 @@ def add_to_input(**add_values):
     return decorator
 
 
-def add_to_output(**add_values):
+def add_to_output(**add_values: Any) -> Callable[[OneToMany], OneToMany]:
+    """Create function wrapper that adds entries to the output dictionary
+
+    .. code-block:: pycon
+
+        >>> @add_to_output(b="meow")
+        >>> def foo():
+        >>>     yield {"a": 10}
+        >>>
+        >>> next(foo())
+        {"a": 10, "b": "meow"}
+
+    Returns:
+        typing.Callable[[OneToMany], OneToMany]:
+    """
+
     def decorator(fn: OneToMany) -> OneToMany:
         @wraps(fn)
         def wrapper(**kwargs):
@@ -112,103 +225,42 @@ def add_to_output(**add_values):
     return decorator
 
 
-T = TypeVar("T")
+def compose(fn: OneToMany, *decorators: Callable[[OneToMany], OneToMany]) -> OneToMany:
+    """Compose multiple decorators together on a :py:type:`~OneToMany`
 
+    Args:
+        fn (OneToMany): base function
+        decorators (typing.Callable[[OneToMany], OneToMany]): decorators to apply
 
-class FnContextBase(ABC, Generic[T]):
-    def __init__(self, fn: T, **context: Any) -> None:
-        self.fn = fn
-        self._context_managers = {
-            name: obj if hasattr(obj, "__enter__") else contextlib.nullcontext(obj)
-            for name, obj in context.items()
-        }
+    Returns:
+        OneToMany:
+    """
 
-    def __enter__(self) -> T:
-        context = {
-            name: obj.__enter__() for name, obj in self._context_managers.items()
-        }
-        return self._wrap_fn(context)
-
-    @abstractmethod
-    def _wrap_fn(self, context: dict[str, Any]) -> T:
-        ...
-
-    def __exit__(self, *excinfo):
-        for context_manager in self._context_managers.values():
-            context_manager.__exit__(*excinfo)
-
-
-class FnContext(FnContextBase[OneToMany]):
-    def _wrap_fn(self, context: dict[str, Any]) -> OneToMany:
-        return add_to_input(**context)(self.fn)
-
-
-class FnContextOne(FnContextBase[OneToOne]):
-    def _wrap_fn(self, context: dict[str, Any]) -> OneToOne:
-        @wraps(self.fn)
-        def wrapper(**kwargs):
-            return self.fn(**kwargs, **context)
-
-        return wrapper
-
-
-@overload
-def compose(
-    fn: OneToMany,
-    *decorators: Callable[[OneToMany], OneToMany],
-    context: None = None,
-) -> OneToMany:
-    ...
-
-
-@overload
-def compose(
-    fn: OneToMany,
-    *decorators: Callable[[OneToMany], OneToMany],
-    context: dict,
-) -> FnContext:
-    ...
-
-
-def compose(
-    fn: OneToMany,
-    *decorators: Callable[[OneToMany], OneToMany],
-    context: Optional[dict] = None,
-) -> OneToMany | FnContext:
     for decorator in decorators:
         fn = decorator(fn)
 
-    return FnContext(fn, **context) if context else fn
+    return fn
 
 
-@overload
 def compose_one(
     fn: OneToOne,
     *decorators: Callable[[OneToMany], OneToMany],
-    context: None = None,
 ) -> OneToOne:
-    ...
+    """Compose multiple decorators together on a :py:type:`~OneToOne`
+
+    Args:
+        fn (OneToOne): base function
+        decorators (typing.Callable[[OneToMany], OneToMany]): decorators to apply
+
+    Returns:
+        OneToOne:
+    """
+
+    return into_one(compose(into_many(fn), *decorators))
 
 
-@overload
-def compose_one(
-    fn: OneToOne, *decorators: Callable[[OneToMany], OneToMany], context: dict
-) -> FnContextOne:
-    ...
-
-
-def compose_one(
-    fn: OneToOne,
-    *decorators: Callable[[OneToMany], OneToMany],
-    context: Optional[dict] = None,
-) -> OneToOne | FnContextOne:
-    fn = into_one(compose(into_many(fn), *decorators))
-
-    return FnContextOne(fn, **context) if context else fn
-
-
-def get_popped_fields(obj: Callable | FnContextBase) -> Optional[list[str]]:
-    fn = obj.fn if isinstance(obj, FnContextBase) else obj
+def get_popped_fields(fn: Callable) -> Optional[list[str]]:
+    """Get fields popped by :py:func:`~pop_id_fields` from the function metadata"""
     return getattr(fn, POPPED_FIELDS_ATTR, None)
 
 
@@ -224,8 +276,5 @@ __all__ = [
     "add_to_output",
     "compose",
     "compose_one",
-    "FnContext",
-    "FnContextOne",
-    "FnContextBase",
     "get_popped_fields",
 ]
