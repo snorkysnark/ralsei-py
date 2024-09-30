@@ -23,6 +23,7 @@ class OutputOf:
 
 
 type Resolves[T] = T | OutputOf
+"""Either the value ``T`` or the :py:class:`~OutputOf` that resolves to that value"""
 
 
 __all__ = ["OutputOf", "Resolves"]

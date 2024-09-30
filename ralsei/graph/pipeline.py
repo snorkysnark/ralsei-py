@@ -12,7 +12,15 @@ if TYPE_CHECKING:
     from ralsei.task import TaskDef
     from ralsei.jinja import SqlEnvironment
 
-Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
+type Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
+"""A dictionary with task name to value pairs, used to define a :py:class:`~Pipeline`
+
+Acceptable values:
+    
+* A task definition (:py:class:`ralsei.task.TaskDef`)
+* A nested :py:class:`~Pipeline`
+* A nested dictionary
+"""
 
 
 def _iter_tasks_flattened(
@@ -92,4 +100,4 @@ class Pipeline(ABC):
         return DependencyResolver.from_definition(self.__flatten()).build_dag(env)
 
 
-__all__ = ["Pipeline"]
+__all__ = ["Pipeline", "Tasks"]

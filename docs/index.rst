@@ -1,14 +1,13 @@
 Welcome to ralsei's documentation!
 ==================================
 
-.. container:: twocol
+.. container:: flex
 
-   .. container:: leftside
+   .. container:: logo
 
       .. image:: _static/logo.png
-         :height: 200
 
-   .. container:: rightside
+   .. container:: box
 
       Fffff
 

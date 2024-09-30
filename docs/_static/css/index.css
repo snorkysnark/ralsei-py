@@ -1,0 +1,11 @@
+div.container.flex {
+  display: flex;
+}
+
+div.container.logo img {
+  object-fit: cover;
+}
+
+.type-definition-anchor>dt>em {
+  display: none;
+}

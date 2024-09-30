@@ -56,7 +56,7 @@ html_theme_options = {
     ]
 }
 
-html_css_files = ["css/columns.css", "css/fix-summary.css"]
+html_css_files = ["css/index.css", "css/fix-summary.css"]
 html_static_path = ["_static"]
 
 rst_prolog = """\
@@ -71,11 +71,6 @@ autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_skip_module_regexes = [r".*\._.*"]
 
 autodoc2_replace_annotations = [
-    ("ralsei.graph.Resolves", "ralsei.graph.OutputOf | "),
-    (
-        "ralsei.dialect.DialectInfo",
-        "ralsei.dialect.BaseDialectInfo | type[ralsei.dialect.BaseDialectInfo]",
-    ),
     (
         "sqlalchemy.Engine",
         "sqlalchemy.engine.Engine",
@@ -99,15 +94,6 @@ autodoc2_replace_annotations = [
     (
         "sqlalchemy.TextClause",
         "sqlalchemy.sql.elements.TextClause",
-    ),
-    (
-        "ralsei.graph.pipeline.Tasks",
-        "typing.Mapping[str, ralsei.task.TaskDef | ralsei.graph.Pipeline | recursive]",
-    ),
-    ("ralsei.wrappers.OneToOne", "typing.Callable[..., dict[str, typing.Any]]"),
-    (
-        "ralsei.wrappers.OneToMany",
-        "typing.Callable[..., typing.Iterator[dict[str, typing.Any]]]",
     ),
     (
         "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",

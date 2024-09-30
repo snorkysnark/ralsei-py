@@ -13,6 +13,7 @@ class BaseDialectInfo:
 
 
 type DialectInfo = BaseDialectInfo | type[BaseDialectInfo]
+"""You can use both a class instance or a class as dialect"""
 
 
 _dialect_map: dict[str, DialectInfo] = {}

@@ -1,22 +1,3 @@
-"""
-.. py:type:: OneToOne
-    :canonical: typing.Callable[..., dict[str, typing.Any]]
-
-.. code-block:: python
-
-    def example(html: str):
-        return {"name": get_name(html)}
-
-.. py:type:: OneToMany
-    :canonical: typing.Callable[..., typing.Iterator[dict[str, typing.Any]]]
-
-.. code-block:: python
-
-    def example(html: str):
-        for name in get_names(html):
-            yield {"name": name}
-"""
-
 from typing import (
     Any,
     Callable,
@@ -28,7 +9,22 @@ from functools import wraps
 POPPED_FIELDS_ATTR = "__ralsei_popped_fields"
 
 type OneToOne = Callable[..., dict[str, Any]]
+"""Row to row mapping function
+
+.. code-block:: python
+
+    def example(html: str):
+        return {"name": get_name(html)}
+"""
 type OneToMany = Callable[..., Iterator[dict[str, Any]]]
+"""One row to many rows mapping function
+
+.. code-block:: python
+
+    def example(html: str):
+        for name in get_names(html):
+            yield {"name": name}
+"""
 
 
 def into_many(fn: OneToOne) -> OneToMany:
@@ -93,9 +89,6 @@ def pop_id_fields(
                 >>>
                 >>> next(foo(year=2015, name="Tokyo"))
                 {"year": 2015, "json": {...}}
-
-    Returns:
-        typing.Callable[[OneToMany], OneToMany]:
     """
 
     def decorator(fn: OneToMany) -> OneToMany:
@@ -128,9 +121,6 @@ def rename_input(**mapping: str) -> Callable[[OneToMany], OneToMany]:
 
         foo(a=10)
 
-
-    Returns:
-        typing.Callable[[OneToMany], OneToMany]:
     """
 
     def decorator(fn: OneToMany) -> OneToMany:
@@ -156,10 +146,6 @@ def rename_output(**mapping: str) -> Callable[[OneToMany], OneToMany]:
         >>>
         >>> next(foo())
         {"b": 5}
-
-
-    Returns:
-        typing.Callable[[OneToMany], OneToMany]:
     """
 
     def decorator(fn: OneToMany) -> OneToMany:
@@ -183,9 +169,6 @@ def add_to_input(**add_values: Any) -> Callable[[OneToMany], OneToMany]:
             yield {...}
 
         foo(a=5)
-
-    Returns:
-        typing.Callable[[OneToMany], OneToMany]:
     """
 
     def decorator(fn: OneToMany) -> OneToMany:
@@ -209,9 +192,6 @@ def add_to_output(**add_values: Any) -> Callable[[OneToMany], OneToMany]:
         >>>
         >>> next(foo())
         {"a": 10, "b": "meow"}
-
-    Returns:
-        typing.Callable[[OneToMany], OneToMany]:
     """
 
     def decorator(fn: OneToMany) -> OneToMany:
@@ -229,11 +209,8 @@ def compose(fn: OneToMany, *decorators: Callable[[OneToMany], OneToMany]) -> One
     """Compose multiple decorators together on a :py:type:`~OneToMany`
 
     Args:
-        fn (OneToMany): base function
-        decorators (typing.Callable[[OneToMany], OneToMany]): decorators to apply
-
-    Returns:
-        OneToMany:
+        fn: base function
+        decorators: decorators to apply
     """
 
     for decorator in decorators:
@@ -249,11 +226,8 @@ def compose_one(
     """Compose multiple decorators together on a :py:type:`~OneToOne`
 
     Args:
-        fn (OneToOne): base function
-        decorators (typing.Callable[[OneToMany], OneToMany]): decorators to apply
-
-    Returns:
-        OneToOne:
+        fn: base function
+        decorators: decorators to apply
     """
 
     return into_one(compose(into_many(fn), *decorators))
