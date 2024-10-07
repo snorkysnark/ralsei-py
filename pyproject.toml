@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ralsei"
-version = "3.0.0.dev3"
+version = "3.0.0.dev4"
 description = "Build modular data pipelines running inside the postgres database"
 authors = ["snorkysnark <snorkysnark@gmail.com>"]
 readme = "README.md"
