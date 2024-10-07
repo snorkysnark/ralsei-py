@@ -153,7 +153,7 @@ class Ralsei:
         @click.option(
             "--from",
             "from_filters",
-            help="run this task and its dependencies",
+            help="run this task and its descendants",
             type=type_treepath,
             multiple=True,
         )
