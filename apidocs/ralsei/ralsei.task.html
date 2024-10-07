@@ -357,36 +357,6 @@
   
   
     <li class="md-nav__item">
-      <a href="ralsei.jinja.html" class="md-nav__link">
-        <span class="md-ellipsis">ralsei.<wbr>jinja</span>
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="ralsei.app.html" class="md-nav__link">
-        <span class="md-ellipsis">ralsei.<wbr>app</span>
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="ralsei.graph.html" class="md-nav__link">
         <span class="md-ellipsis">ralsei.<wbr>graph</span>
       </a>
@@ -1098,6 +1068,36 @@
     <li class="md-nav__item">
       <a href="ralsei.connection.html" class="md-nav__link">
         <span class="md-ellipsis">ralsei.<wbr>connection</span>
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ralsei.jinja.html" class="md-nav__link">
+        <span class="md-ellipsis">ralsei.<wbr>jinja</span>
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ralsei.app.html" class="md-nav__link">
+        <span class="md-ellipsis">ralsei.<wbr>app</span>
       </a>
     </li>
   
@@ -2467,8 +2467,8 @@ so that you can update <a class="reference internal" href="#ralsei.task.MapToNew
 </dd></dl>
 
 <dl class="py class objdesc">
-<dt class="sig sig-object highlight py" id="ralsei.task.CreateTableTask">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ralsei.task.</span></span><span class="sig-name descname"><span class="pre">CreateTableTask</span></span><a class="headerlink" href="#ralsei.task.CreateTableTask" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object highlight sig-wrap py" id="ralsei.task.CreateTableTask">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ralsei.task.</span></span><span class="sig-name descname"><span class="pre">CreateTableTask</span></span><span class="sig-paren">(</span><span class="sig-param-decl"><em class="sig-param"><span class="n"><span class="pre">this</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><span class="pre">D</span></span></span></em>, </span><span class="sig-param-decl"><em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="desctype"><a class="reference internal" href="ralsei.jinja.html#ralsei.jinja.ISqlEnvironment" title="ralsei.jinja.ISqlEnvironment (Python class) — Bases: typing.Protocol"><span class="pre">ralsei.jinja.ISqlEnvironment</span></a></span></span></em></span><span class="sig-paren">)</span><a class="headerlink" href="#ralsei.task.CreateTableTask" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="ralsei.task.base.html#ralsei.task.base.TaskImpl" title="ralsei.task.base.TaskImpl (Python class) — Bases: ralsei.task.base.Task"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ralsei.task.base.TaskImpl</span></code></a></p>
 <p>Base class for a task that performs table creation</p>
 <p>All you have to do is call <a class="reference internal" href="#ralsei.task.CreateTableTask._prepare_table" title="ralsei.task.CreateTableTask._prepare_table (Python method)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">_prepare_table()</span></code></a> from within <a class="reference internal" href="#ralsei.task.TaskImpl.prepare" title="ralsei.task.TaskImpl.prepare (Python method) — Perform your initialization here"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ralsei.task.TaskImpl.prepare()</span></code></a>.</p>
@@ -2497,6 +2497,7 @@ leaving only the <a class="reference internal" href="#ralsei.task.TaskImpl._run"
 </code></pre></div>
 </div>
 </div>
+<p class="rubric">Initialization</p>
 <dl class="py attribute objdesc">
 <dt class="sig sig-object highlight py" id="ralsei.task.CreateTableTask._table">
 <span class="sig-name descname"><span class="pre">_table</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference internal" href="ralsei.types.html#ralsei.types.Table" title="ralsei.types.Table (Python class) — Bases: ralsei.types.to_sql.ToSql"><span class="pre">ralsei.types.Table</span></a></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="kc">None</span></code><a class="headerlink" href="#ralsei.task.CreateTableTask._table" title="Link to this definition">¶</a></dt>

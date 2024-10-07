@@ -25,12 +25,17 @@ Classes
 API
 ~~~
 
-.. py:class:: CreateTableTask
+.. py:class:: CreateTableTask(this: D, env: ralsei.jinja.ISqlEnvironment)
    :canonical: ralsei.task.create_table.CreateTableTask
 
    Bases: :py:obj:`ralsei.task.base.TaskImpl`
 
    .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask.__init__
       :parser: autodoc2_napoleon
 
    .. py:attribute:: _table
@@ -59,17 +64,8 @@ API
       :canonical: ralsei.task.create_table.CreateTableTask.output
       :type: typing.Any
 
-      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask.output
-         :parser: autodoc2_napoleon
-
    .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
       :canonical: ralsei.task.create_table.CreateTableTask._exists
 
-      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._exists
-         :parser: autodoc2_napoleon
-
    .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
       :canonical: ralsei.task.create_table.CreateTableTask._delete
-
-      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._delete
-         :parser: autodoc2_napoleon

@@ -15,11 +15,11 @@ Subpackages
    :maxdepth: 3
 
    ralsei.types
-   ralsei.jinja
-   ralsei.app
    ralsei.graph
    ralsei.task
    ralsei.connection
+   ralsei.jinja
+   ralsei.app
 
 Submodules
 ----------
@@ -28,11 +28,11 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
-   ralsei.console
-   ralsei.utils
    ralsei.wrappers
-   ralsei.db_actions
+   ralsei.console
    ralsei.dialect
+   ralsei.db_actions
+   ralsei.utils
 
 Package Contents
 ----------------
