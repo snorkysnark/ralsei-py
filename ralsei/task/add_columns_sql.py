@@ -36,6 +36,9 @@ class AddColumnsSql(TaskDef):
                 sql=Path("./postprocess.sql").read_text(),
                 table=Table("people"),
             )
+
+    Note:
+        You can use :py:func:`ralsei.utils.folder` to find SQL files relative to current file
     """
 
     sql: str | list[str]

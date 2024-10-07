@@ -34,6 +34,9 @@ class CreateTableSql(TaskDef):
                 table=Table("new_table"),
                 locals={"sources": self.outputof("other")},
             )
+
+    Note:
+        You can use :py:func:`ralsei.utils.folder` to find SQL files relative to current file
     """
 
     sql: str | list[str]
