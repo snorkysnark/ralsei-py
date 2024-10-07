@@ -29,9 +29,8 @@ jobs:
       - name: Run Tests
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres
-        run: |
-          source .venv/bin/activate
-          pytest ./tests
+          PYTHONPATH: .
+        run: poetry run pytest ./tests
 
   publish:
     needs: test
