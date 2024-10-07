@@ -1,0 +1,541 @@
+:py:mod:`ralsei.task`
+=====================
+
+.. py:module:: ralsei.task
+
+.. autodoc2-docstring:: ralsei.task
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Task <ralsei.task.base.Task>`
+     - .. autodoc2-docstring:: ralsei.task.base.Task
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`TaskImpl <ralsei.task.base.TaskImpl>`
+     - .. autodoc2-docstring:: ralsei.task.base.TaskImpl
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`TaskDef <ralsei.task.base.TaskDef>`
+     - .. autodoc2-docstring:: ralsei.task.base.TaskDef
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`CreateTableSql <ralsei.task.create_table_sql.CreateTableSql>`
+     - .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`AddColumnsSql <ralsei.task.add_columns_sql.AddColumnsSql>`
+     - .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`MapToNewTable <ralsei.task.map_to_new_table.MapToNewTable>`
+     - .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`MapToNewColumns <ralsei.task.map_to_new_columns.MapToNewColumns>`
+     - .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`CreateTableTask <ralsei.task.create_table.CreateTableTask>`
+     - .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`AddColumnsTask <ralsei.task.add_columns.AddColumnsTask>`
+     - .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask
+          :parser: autodoc2_napoleon
+          :summary:
+
+Data
+~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ROW_CONTEXT_ATRRIBUTE <ralsei.task.context.ROW_CONTEXT_ATRRIBUTE>`
+     - .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ROW_CONTEXT_VAR <ralsei.task.context.ROW_CONTEXT_VAR>`
+     - .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_VAR
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: Task
+   :canonical: ralsei.task.base.Task
+
+   Bases: :py:obj:`abc.ABC`
+
+   .. autodoc2-docstring:: ralsei.task.base.Task
+      :parser: autodoc2_napoleon
+
+   .. py:method:: run(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.task.base.Task.run
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.run
+         :parser: autodoc2_napoleon
+
+   .. py:method:: delete(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.task.base.Task.delete
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.delete
+         :parser: autodoc2_napoleon
+
+   .. py:method:: redo(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.task.base.Task.redo
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.redo
+         :parser: autodoc2_napoleon
+
+   .. py:property:: output
+      :canonical: ralsei.task.base.Task.output
+      :abstractmethod:
+      :type: typing.Any
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.output
+         :parser: autodoc2_napoleon
+
+   .. py:method:: exists(conn: ralsei.connection.ConnectionExt) -> bool
+      :canonical: ralsei.task.base.Task.exists
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: scripts() -> typing.Iterable[tuple[str, object]]
+      :canonical: ralsei.task.base.Task.scripts
+
+      .. autodoc2-docstring:: ralsei.task.base.Task.scripts
+         :parser: autodoc2_napoleon
+
+.. py:class:: TaskImpl(this: D, env: ralsei.jinja.ISqlEnvironment)
+   :canonical: ralsei.task.base.TaskImpl
+
+   Bases: :py:obj:`ralsei.task.base.Task`
+
+   .. autodoc2-docstring:: ralsei.task.base.TaskImpl
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.task.base.TaskImpl.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: env
+      :canonical: ralsei.task.base.TaskImpl.env
+      :type: ralsei.jinja.ISqlEnvironment
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl.env
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _scripts
+      :canonical: ralsei.task.base.TaskImpl._scripts
+      :type: dict[str, object]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl._scripts
+         :parser: autodoc2_napoleon
+
+   .. py:method:: prepare(this: D)
+      :canonical: ralsei.task.base.TaskImpl.prepare
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl.prepare
+         :parser: autodoc2_napoleon
+
+   .. py:method:: resolve(value: ralsei.graph.Resolves[ralsei.task.base.TaskImpl.resolve.T]) -> ralsei.task.base.TaskImpl.resolve.T
+      :canonical: ralsei.task.base.TaskImpl.resolve
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl.resolve
+         :parser: autodoc2_napoleon
+
+   .. py:method:: run(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.task.base.TaskImpl.run
+
+   .. py:method:: delete(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.task.base.TaskImpl.delete
+
+   .. py:method:: exists(conn: ralsei.connection.ConnectionExt) -> bool
+      :canonical: ralsei.task.base.TaskImpl.exists
+
+   .. py:method:: _run(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.base.TaskImpl._run
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl._run
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.base.TaskImpl._delete
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl._delete
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
+      :canonical: ralsei.task.base.TaskImpl._exists
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl._exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: scripts() -> typing.Iterable[tuple[str, object]]
+      :canonical: ralsei.task.base.TaskImpl.scripts
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskImpl.scripts
+         :parser: autodoc2_napoleon
+
+.. py:class:: TaskDef
+   :canonical: ralsei.task.base.TaskDef
+
+   .. autodoc2-docstring:: ralsei.task.base.TaskDef
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: Impl
+      :canonical: ralsei.task.base.TaskDef.Impl
+      :type: typing.ClassVar[type[ralsei.task.base.TaskImpl[typing.Self]]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskDef.Impl
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: locals
+      :canonical: ralsei.task.base.TaskDef.locals
+      :type: dict[str, typing.Any]
+      :value: 'field(...)'
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskDef.locals
+         :parser: autodoc2_napoleon
+
+   .. py:method:: create(env: ralsei.jinja.SqlEnvironment) -> ralsei.task.base.TaskImpl[typing.Self]
+      :canonical: ralsei.task.base.TaskDef.create
+
+      .. autodoc2-docstring:: ralsei.task.base.TaskDef.create
+         :parser: autodoc2_napoleon
+
+.. py:class:: CreateTableSql
+   :canonical: ralsei.task.create_table_sql.CreateTableSql
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: sql
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.sql
+      :type: str | list[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.sql
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: view
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.view
+      :type: bool
+      :value: False
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.view
+         :parser: autodoc2_napoleon
+
+.. py:class:: AddColumnsSql
+   :canonical: ralsei.task.add_columns_sql.AddColumnsSql
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: sql
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.sql
+      :type: str | list[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.sql
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.table
+      :type: ralsei.graph.Resolves[ralsei.types.Table]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.columns
+      :type: typing.Optional[typing.Sequence[ralsei.types.ColumnBase]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.columns
+         :parser: autodoc2_napoleon
+
+.. py:class:: MapToNewTable
+   :canonical: ralsei.task.map_to_new_table.MapToNewTable
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.columns
+      :type: typing.Sequence[str | ralsei.types.ValueColumnBase]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: fn
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.fn
+      :type: ralsei.wrappers.OneToMany
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.fn
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: select
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.select
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.select
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: source_table
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.source_table
+      :type: typing.Optional[ralsei.graph.Resolves[ralsei.types.Table]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.source_table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: is_done_column
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.is_done_column
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.is_done_column
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: id_fields
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.id_fields
+      :type: typing.Optional[list[ralsei.types.IdColumn]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.id_fields
+         :parser: autodoc2_napoleon
+
+.. py:class:: MapToNewColumns
+   :canonical: ralsei.task.map_to_new_columns.MapToNewColumns
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: select
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.select
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.select
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.table
+      :type: ralsei.graph.Resolves[ralsei.types.Table]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.columns
+      :type: typing.Sequence[ralsei.types.ValueColumnBase]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: fn
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.fn
+      :type: ralsei.wrappers.OneToOne
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.fn
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: is_done_column
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: id_fields
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.id_fields
+      :type: typing.Optional[list[ralsei.types.IdColumn]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.id_fields
+         :parser: autodoc2_napoleon
+
+.. py:class:: CreateTableTask
+   :canonical: ralsei.task.create_table.CreateTableTask
+
+   Bases: :py:obj:`ralsei.task.base.TaskImpl`
+
+   .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: _table
+      :canonical: ralsei.task.create_table.CreateTableTask._table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _drop_sql
+      :canonical: ralsei.task.create_table.CreateTableTask._drop_sql
+      :type: sqlalchemy.sql.elements.TextClause
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._drop_sql
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _prepare_table(table: ralsei.types.Table, view: bool = False)
+      :canonical: ralsei.task.create_table.CreateTableTask._prepare_table
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._prepare_table
+         :parser: autodoc2_napoleon
+
+   .. py:property:: output
+      :canonical: ralsei.task.create_table.CreateTableTask.output
+      :type: typing.Any
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask.output
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
+      :canonical: ralsei.task.create_table.CreateTableTask._exists
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.create_table.CreateTableTask._delete
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._delete
+         :parser: autodoc2_napoleon
+
+.. py:class:: AddColumnsTask
+   :canonical: ralsei.task.add_columns.AddColumnsTask
+
+   Bases: :py:obj:`ralsei.task.base.TaskImpl`
+
+   .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: _table
+      :canonical: ralsei.task.add_columns.AddColumnsTask._table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._columns
+      :type: list[ralsei.types.ColumnRendered]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _add_columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._add_columns
+      :type: ralsei.db_actions.AddColumns
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._add_columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _drop_columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._drop_columns
+      :type: ralsei.db_actions.DropColumns
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._drop_columns
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _prepare_columns(table: ralsei.graph.Resolves[ralsei.types.Table], columns: typing.Sequence[ralsei.types.ColumnBase], *, if_not_exists: bool = False)
+      :canonical: ralsei.task.add_columns.AddColumnsTask._prepare_columns
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._prepare_columns
+         :parser: autodoc2_napoleon
+
+   .. py:property:: output
+      :canonical: ralsei.task.add_columns.AddColumnsTask.output
+      :type: typing.Any
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask.output
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
+      :canonical: ralsei.task.add_columns.AddColumnsTask._exists
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.add_columns.AddColumnsTask._delete
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._delete
+         :parser: autodoc2_napoleon
+
+.. py:data:: ROW_CONTEXT_ATRRIBUTE
+   :canonical: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+   :value: '__ralsei_row_context'
+
+   .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+      :parser: autodoc2_napoleon
+
+.. py:data:: ROW_CONTEXT_VAR
+   :canonical: ralsei.task.context.ROW_CONTEXT_VAR
+   :type: contextvars.ContextVar[dict]
+   :value: 'ContextVar(...)'
+
+   .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_VAR
+      :parser: autodoc2_napoleon

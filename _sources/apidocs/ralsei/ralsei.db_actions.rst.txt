@@ -1,0 +1,98 @@
+:py:mod:`ralsei.db_actions`
+===========================
+
+.. py:module:: ralsei.db_actions
+
+.. autodoc2-docstring:: ralsei.db_actions
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`AddColumns <ralsei.db_actions.AddColumns>`
+     - .. autodoc2-docstring:: ralsei.db_actions.AddColumns
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`DropColumns <ralsei.db_actions.DropColumns>`
+     - .. autodoc2-docstring:: ralsei.db_actions.DropColumns
+          :parser: autodoc2_napoleon
+          :summary:
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`table_exists <ralsei.db_actions.table_exists>`
+     - .. autodoc2-docstring:: ralsei.db_actions.table_exists
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`columns_exist <ralsei.db_actions.columns_exist>`
+     - .. autodoc2-docstring:: ralsei.db_actions.columns_exist
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:function:: table_exists(conn: ralsei.connection.ConnectionEnvironment, table: ralsei.types.Table) -> bool
+   :canonical: ralsei.db_actions.table_exists
+
+   .. autodoc2-docstring:: ralsei.db_actions.table_exists
+      :parser: autodoc2_napoleon
+
+.. py:function:: columns_exist(conn: ralsei.connection.ConnectionEnvironment, table: ralsei.types.Table, columns: typing.Iterable[str]) -> bool
+   :canonical: ralsei.db_actions.columns_exist
+
+   .. autodoc2-docstring:: ralsei.db_actions.columns_exist
+      :parser: autodoc2_napoleon
+
+.. py:class:: AddColumns(env: ralsei.jinja.ISqlEnvironment, table: ralsei.types.Table, columns: typing.Iterable[ralsei.types.ColumnRendered], if_not_exists: bool = False)
+   :canonical: ralsei.db_actions.AddColumns
+
+   .. autodoc2-docstring:: ralsei.db_actions.AddColumns
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.db_actions.AddColumns.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __call__(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.db_actions.AddColumns.__call__
+
+      .. autodoc2-docstring:: ralsei.db_actions.AddColumns.__call__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __str__() -> str
+      :canonical: ralsei.db_actions.AddColumns.__str__
+
+.. py:class:: DropColumns(env: ralsei.jinja.ISqlEnvironment, table: ralsei.types.Table, columns: typing.Iterable[ralsei.types.ColumnRendered], if_exists: bool = False)
+   :canonical: ralsei.db_actions.DropColumns
+
+   .. autodoc2-docstring:: ralsei.db_actions.DropColumns
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.db_actions.DropColumns.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __call__(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.db_actions.DropColumns.__call__
+
+      .. autodoc2-docstring:: ralsei.db_actions.DropColumns.__call__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __str__() -> str
+      :canonical: ralsei.db_actions.DropColumns.__str__

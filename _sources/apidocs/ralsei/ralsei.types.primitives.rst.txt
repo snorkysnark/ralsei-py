@@ -1,0 +1,146 @@
+:py:mod:`ralsei.types.primitives`
+=================================
+
+.. py:module:: ralsei.types.primitives
+
+.. autodoc2-docstring:: ralsei.types.primitives
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Sql <ralsei.types.primitives.Sql>`
+     - .. autodoc2-docstring:: ralsei.types.primitives.Sql
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`Identifier <ralsei.types.primitives.Identifier>`
+     - .. autodoc2-docstring:: ralsei.types.primitives.Identifier
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`Table <ralsei.types.primitives.Table>`
+     - .. autodoc2-docstring:: ralsei.types.primitives.Table
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`Placeholder <ralsei.types.primitives.Placeholder>`
+     - .. autodoc2-docstring:: ralsei.types.primitives.Placeholder
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: Sql
+   :canonical: ralsei.types.primitives.Sql
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.primitives.Sql
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: value
+      :canonical: ralsei.types.primitives.Sql.value
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Sql.value
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.primitives.Sql.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Sql.to_sql
+         :parser: autodoc2_napoleon
+
+.. py:class:: Identifier
+   :canonical: ralsei.types.primitives.Identifier
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.primitives.Identifier
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: value
+      :canonical: ralsei.types.primitives.Identifier.value
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Identifier.value
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.primitives.Identifier.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Identifier.to_sql
+         :parser: autodoc2_napoleon
+
+.. py:class:: Table
+   :canonical: ralsei.types.primitives.Table
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.primitives.Table
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: name
+      :canonical: ralsei.types.primitives.Table.name
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Table.name
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: schema
+      :canonical: ralsei.types.primitives.Table.schema
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Table.schema
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __str__() -> str
+      :canonical: ralsei.types.primitives.Table.__str__
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Table.__str__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.primitives.Table.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Table.to_sql
+         :parser: autodoc2_napoleon
+
+.. py:class:: Placeholder
+   :canonical: ralsei.types.primitives.Placeholder
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.primitives.Placeholder
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: name
+      :canonical: ralsei.types.primitives.Placeholder.name
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Placeholder.name
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __post_init__()
+      :canonical: ralsei.types.primitives.Placeholder.__post_init__
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Placeholder.__post_init__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.primitives.Placeholder.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.primitives.Placeholder.to_sql
+         :parser: autodoc2_napoleon

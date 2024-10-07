@@ -1,0 +1,42 @@
+:py:mod:`ralsei.utils`
+======================
+
+.. py:module:: ralsei.utils
+
+.. autodoc2-docstring:: ralsei.utils
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`expect <ralsei.utils.expect>`
+     - .. autodoc2-docstring:: ralsei.utils.expect
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`folder <ralsei.utils.folder>`
+     - .. autodoc2-docstring:: ralsei.utils.folder
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:function:: expect(value: typing.Optional[ralsei.utils.expect.T], error: Exception) -> ralsei.utils.expect.T
+   :canonical: ralsei.utils.expect
+
+   .. autodoc2-docstring:: ralsei.utils.expect
+      :parser: autodoc2_napoleon
+
+.. py:function:: folder() -> pathlib.Path
+   :canonical: ralsei.utils.folder
+
+   .. autodoc2-docstring:: ralsei.utils.folder
+      :parser: autodoc2_napoleon

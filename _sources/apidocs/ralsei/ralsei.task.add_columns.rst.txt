@@ -1,0 +1,91 @@
+:py:mod:`ralsei.task.add_columns`
+=================================
+
+.. py:module:: ralsei.task.add_columns
+
+.. autodoc2-docstring:: ralsei.task.add_columns
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`AddColumnsTask <ralsei.task.add_columns.AddColumnsTask>`
+     - .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: AddColumnsTask
+   :canonical: ralsei.task.add_columns.AddColumnsTask
+
+   Bases: :py:obj:`ralsei.task.base.TaskImpl`
+
+   .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: _table
+      :canonical: ralsei.task.add_columns.AddColumnsTask._table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._columns
+      :type: list[ralsei.types.ColumnRendered]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _add_columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._add_columns
+      :type: ralsei.db_actions.AddColumns
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._add_columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _drop_columns
+      :canonical: ralsei.task.add_columns.AddColumnsTask._drop_columns
+      :type: ralsei.db_actions.DropColumns
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._drop_columns
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _prepare_columns(table: ralsei.graph.Resolves[ralsei.types.Table], columns: typing.Sequence[ralsei.types.ColumnBase], *, if_not_exists: bool = False)
+      :canonical: ralsei.task.add_columns.AddColumnsTask._prepare_columns
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._prepare_columns
+         :parser: autodoc2_napoleon
+
+   .. py:property:: output
+      :canonical: ralsei.task.add_columns.AddColumnsTask.output
+      :type: typing.Any
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask.output
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
+      :canonical: ralsei.task.add_columns.AddColumnsTask._exists
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.add_columns.AddColumnsTask._delete
+
+      .. autodoc2-docstring:: ralsei.task.add_columns.AddColumnsTask._delete
+         :parser: autodoc2_napoleon

@@ -1,0 +1,160 @@
+:py:mod:`ralsei.wrappers`
+=========================
+
+.. py:module:: ralsei.wrappers
+
+.. autodoc2-docstring:: ralsei.wrappers
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`into_many <ralsei.wrappers.into_many>`
+     - .. autodoc2-docstring:: ralsei.wrappers.into_many
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`into_one <ralsei.wrappers.into_one>`
+     - .. autodoc2-docstring:: ralsei.wrappers.into_one
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`pop_id_fields <ralsei.wrappers.pop_id_fields>`
+     - .. autodoc2-docstring:: ralsei.wrappers.pop_id_fields
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`rename_input <ralsei.wrappers.rename_input>`
+     - .. autodoc2-docstring:: ralsei.wrappers.rename_input
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`rename_output <ralsei.wrappers.rename_output>`
+     - .. autodoc2-docstring:: ralsei.wrappers.rename_output
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`add_to_input <ralsei.wrappers.add_to_input>`
+     - .. autodoc2-docstring:: ralsei.wrappers.add_to_input
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`add_to_output <ralsei.wrappers.add_to_output>`
+     - .. autodoc2-docstring:: ralsei.wrappers.add_to_output
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`compose <ralsei.wrappers.compose>`
+     - .. autodoc2-docstring:: ralsei.wrappers.compose
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`compose_one <ralsei.wrappers.compose_one>`
+     - .. autodoc2-docstring:: ralsei.wrappers.compose_one
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`get_popped_fields <ralsei.wrappers.get_popped_fields>`
+     - .. autodoc2-docstring:: ralsei.wrappers.get_popped_fields
+          :parser: autodoc2_napoleon
+          :summary:
+
+Aliases
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`OneToOne <ralsei.wrappers.OneToOne>`
+     - .. autodoc2-docstring:: ralsei.wrappers.OneToOne
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`OneToMany <ralsei.wrappers.OneToMany>`
+     - .. autodoc2-docstring:: ralsei.wrappers.OneToMany
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. rst-class:: type-definition-anchor
+.. py:class:: OneToOne
+   :canonical: ralsei.wrappers.OneToOne
+
+   .. py:type:: OneToOne
+      :canonical: typing.Callable[..., dict[str, typing.Any]]
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.wrappers.OneToOne
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: OneToMany
+   :canonical: ralsei.wrappers.OneToMany
+
+   .. py:type:: OneToMany
+      :canonical: typing.Callable[..., typing.Iterator[dict[str, typing.Any]]]
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.wrappers.OneToMany
+         :parser: autodoc2_napoleon
+
+.. py:function:: into_many(fn: ralsei.wrappers.OneToOne) -> ralsei.wrappers.OneToMany
+   :canonical: ralsei.wrappers.into_many
+
+   .. autodoc2-docstring:: ralsei.wrappers.into_many
+      :parser: autodoc2_napoleon
+
+.. py:function:: into_one(fn: ralsei.wrappers.OneToMany) -> ralsei.wrappers.OneToOne
+   :canonical: ralsei.wrappers.into_one
+
+   .. autodoc2-docstring:: ralsei.wrappers.into_one
+      :parser: autodoc2_napoleon
+
+.. py:function:: pop_id_fields(*id_fields: str, keep: bool = False) -> typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]
+   :canonical: ralsei.wrappers.pop_id_fields
+
+   .. autodoc2-docstring:: ralsei.wrappers.pop_id_fields
+      :parser: autodoc2_napoleon
+
+.. py:function:: rename_input(**mapping: str) -> typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]
+   :canonical: ralsei.wrappers.rename_input
+
+   .. autodoc2-docstring:: ralsei.wrappers.rename_input
+      :parser: autodoc2_napoleon
+
+.. py:function:: rename_output(**mapping: str) -> typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]
+   :canonical: ralsei.wrappers.rename_output
+
+   .. autodoc2-docstring:: ralsei.wrappers.rename_output
+      :parser: autodoc2_napoleon
+
+.. py:function:: add_to_input(**add_values: typing.Any) -> typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]
+   :canonical: ralsei.wrappers.add_to_input
+
+   .. autodoc2-docstring:: ralsei.wrappers.add_to_input
+      :parser: autodoc2_napoleon
+
+.. py:function:: add_to_output(**add_values: typing.Any) -> typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]
+   :canonical: ralsei.wrappers.add_to_output
+
+   .. autodoc2-docstring:: ralsei.wrappers.add_to_output
+      :parser: autodoc2_napoleon
+
+.. py:function:: compose(fn: ralsei.wrappers.OneToMany, *decorators: typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]) -> ralsei.wrappers.OneToMany
+   :canonical: ralsei.wrappers.compose
+
+   .. autodoc2-docstring:: ralsei.wrappers.compose
+      :parser: autodoc2_napoleon
+
+.. py:function:: compose_one(fn: ralsei.wrappers.OneToOne, *decorators: typing.Callable[[ralsei.wrappers.OneToMany], ralsei.wrappers.OneToMany]) -> ralsei.wrappers.OneToOne
+   :canonical: ralsei.wrappers.compose_one
+
+   .. autodoc2-docstring:: ralsei.wrappers.compose_one
+      :parser: autodoc2_napoleon
+
+.. py:function:: get_popped_fields(fn: typing.Callable) -> typing.Optional[list[str]]
+   :canonical: ralsei.wrappers.get_popped_fields
+
+   .. autodoc2-docstring:: ralsei.wrappers.get_popped_fields
+      :parser: autodoc2_napoleon

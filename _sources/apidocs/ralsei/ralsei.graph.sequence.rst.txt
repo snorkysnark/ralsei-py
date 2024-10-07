@@ -1,0 +1,88 @@
+:py:mod:`ralsei.graph.sequence`
+===============================
+
+.. py:module:: ralsei.graph.sequence
+
+.. autodoc2-docstring:: ralsei.graph.sequence
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`NamedTask <ralsei.graph.sequence.NamedTask>`
+     - .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`TaskSequence <ralsei.graph.sequence.TaskSequence>`
+     - .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: NamedTask
+   :canonical: ralsei.graph.sequence.NamedTask
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: path
+      :canonical: ralsei.graph.sequence.NamedTask.path
+      :type: ralsei.graph.path.TreePath
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.path
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: task
+      :canonical: ralsei.graph.sequence.NamedTask.task
+      :type: ralsei.task.Task
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.task
+         :parser: autodoc2_napoleon
+
+   .. py:property:: name
+      :canonical: ralsei.graph.sequence.NamedTask.name
+      :type: str
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.name
+         :parser: autodoc2_napoleon
+
+.. py:class:: TaskSequence(steps: list[ralsei.graph.sequence.NamedTask])
+   :canonical: ralsei.graph.sequence.TaskSequence
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: run(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.run
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.run
+         :parser: autodoc2_napoleon
+
+   .. py:method:: delete(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.delete
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.delete
+         :parser: autodoc2_napoleon
+
+   .. py:method:: redo(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.redo
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.redo
+         :parser: autodoc2_napoleon

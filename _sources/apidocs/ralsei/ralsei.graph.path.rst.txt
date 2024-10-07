@@ -1,0 +1,58 @@
+:py:mod:`ralsei.graph.path`
+===========================
+
+.. py:module:: ralsei.graph.path
+
+.. autodoc2-docstring:: ralsei.graph.path
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`TreePath <ralsei.graph.path.TreePath>`
+     - .. autodoc2-docstring:: ralsei.graph.path.TreePath
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: TreePath()
+   :canonical: ralsei.graph.path.TreePath
+
+   Bases: :py:obj:`tuple`\ [\ :py:obj:`str`\ , :py:obj:`...`\ ]
+
+   .. autodoc2-docstring:: ralsei.graph.path.TreePath
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.path.TreePath.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __new__(*parts: str) -> typing.Self
+      :canonical: ralsei.graph.path.TreePath.__new__
+
+      .. autodoc2-docstring:: ralsei.graph.path.TreePath.__new__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: parse(string: str) -> ralsei.graph.path.TreePath
+      :canonical: ralsei.graph.path.TreePath.parse
+      :staticmethod:
+
+      .. autodoc2-docstring:: ralsei.graph.path.TreePath.parse
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __str__() -> str
+      :canonical: ralsei.graph.path.TreePath.__str__
+
+   .. py:method:: __repr__() -> str
+      :canonical: ralsei.graph.path.TreePath.__repr__

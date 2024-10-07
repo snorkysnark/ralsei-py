@@ -1,0 +1,149 @@
+:py:mod:`ralsei.dialect`
+========================
+
+.. py:module:: ralsei.dialect
+
+.. autodoc2-docstring:: ralsei.dialect
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`BaseDialectInfo <ralsei.dialect.BaseDialectInfo>`
+     - .. autodoc2-docstring:: ralsei.dialect.BaseDialectInfo
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`PostgresDialectInfo <ralsei.dialect.PostgresDialectInfo>`
+     -
+   * - :py:obj:`SqliteDialectInfo <ralsei.dialect.SqliteDialectInfo>`
+     -
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`register_dialect <ralsei.dialect.register_dialect>`
+     - .. autodoc2-docstring:: ralsei.dialect.register_dialect
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`get_dialect <ralsei.dialect.get_dialect>`
+     - .. autodoc2-docstring:: ralsei.dialect.get_dialect
+          :parser: autodoc2_napoleon
+          :summary:
+
+Aliases
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`DialectInfo <ralsei.dialect.DialectInfo>`
+     - .. autodoc2-docstring:: ralsei.dialect.DialectInfo
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: BaseDialectInfo
+   :canonical: ralsei.dialect.BaseDialectInfo
+
+   .. autodoc2-docstring:: ralsei.dialect.BaseDialectInfo
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: autoincrement_key
+      :canonical: ralsei.dialect.BaseDialectInfo.autoincrement_key
+      :type: ralsei.types.ToSql
+      :value: 'Sql(...)'
+
+      .. autodoc2-docstring:: ralsei.dialect.BaseDialectInfo.autoincrement_key
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: supports_column_if_not_exists
+      :canonical: ralsei.dialect.BaseDialectInfo.supports_column_if_not_exists
+      :type: bool
+      :value: True
+
+      .. autodoc2-docstring:: ralsei.dialect.BaseDialectInfo.supports_column_if_not_exists
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: supports_rowcount
+      :canonical: ralsei.dialect.BaseDialectInfo.supports_rowcount
+      :type: bool
+      :value: True
+
+      .. autodoc2-docstring:: ralsei.dialect.BaseDialectInfo.supports_rowcount
+         :parser: autodoc2_napoleon
+
+.. py:class:: PostgresDialectInfo
+   :canonical: ralsei.dialect.PostgresDialectInfo
+
+   Bases: :py:obj:`ralsei.dialect.BaseDialectInfo`
+
+.. py:class:: SqliteDialectInfo
+   :canonical: ralsei.dialect.SqliteDialectInfo
+
+   Bases: :py:obj:`ralsei.dialect.BaseDialectInfo`
+
+   .. py:attribute:: name
+      :canonical: ralsei.dialect.SqliteDialectInfo.name
+      :value: 'sqlite'
+
+      .. autodoc2-docstring:: ralsei.dialect.SqliteDialectInfo.name
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: autoincrement_key
+      :canonical: ralsei.dialect.SqliteDialectInfo.autoincrement_key
+      :value: 'Sql(...)'
+
+      .. autodoc2-docstring:: ralsei.dialect.SqliteDialectInfo.autoincrement_key
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: supports_column_if_not_exists
+      :canonical: ralsei.dialect.SqliteDialectInfo.supports_column_if_not_exists
+      :value: False
+
+      .. autodoc2-docstring:: ralsei.dialect.SqliteDialectInfo.supports_column_if_not_exists
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: supports_rowcount
+      :canonical: ralsei.dialect.SqliteDialectInfo.supports_rowcount
+      :value: False
+
+      .. autodoc2-docstring:: ralsei.dialect.SqliteDialectInfo.supports_rowcount
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: DialectInfo
+   :canonical: ralsei.dialect.DialectInfo
+
+   .. py:type:: DialectInfo
+      :canonical: ralsei.dialect.BaseDialectInfo | type[ralsei.dialect.BaseDialectInfo]
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.dialect.DialectInfo
+         :parser: autodoc2_napoleon
+
+.. py:function:: register_dialect(driver: str) -> typing.Callable[[ralsei.dialect.register_dialect.D], ralsei.dialect.register_dialect.D]
+   :canonical: ralsei.dialect.register_dialect
+
+   .. autodoc2-docstring:: ralsei.dialect.register_dialect
+      :parser: autodoc2_napoleon
+
+.. py:function:: get_dialect(driver: str) -> ralsei.dialect.DialectInfo
+   :canonical: ralsei.dialect.get_dialect
+
+   .. autodoc2-docstring:: ralsei.dialect.get_dialect
+      :parser: autodoc2_napoleon

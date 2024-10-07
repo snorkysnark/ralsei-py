@@ -1,0 +1,32 @@
+:py:mod:`ralsei.connection.create`
+==================================
+
+.. py:module:: ralsei.connection.create
+
+.. autodoc2-docstring:: ralsei.connection.create
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`create_engine <ralsei.connection.create.create_engine>`
+     - .. autodoc2-docstring:: ralsei.connection.create.create_engine
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:function:: create_engine(url: str | sqlalchemy.engine.URL, **kwargs) -> sqlalchemy.engine.Engine
+   :canonical: ralsei.connection.create.create_engine
+
+   .. autodoc2-docstring:: ralsei.connection.create.create_engine
+      :parser: autodoc2_napoleon

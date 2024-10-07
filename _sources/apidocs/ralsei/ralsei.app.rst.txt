@@ -1,0 +1,107 @@
+:py:mod:`ralsei.app`
+====================
+
+.. py:module:: ralsei.app
+
+.. autodoc2-docstring:: ralsei.app
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Ralsei <ralsei.app.Ralsei>`
+     - .. autodoc2-docstring:: ralsei.app.Ralsei
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: Ralsei(url: sqlalchemy.engine.URL, pipeline: ralsei.graph.Pipeline)
+   :canonical: ralsei.app.Ralsei
+
+   .. autodoc2-docstring:: ralsei.app.Ralsei
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.app.Ralsei.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: pipeline
+      :canonical: ralsei.app.Ralsei.pipeline
+      :type: ralsei.graph.Pipeline
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.pipeline
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: engine
+      :canonical: ralsei.app.Ralsei.engine
+      :type: sqlalchemy.engine.Engine
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.engine
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: env
+      :canonical: ralsei.app.Ralsei.env
+      :type: ralsei.jinja.SqlEnvironment
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.env
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: dag
+      :canonical: ralsei.app.Ralsei.dag
+      :type: ralsei.graph.DAG
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.dag
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _create_engine(url: sqlalchemy.engine.URL) -> sqlalchemy.engine.Engine
+      :canonical: ralsei.app.Ralsei._create_engine
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei._create_engine
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _prepare_env(env: ralsei.jinja.SqlEnvironment)
+      :canonical: ralsei.app.Ralsei._prepare_env
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei._prepare_env
+         :parser: autodoc2_napoleon
+
+   .. py:method:: connect() -> ralsei.connection.ConnectionEnvironment
+      :canonical: ralsei.app.Ralsei.connect
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.connect
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _on_connect(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.app.Ralsei._on_connect
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei._on_connect
+         :parser: autodoc2_napoleon
+
+   .. py:method:: build_cli() -> click.Group
+      :canonical: ralsei.app.Ralsei.build_cli
+      :classmethod:
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.build_cli
+         :parser: autodoc2_napoleon
+
+   .. py:method:: run_cli(*args, **kwargs)
+      :canonical: ralsei.app.Ralsei.run_cli
+      :classmethod:
+
+      .. autodoc2-docstring:: ralsei.app.Ralsei.run_cli
+         :parser: autodoc2_napoleon

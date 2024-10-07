@@ -1,0 +1,150 @@
+:py:mod:`ralsei.types.column`
+=============================
+
+.. py:module:: ralsei.types.column
+
+.. autodoc2-docstring:: ralsei.types.column
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ColumnBase <ralsei.types.column.ColumnBase>`
+     - .. autodoc2-docstring:: ralsei.types.column.ColumnBase
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`Column <ralsei.types.column.Column>`
+     - .. autodoc2-docstring:: ralsei.types.column.Column
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ColumnRendered <ralsei.types.column.ColumnRendered>`
+     - .. autodoc2-docstring:: ralsei.types.column.ColumnRendered
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ColumnDefinition <ralsei.types.column.ColumnDefinition>`
+     - .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ColumnBase(name: str)
+   :canonical: ralsei.types.column.ColumnBase
+
+   Bases: :py:obj:`abc.ABC`
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnBase
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnBase.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: name
+      :canonical: ralsei.types.column.ColumnBase.name
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnBase.name
+         :parser: autodoc2_napoleon
+
+   .. py:property:: identifier
+      :canonical: ralsei.types.column.ColumnBase.identifier
+      :type: ralsei.types.primitives.Identifier
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnBase.identifier
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.column.ColumnRendered
+      :canonical: ralsei.types.column.ColumnBase.render
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnBase.render
+         :parser: autodoc2_napoleon
+
+.. py:class:: Column(name: str, type: str)
+   :canonical: ralsei.types.column.Column
+
+   Bases: :py:obj:`ralsei.types.column.ColumnBase`
+
+   .. autodoc2-docstring:: ralsei.types.column.Column
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.column.Column.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.column.ColumnRendered
+      :canonical: ralsei.types.column.Column.render
+
+      .. autodoc2-docstring:: ralsei.types.column.Column.render
+         :parser: autodoc2_napoleon
+
+.. py:class:: ColumnRendered(name: str, type: str)
+   :canonical: ralsei.types.column.ColumnRendered
+
+   Bases: :py:obj:`ralsei.types.column.ColumnBase`
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnRendered
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnRendered.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: type
+      :canonical: ralsei.types.column.ColumnRendered.type
+      :type: ralsei.types.primitives.Sql
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnRendered.type
+         :parser: autodoc2_napoleon
+
+   .. py:property:: definition
+      :canonical: ralsei.types.column.ColumnRendered.definition
+      :type: ralsei.types.column.ColumnDefinition
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnRendered.definition
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.column.ColumnRendered
+      :canonical: ralsei.types.column.ColumnRendered.render
+
+.. py:class:: ColumnDefinition(column: ralsei.types.column.ColumnRendered)
+   :canonical: ralsei.types.column.ColumnDefinition
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: column
+      :canonical: ralsei.types.column.ColumnDefinition.column
+      :type: ralsei.types.column.ColumnRendered
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition.column
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.column.ColumnDefinition.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition.to_sql
+         :parser: autodoc2_napoleon

@@ -1,0 +1,32 @@
+:py:mod:`ralsei.graph.resolver_context`
+=======================================
+
+.. py:module:: ralsei.graph.resolver_context
+
+.. autodoc2-docstring:: ralsei.graph.resolver_context
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`resolve <ralsei.graph.resolver_context.resolve>`
+     - .. autodoc2-docstring:: ralsei.graph.resolver_context.resolve
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:function:: resolve(env: ralsei.jinja.ISqlEnvironment, value: typing.Any) -> typing.Any
+   :canonical: ralsei.graph.resolver_context.resolve
+
+   .. autodoc2-docstring:: ralsei.graph.resolver_context.resolve
+      :parser: autodoc2_napoleon

@@ -1,0 +1,77 @@
+:py:mod:`ralsei.graph.outputof`
+===============================
+
+.. py:module:: ralsei.graph.outputof
+
+.. autodoc2-docstring:: ralsei.graph.outputof
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`OutputOf <ralsei.graph.outputof.OutputOf>`
+     - .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf
+          :parser: autodoc2_napoleon
+          :summary:
+
+Aliases
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Resolves <ralsei.graph.outputof.Resolves>`
+     - .. autodoc2-docstring:: ralsei.graph.outputof.Resolves
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: OutputOf
+   :canonical: ralsei.graph.outputof.OutputOf
+
+   .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: pipeline
+      :canonical: ralsei.graph.outputof.OutputOf.pipeline
+      :type: ralsei.graph.pipeline.Pipeline
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.pipeline
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: task_paths
+      :canonical: ralsei.graph.outputof.OutputOf.task_paths
+      :type: list[ralsei.graph.path.TreePath]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.task_paths
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __post_init__()
+      :canonical: ralsei.graph.outputof.OutputOf.__post_init__
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.__post_init__
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: Resolves
+   :canonical: ralsei.graph.outputof.Resolves
+
+   .. py:type:: Resolves
+      :canonical: ralsei.graph.outputof.T | ralsei.graph.outputof.OutputOf
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.Resolves
+         :parser: autodoc2_napoleon

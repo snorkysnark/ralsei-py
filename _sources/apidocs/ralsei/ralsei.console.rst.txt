@@ -1,0 +1,52 @@
+:py:mod:`ralsei.console`
+========================
+
+.. py:module:: ralsei.console
+
+.. autodoc2-docstring:: ralsei.console
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`track <ralsei.console.track>`
+     - .. autodoc2-docstring:: ralsei.console.track
+          :parser: autodoc2_napoleon
+          :summary:
+
+Data
+~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`console <ralsei.console.console>`
+     - .. autodoc2-docstring:: ralsei.console.console
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:data:: console
+   :canonical: ralsei.console.console
+   :type: rich.console.Console
+   :value: 'RalseiConsole(...)'
+
+   .. autodoc2-docstring:: ralsei.console.console
+      :parser: autodoc2_napoleon
+
+.. py:function:: track(sequence: typing.Sequence[ralsei.console.track.T] | typing.Iterable[ralsei.console.track.T], description: str = 'Working...', total: typing.Optional[float] = None) -> typing.Iterable[ralsei.console.track.T]
+   :canonical: ralsei.console.track
+
+   .. autodoc2-docstring:: ralsei.console.track
+      :parser: autodoc2_napoleon

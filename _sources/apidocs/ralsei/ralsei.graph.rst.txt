@@ -1,0 +1,325 @@
+:py:mod:`ralsei.graph`
+======================
+
+.. py:module:: ralsei.graph
+
+.. autodoc2-docstring:: ralsei.graph
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Pipeline <ralsei.graph.pipeline.Pipeline>`
+     - .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`DAG <ralsei.graph.dag.DAG>`
+     - .. autodoc2-docstring:: ralsei.graph.dag.DAG
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`TreePath <ralsei.graph.path.TreePath>`
+     - .. autodoc2-docstring:: ralsei.graph.path.TreePath
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`OutputOf <ralsei.graph.outputof.OutputOf>`
+     - .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`NamedTask <ralsei.graph.sequence.NamedTask>`
+     - .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`TaskSequence <ralsei.graph.sequence.TaskSequence>`
+     - .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence
+          :parser: autodoc2_napoleon
+          :summary:
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`resolve <ralsei.graph.resolver_context.resolve>`
+     - .. autodoc2-docstring:: ralsei.graph.resolver_context.resolve
+          :parser: autodoc2_napoleon
+          :summary:
+
+Aliases
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Tasks <ralsei.graph.pipeline.Tasks>`
+     - .. autodoc2-docstring:: ralsei.graph.pipeline.Tasks
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`Resolves <ralsei.graph.outputof.Resolves>`
+     - .. autodoc2-docstring:: ralsei.graph.outputof.Resolves
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: Pipeline
+   :canonical: ralsei.graph.pipeline.Pipeline
+
+   Bases: :py:obj:`abc.ABC`
+
+   .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline
+      :parser: autodoc2_napoleon
+
+   .. py:method:: create_tasks() -> ralsei.graph.pipeline.Tasks
+      :canonical: ralsei.graph.pipeline.Pipeline.create_tasks
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.create_tasks
+         :parser: autodoc2_napoleon
+
+   .. py:method:: outputof(*task_paths: str | ralsei.graph.path.TreePath) -> ralsei.graph.outputof.OutputOf
+      :canonical: ralsei.graph.pipeline.Pipeline.outputof
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.outputof
+         :parser: autodoc2_napoleon
+
+   .. py:method:: build_dag(env: ralsei.jinja.SqlEnvironment) -> ralsei.graph.dag.DAG
+      :canonical: ralsei.graph.pipeline.Pipeline.build_dag
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.build_dag
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: Tasks
+   :canonical: ralsei.graph.pipeline.Tasks
+
+   .. py:type:: Tasks
+      :canonical: typing.Mapping[str, typing.Union[ralsei.task.TaskDef, ralsei.graph.pipeline.Pipeline, ralsei.graph.pipeline.Tasks]]
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Tasks
+         :parser: autodoc2_napoleon
+
+.. py:class:: DAG
+   :canonical: ralsei.graph.dag.DAG
+
+   .. autodoc2-docstring:: ralsei.graph.dag.DAG
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: tasks
+      :canonical: ralsei.graph.dag.DAG.tasks
+      :type: dict[ralsei.graph.path.TreePath, ralsei.task.Task]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.tasks
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: relations
+      :canonical: ralsei.graph.dag.DAG.relations
+      :type: dict[ralsei.graph.path.TreePath, set[ralsei.graph.path.TreePath]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.relations
+         :parser: autodoc2_napoleon
+
+   .. py:method:: tasks_str() -> dict[str, ralsei.task.Task]
+      :canonical: ralsei.graph.dag.DAG.tasks_str
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.tasks_str
+         :parser: autodoc2_napoleon
+
+   .. py:method:: relations_str() -> dict[str, set[str]]
+      :canonical: ralsei.graph.dag.DAG.relations_str
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.relations_str
+         :parser: autodoc2_napoleon
+
+   .. py:method:: topological_sort(constrain_starting_nodes: typing.Optional[typing.Iterable[ralsei.graph.path.TreePath]] = None) -> ralsei.graph.sequence.TaskSequence
+      :canonical: ralsei.graph.dag.DAG.topological_sort
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.topological_sort
+         :parser: autodoc2_napoleon
+
+   .. py:method:: sort_filtered(from_filters: typing.Sequence[ralsei.graph.path.TreePath], single_filters: typing.Sequence[ralsei.graph.path.TreePath]) -> ralsei.graph.sequence.TaskSequence
+      :canonical: ralsei.graph.dag.DAG.sort_filtered
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.sort_filtered
+         :parser: autodoc2_napoleon
+
+   .. py:method:: graphviz() -> graphviz.Digraph
+      :canonical: ralsei.graph.dag.DAG.graphviz
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.graphviz
+         :parser: autodoc2_napoleon
+
+.. py:class:: TreePath()
+   :canonical: ralsei.graph.path.TreePath
+
+   Bases: :py:obj:`tuple`\ [\ :py:obj:`str`\ , :py:obj:`...`\ ]
+
+   .. autodoc2-docstring:: ralsei.graph.path.TreePath
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.path.TreePath.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __new__(*parts: str) -> typing.Self
+      :canonical: ralsei.graph.path.TreePath.__new__
+
+      .. autodoc2-docstring:: ralsei.graph.path.TreePath.__new__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: parse(string: str) -> ralsei.graph.path.TreePath
+      :canonical: ralsei.graph.path.TreePath.parse
+      :staticmethod:
+
+      .. autodoc2-docstring:: ralsei.graph.path.TreePath.parse
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __str__() -> str
+      :canonical: ralsei.graph.path.TreePath.__str__
+
+   .. py:method:: __repr__() -> str
+      :canonical: ralsei.graph.path.TreePath.__repr__
+
+.. py:class:: OutputOf
+   :canonical: ralsei.graph.outputof.OutputOf
+
+   .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: pipeline
+      :canonical: ralsei.graph.outputof.OutputOf.pipeline
+      :type: ralsei.graph.pipeline.Pipeline
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.pipeline
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: task_paths
+      :canonical: ralsei.graph.outputof.OutputOf.task_paths
+      :type: list[ralsei.graph.path.TreePath]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.task_paths
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __post_init__()
+      :canonical: ralsei.graph.outputof.OutputOf.__post_init__
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.OutputOf.__post_init__
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: Resolves
+   :canonical: ralsei.graph.outputof.Resolves
+
+   .. py:type:: Resolves
+      :canonical: ralsei.graph.outputof.T | ralsei.graph.outputof.OutputOf
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.graph.outputof.Resolves
+         :parser: autodoc2_napoleon
+
+.. py:function:: resolve(env: ralsei.jinja.ISqlEnvironment, value: typing.Any) -> typing.Any
+   :canonical: ralsei.graph.resolver_context.resolve
+
+   .. autodoc2-docstring:: ralsei.graph.resolver_context.resolve
+      :parser: autodoc2_napoleon
+
+.. py:exception:: ResolverContextError(*args: object)
+   :canonical: ralsei.graph.error.ResolverContextError
+
+   Bases: :py:obj:`RuntimeError`
+
+   .. autodoc2-docstring:: ralsei.graph.error.ResolverContextError
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.error.ResolverContextError.__init__
+      :parser: autodoc2_napoleon
+
+.. py:exception:: CyclicGraphError(*args: object)
+   :canonical: ralsei.graph.error.CyclicGraphError
+
+   Bases: :py:obj:`RuntimeError`
+
+   .. autodoc2-docstring:: ralsei.graph.error.CyclicGraphError
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.error.CyclicGraphError.__init__
+      :parser: autodoc2_napoleon
+
+.. py:class:: NamedTask
+   :canonical: ralsei.graph.sequence.NamedTask
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: path
+      :canonical: ralsei.graph.sequence.NamedTask.path
+      :type: ralsei.graph.path.TreePath
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.path
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: task
+      :canonical: ralsei.graph.sequence.NamedTask.task
+      :type: ralsei.task.Task
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.task
+         :parser: autodoc2_napoleon
+
+   .. py:property:: name
+      :canonical: ralsei.graph.sequence.NamedTask.name
+      :type: str
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.NamedTask.name
+         :parser: autodoc2_napoleon
+
+.. py:class:: TaskSequence(steps: list[ralsei.graph.sequence.NamedTask])
+   :canonical: ralsei.graph.sequence.TaskSequence
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: run(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.run
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.run
+         :parser: autodoc2_napoleon
+
+   .. py:method:: delete(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.delete
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.delete
+         :parser: autodoc2_napoleon
+
+   .. py:method:: redo(conn: ralsei.connection.ConnectionExt)
+      :canonical: ralsei.graph.sequence.TaskSequence.redo
+
+      .. autodoc2-docstring:: ralsei.graph.sequence.TaskSequence.redo
+         :parser: autodoc2_napoleon

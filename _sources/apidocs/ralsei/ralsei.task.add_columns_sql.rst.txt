@@ -1,0 +1,58 @@
+:py:mod:`ralsei.task.add_columns_sql`
+=====================================
+
+.. py:module:: ralsei.task.add_columns_sql
+
+.. autodoc2-docstring:: ralsei.task.add_columns_sql
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`AddColumnsSql <ralsei.task.add_columns_sql.AddColumnsSql>`
+     - .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: AddColumnsSql
+   :canonical: ralsei.task.add_columns_sql.AddColumnsSql
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: sql
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.sql
+      :type: str | list[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.sql
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.table
+      :type: ralsei.graph.Resolves[ralsei.types.Table]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.add_columns_sql.AddColumnsSql.columns
+      :type: typing.Optional[typing.Sequence[ralsei.types.ColumnBase]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.add_columns_sql.AddColumnsSql.columns
+         :parser: autodoc2_napoleon

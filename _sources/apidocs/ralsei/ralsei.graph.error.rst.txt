@@ -1,0 +1,40 @@
+:py:mod:`ralsei.graph.error`
+============================
+
+.. py:module:: ralsei.graph.error
+
+.. autodoc2-docstring:: ralsei.graph.error
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+API
+~~~
+
+.. py:exception:: ResolverContextError(*args: object)
+   :canonical: ralsei.graph.error.ResolverContextError
+
+   Bases: :py:obj:`RuntimeError`
+
+   .. autodoc2-docstring:: ralsei.graph.error.ResolverContextError
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.error.ResolverContextError.__init__
+      :parser: autodoc2_napoleon
+
+.. py:exception:: CyclicGraphError(*args: object)
+   :canonical: ralsei.graph.error.CyclicGraphError
+
+   Bases: :py:obj:`RuntimeError`
+
+   .. autodoc2-docstring:: ralsei.graph.error.CyclicGraphError
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.graph.error.CyclicGraphError.__init__
+      :parser: autodoc2_napoleon

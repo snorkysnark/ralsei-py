@@ -1,0 +1,4 @@
+/* don't line-wrap class names in autosummary */
+table.autosummary tr > td:nth-child(1) {
+  white-space: nowrap;
+}

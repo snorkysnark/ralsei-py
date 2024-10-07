@@ -1,0 +1,60 @@
+:py:mod:`ralsei`
+================
+
+.. py:module:: ralsei
+
+.. autodoc2-docstring:: ralsei
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Subpackages
+-----------
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   ralsei.types
+   ralsei.jinja
+   ralsei.app
+   ralsei.graph
+   ralsei.task
+   ralsei.connection
+
+Submodules
+----------
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   ralsei.console
+   ralsei.utils
+   ralsei.wrappers
+   ralsei.db_actions
+   ralsei.dialect
+
+Package Contents
+----------------
+
+Data
+~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`__all__ <ralsei.__all__>`
+     - .. autodoc2-docstring:: ralsei.__all__
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:data:: __all__
+   :canonical: ralsei.__all__
+   :value: ['ConnectionEnvironment', 'create_engine', 'Sql', 'Identifier', 'Table', 'Placeholder', 'Column', 'C...
+
+   .. autodoc2-docstring:: ralsei.__all__
+      :parser: autodoc2_napoleon

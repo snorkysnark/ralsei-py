@@ -1,0 +1,90 @@
+:py:mod:`ralsei.task.map_to_new_table`
+======================================
+
+.. py:module:: ralsei.task.map_to_new_table
+
+.. autodoc2-docstring:: ralsei.task.map_to_new_table
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`MapToNewTable <ralsei.task.map_to_new_table.MapToNewTable>`
+     - .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: MapToNewTable
+   :canonical: ralsei.task.map_to_new_table.MapToNewTable
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.columns
+      :type: typing.Sequence[str | ralsei.types.ValueColumnBase]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: fn
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.fn
+      :type: ralsei.wrappers.OneToMany
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.fn
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: select
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.select
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.select
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: source_table
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.source_table
+      :type: typing.Optional[ralsei.graph.Resolves[ralsei.types.Table]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.source_table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: is_done_column
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.is_done_column
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.is_done_column
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: id_fields
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.id_fields
+      :type: typing.Optional[list[ralsei.types.IdColumn]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.id_fields
+         :parser: autodoc2_napoleon

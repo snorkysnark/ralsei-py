@@ -1,0 +1,76 @@
+:py:mod:`ralsei.graph.pipeline`
+===============================
+
+.. py:module:: ralsei.graph.pipeline
+
+.. autodoc2-docstring:: ralsei.graph.pipeline
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Pipeline <ralsei.graph.pipeline.Pipeline>`
+     - .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline
+          :parser: autodoc2_napoleon
+          :summary:
+
+Aliases
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`Tasks <ralsei.graph.pipeline.Tasks>`
+     - .. autodoc2-docstring:: ralsei.graph.pipeline.Tasks
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: Pipeline
+   :canonical: ralsei.graph.pipeline.Pipeline
+
+   Bases: :py:obj:`abc.ABC`
+
+   .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline
+      :parser: autodoc2_napoleon
+
+   .. py:method:: create_tasks() -> ralsei.graph.pipeline.Tasks
+      :canonical: ralsei.graph.pipeline.Pipeline.create_tasks
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.create_tasks
+         :parser: autodoc2_napoleon
+
+   .. py:method:: outputof(*task_paths: str | ralsei.graph.path.TreePath) -> ralsei.graph.outputof.OutputOf
+      :canonical: ralsei.graph.pipeline.Pipeline.outputof
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.outputof
+         :parser: autodoc2_napoleon
+
+   .. py:method:: build_dag(env: ralsei.jinja.SqlEnvironment) -> ralsei.graph.dag.DAG
+      :canonical: ralsei.graph.pipeline.Pipeline.build_dag
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Pipeline.build_dag
+         :parser: autodoc2_napoleon
+
+.. rst-class:: type-definition-anchor
+.. py:class:: Tasks
+   :canonical: ralsei.graph.pipeline.Tasks
+
+   .. py:type:: Tasks
+      :canonical: typing.Mapping[str, typing.Union[ralsei.task.TaskDef, ralsei.graph.pipeline.Pipeline, ralsei.graph.pipeline.Tasks]]
+      :noindex:
+
+      .. autodoc2-docstring:: ralsei.graph.pipeline.Tasks
+         :parser: autodoc2_napoleon

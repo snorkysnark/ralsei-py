@@ -1,0 +1,58 @@
+:py:mod:`ralsei.task.create_table_sql`
+======================================
+
+.. py:module:: ralsei.task.create_table_sql
+
+.. autodoc2-docstring:: ralsei.task.create_table_sql
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`CreateTableSql <ralsei.task.create_table_sql.CreateTableSql>`
+     - .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: CreateTableSql
+   :canonical: ralsei.task.create_table_sql.CreateTableSql
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: sql
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.sql
+      :type: str | list[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.sql
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: view
+      :canonical: ralsei.task.create_table_sql.CreateTableSql.view
+      :type: bool
+      :value: False
+
+      .. autodoc2-docstring:: ralsei.task.create_table_sql.CreateTableSql.view
+         :parser: autodoc2_napoleon

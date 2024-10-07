@@ -1,0 +1,55 @@
+:py:mod:`ralsei.jinja.adapter`
+==============================
+
+.. py:module:: ralsei.jinja.adapter
+
+.. autodoc2-docstring:: ralsei.jinja.adapter
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`SqlAdapter <ralsei.jinja.adapter.SqlAdapter>`
+     - .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: SqlAdapter()
+   :canonical: ralsei.jinja.adapter.SqlAdapter
+
+   .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: register_type(type_: type[ralsei.jinja.adapter.SqlAdapter.register_type.T], to_sql: typing.Callable[[ralsei.jinja.adapter.SqlAdapter.register_type.T], str])
+      :canonical: ralsei.jinja.adapter.SqlAdapter.register_type
+
+      .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter.register_type
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(value: typing.Any) -> str
+      :canonical: ralsei.jinja.adapter.SqlAdapter.to_sql
+
+      .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter.to_sql
+         :parser: autodoc2_napoleon
+
+   .. py:method:: format(source: str, /, *args, **kwargs) -> str
+      :canonical: ralsei.jinja.adapter.SqlAdapter.format
+
+      .. autodoc2-docstring:: ralsei.jinja.adapter.SqlAdapter.format
+         :parser: autodoc2_napoleon

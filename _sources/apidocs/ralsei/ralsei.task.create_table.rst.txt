@@ -1,0 +1,75 @@
+:py:mod:`ralsei.task.create_table`
+==================================
+
+.. py:module:: ralsei.task.create_table
+
+.. autodoc2-docstring:: ralsei.task.create_table
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`CreateTableTask <ralsei.task.create_table.CreateTableTask>`
+     - .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: CreateTableTask
+   :canonical: ralsei.task.create_table.CreateTableTask
+
+   Bases: :py:obj:`ralsei.task.base.TaskImpl`
+
+   .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: _table
+      :canonical: ralsei.task.create_table.CreateTableTask._table
+      :type: ralsei.types.Table
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: _drop_sql
+      :canonical: ralsei.task.create_table.CreateTableTask._drop_sql
+      :type: sqlalchemy.sql.elements.TextClause
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._drop_sql
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _prepare_table(table: ralsei.types.Table, view: bool = False)
+      :canonical: ralsei.task.create_table.CreateTableTask._prepare_table
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._prepare_table
+         :parser: autodoc2_napoleon
+
+   .. py:property:: output
+      :canonical: ralsei.task.create_table.CreateTableTask.output
+      :type: typing.Any
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask.output
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _exists(conn: ralsei.connection.ConnectionEnvironment) -> bool
+      :canonical: ralsei.task.create_table.CreateTableTask._exists
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._exists
+         :parser: autodoc2_napoleon
+
+   .. py:method:: _delete(conn: ralsei.connection.ConnectionEnvironment)
+      :canonical: ralsei.task.create_table.CreateTableTask._delete
+
+      .. autodoc2-docstring:: ralsei.task.create_table.CreateTableTask._delete
+         :parser: autodoc2_napoleon

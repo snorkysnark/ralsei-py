@@ -1,0 +1,181 @@
+:py:mod:`ralsei.types.value_column`
+===================================
+
+.. py:module:: ralsei.types.value_column
+
+.. autodoc2-docstring:: ralsei.types.value_column
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ValueColumnBase <ralsei.types.value_column.ValueColumnBase>`
+     - .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ValueColumn <ralsei.types.value_column.ValueColumn>`
+     - .. autodoc2-docstring:: ralsei.types.value_column.ValueColumn
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ValueColumnRendered <ralsei.types.value_column.ValueColumnRendered>`
+     - .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnRendered
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`ValueColumnSetStatement <ralsei.types.value_column.ValueColumnSetStatement>`
+     - .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnSetStatement
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`IdColumn <ralsei.types.value_column.IdColumn>`
+     - .. autodoc2-docstring:: ralsei.types.value_column.IdColumn
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ValueColumnBase(name: str, value: typing.Any = FROM_NAME)
+   :canonical: ralsei.types.value_column.ValueColumnBase
+
+   Bases: :py:obj:`ralsei.types.column.ColumnBase`
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: value
+      :canonical: ralsei.types.value_column.ValueColumnBase.value
+      :type: typing.Any
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase.value
+         :parser: autodoc2_napoleon
+
+   .. py:property:: set_statement
+      :canonical: ralsei.types.value_column.ValueColumnBase.set_statement
+      :type: ralsei.types.value_column.ValueColumnSetStatement
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase.set_statement
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.value_column.ValueColumnRendered
+      :canonical: ralsei.types.value_column.ValueColumnBase.render
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnBase.render
+         :parser: autodoc2_napoleon
+
+.. py:class:: ValueColumn(name: str, type: str, value: typing.Any = FROM_NAME)
+   :canonical: ralsei.types.value_column.ValueColumn
+
+   Bases: :py:obj:`ralsei.types.column.Column`, :py:obj:`ralsei.types.value_column.ValueColumnBase`
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumn
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumn.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.value_column.ValueColumnRendered
+      :canonical: ralsei.types.value_column.ValueColumn.render
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumn.render
+         :parser: autodoc2_napoleon
+
+.. py:class:: ValueColumnRendered(name: str, type: str, value: typing.Any = FROM_NAME)
+   :canonical: ralsei.types.value_column.ValueColumnRendered
+
+   Bases: :py:obj:`ralsei.types.column.ColumnRendered`, :py:obj:`ralsei.types.value_column.ValueColumnBase`
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnRendered
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnRendered.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: render(env: ralsei.jinja.ISqlEnvironment, /, **params: typing.Any) -> ralsei.types.value_column.ValueColumnRendered
+      :canonical: ralsei.types.value_column.ValueColumnRendered.render
+
+.. py:class:: ValueColumnSetStatement(value_column: ralsei.types.value_column.ValueColumnBase)
+   :canonical: ralsei.types.value_column.ValueColumnSetStatement
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnSetStatement
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnSetStatement.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: value_column
+      :canonical: ralsei.types.value_column.ValueColumnSetStatement.value_column
+      :type: ralsei.types.value_column.ValueColumnBase
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnSetStatement.value_column
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.value_column.ValueColumnSetStatement.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.value_column.ValueColumnSetStatement.to_sql
+         :parser: autodoc2_napoleon
+
+.. py:class:: IdColumn(name: str, value: typing.Any = FROM_NAME)
+   :canonical: ralsei.types.value_column.IdColumn
+
+   Bases: :py:obj:`ralsei.types.to_sql.ToSql`
+
+   .. autodoc2-docstring:: ralsei.types.value_column.IdColumn
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.types.value_column.IdColumn.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: name
+      :canonical: ralsei.types.value_column.IdColumn.name
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.value_column.IdColumn.name
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: value
+      :canonical: ralsei.types.value_column.IdColumn.value
+      :type: typing.Any
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.types.value_column.IdColumn.value
+         :parser: autodoc2_napoleon
+
+   .. py:property:: identifier
+      :canonical: ralsei.types.value_column.IdColumn.identifier
+      :type: ralsei.types.primitives.Identifier
+
+      .. autodoc2-docstring:: ralsei.types.value_column.IdColumn.identifier
+         :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.value_column.IdColumn.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.value_column.IdColumn.to_sql
+         :parser: autodoc2_napoleon

@@ -1,0 +1,90 @@
+:py:mod:`ralsei.connection.jinja`
+=================================
+
+.. py:module:: ralsei.connection.jinja
+
+.. autodoc2-docstring:: ralsei.connection.jinja
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ConnectionEnvironment <ralsei.connection.jinja.ConnectionEnvironment>`
+     - .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ConnectionEnvironment(sqlalchemy_conn: sqlalchemy.engine.Engine | ralsei.connection.ext.ConnectionExt, env: ralsei.jinja.ISqlEnvironment | None = None)
+   :canonical: ralsei.connection.jinja.ConnectionEnvironment
+
+   .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: sqlalchemy
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.sqlalchemy
+      :type: ralsei.connection.ext.ConnectionExt
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.sqlalchemy
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: jinja
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.jinja
+      :type: ralsei.jinja.ISqlEnvironment
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.jinja
+         :parser: autodoc2_napoleon
+
+   .. py:property:: dialect_info
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.dialect_info
+      :type: ralsei.dialect.DialectInfo
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.dialect_info
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render_execute(source: str, template_params: typing.Mapping[str, typing.Any] = {}, bind_params: typing.Optional[sqlalchemy.engine.interfaces._CoreAnyExecuteParams] = None) -> sqlalchemy.engine.CursorResult[typing.Any]
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.render_execute
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.render_execute
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render_executescript(source: str | list[str], template_params: typing.Mapping[str, typing.Any] = {}, bind_params: typing.Optional[typing.Mapping[str, typing.Any]] = None)
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.render_executescript
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.render_executescript
+         :parser: autodoc2_napoleon
+
+   .. py:method:: execute_with_length_hint(statement: sqlalchemy.sql.expression.Executable, parameters: typing.Optional[typing.Mapping[str, typing.Any]] = None) -> typing.Iterable[sqlalchemy.engine.Row[typing.Any]]
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.execute_with_length_hint
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.execute_with_length_hint
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __enter__() -> ralsei.connection.jinja.ConnectionEnvironment
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.__enter__
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.__enter__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __exit__(type_: typing.Any, value: typing.Any, traceback: typing.Any) -> None
+      :canonical: ralsei.connection.jinja.ConnectionEnvironment.__exit__
+
+      .. autodoc2-docstring:: ralsei.connection.jinja.ConnectionEnvironment.__exit__
+         :parser: autodoc2_napoleon

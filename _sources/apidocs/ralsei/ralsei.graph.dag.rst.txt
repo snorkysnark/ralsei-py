@@ -1,0 +1,78 @@
+:py:mod:`ralsei.graph.dag`
+==========================
+
+.. py:module:: ralsei.graph.dag
+
+.. autodoc2-docstring:: ralsei.graph.dag
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`DAG <ralsei.graph.dag.DAG>`
+     - .. autodoc2-docstring:: ralsei.graph.dag.DAG
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: DAG
+   :canonical: ralsei.graph.dag.DAG
+
+   .. autodoc2-docstring:: ralsei.graph.dag.DAG
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: tasks
+      :canonical: ralsei.graph.dag.DAG.tasks
+      :type: dict[ralsei.graph.path.TreePath, ralsei.task.Task]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.tasks
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: relations
+      :canonical: ralsei.graph.dag.DAG.relations
+      :type: dict[ralsei.graph.path.TreePath, set[ralsei.graph.path.TreePath]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.relations
+         :parser: autodoc2_napoleon
+
+   .. py:method:: tasks_str() -> dict[str, ralsei.task.Task]
+      :canonical: ralsei.graph.dag.DAG.tasks_str
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.tasks_str
+         :parser: autodoc2_napoleon
+
+   .. py:method:: relations_str() -> dict[str, set[str]]
+      :canonical: ralsei.graph.dag.DAG.relations_str
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.relations_str
+         :parser: autodoc2_napoleon
+
+   .. py:method:: topological_sort(constrain_starting_nodes: typing.Optional[typing.Iterable[ralsei.graph.path.TreePath]] = None) -> ralsei.graph.sequence.TaskSequence
+      :canonical: ralsei.graph.dag.DAG.topological_sort
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.topological_sort
+         :parser: autodoc2_napoleon
+
+   .. py:method:: sort_filtered(from_filters: typing.Sequence[ralsei.graph.path.TreePath], single_filters: typing.Sequence[ralsei.graph.path.TreePath]) -> ralsei.graph.sequence.TaskSequence
+      :canonical: ralsei.graph.dag.DAG.sort_filtered
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.sort_filtered
+         :parser: autodoc2_napoleon
+
+   .. py:method:: graphviz() -> graphviz.Digraph
+      :canonical: ralsei.graph.dag.DAG.graphviz
+
+      .. autodoc2-docstring:: ralsei.graph.dag.DAG.graphviz
+         :parser: autodoc2_napoleon

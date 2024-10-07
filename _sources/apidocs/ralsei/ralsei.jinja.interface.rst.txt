@@ -1,0 +1,85 @@
+:py:mod:`ralsei.jinja.interface`
+================================
+
+.. py:module:: ralsei.jinja.interface
+
+.. autodoc2-docstring:: ralsei.jinja.interface
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ISqlEnvironment <ralsei.jinja.interface.ISqlEnvironment>`
+     - .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ISqlEnvironment
+   :canonical: ralsei.jinja.interface.ISqlEnvironment
+
+   Bases: :py:obj:`typing.Protocol`
+
+   .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment
+      :parser: autodoc2_napoleon
+
+   .. py:property:: adapter
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.adapter
+      :type: ralsei.jinja.adapter.SqlAdapter
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.adapter
+         :parser: autodoc2_napoleon
+
+   .. py:property:: dialect_info
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.dialect_info
+      :type: ralsei.dialect.DialectInfo
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.dialect_info
+         :parser: autodoc2_napoleon
+
+   .. py:method:: from_string(source: str | jinja2.nodes.Template, globals: typing.Optional[typing.MutableMapping[str, typing.Any]] = None, template_class: None = None) -> ralsei.jinja.environment.SqlTemplate
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.from_string
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.from_string
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render(source: str, /, *args: typing.Any, **kwargs: typing.Any) -> str
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.render
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.render
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render_sql(source: str, /, *args: typing.Any, **kwargs: typing.Any) -> sqlalchemy.sql.elements.TextClause
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.render_sql
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.render_sql
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render_split(source: str, /, *args: typing.Any, **kwargs: typing.Any) -> list[str]
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.render_split
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.render_split
+         :parser: autodoc2_napoleon
+
+   .. py:method:: render_sql_split(source: str, /, *args: typing.Any, **kwargs: typing.Any) -> list[sqlalchemy.sql.elements.TextClause]
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.render_sql_split
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.render_sql_split
+         :parser: autodoc2_napoleon
+
+   .. py:property:: base
+      :canonical: ralsei.jinja.interface.ISqlEnvironment.base
+      :type: ralsei.jinja.environment.SqlEnvironment
+
+      .. autodoc2-docstring:: ralsei.jinja.interface.ISqlEnvironment.base
+         :parser: autodoc2_napoleon

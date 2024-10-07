@@ -1,0 +1,63 @@
+:py:mod:`ralsei.connection.ext`
+===============================
+
+.. py:module:: ralsei.connection.ext
+
+.. autodoc2-docstring:: ralsei.connection.ext
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ConnectionExt <ralsei.connection.ext.ConnectionExt>`
+     - .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ConnectionExt(engine: sqlalchemy.engine.base.Engine, connection: typing.Optional[sqlalchemy.pool.PoolProxiedConnection] = None, _has_events: typing.Optional[bool] = None, _allow_revalidate: bool = True, _allow_autobegin: bool = True)
+   :canonical: ralsei.connection.ext.ConnectionExt
+
+   Bases: :py:obj:`sqlalchemy.engine.Connection`
+
+   .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: execute_text(statement: str, parameters: typing.Optional[sqlalchemy.engine.interfaces._CoreAnyExecuteParams] = None) -> sqlalchemy.engine.CursorResult[typing.Any]
+      :canonical: ralsei.connection.ext.ConnectionExt.execute_text
+
+      .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt.execute_text
+         :parser: autodoc2_napoleon
+
+   .. py:method:: executescript(statements: typing.Iterable[sqlalchemy.sql.expression.Executable], parameters: typing.Optional[typing.Mapping[str, typing.Any]] = None)
+      :canonical: ralsei.connection.ext.ConnectionExt.executescript
+
+      .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt.executescript
+         :parser: autodoc2_napoleon
+
+   .. py:method:: executescript_text(statements: typing.Iterable[str], parameters: typing.Optional[typing.Mapping[str, typing.Any]] = None)
+      :canonical: ralsei.connection.ext.ConnectionExt.executescript_text
+
+      .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt.executescript_text
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __enter__() -> typing.Self
+      :canonical: ralsei.connection.ext.ConnectionExt.__enter__
+
+      .. autodoc2-docstring:: ralsei.connection.ext.ConnectionExt.__enter__
+         :parser: autodoc2_napoleon

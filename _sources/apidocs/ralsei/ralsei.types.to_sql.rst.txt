@@ -1,0 +1,41 @@
+:py:mod:`ralsei.types.to_sql`
+=============================
+
+.. py:module:: ralsei.types.to_sql
+
+.. autodoc2-docstring:: ralsei.types.to_sql
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ToSql <ralsei.types.to_sql.ToSql>`
+     - .. autodoc2-docstring:: ralsei.types.to_sql.ToSql
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ToSql
+   :canonical: ralsei.types.to_sql.ToSql
+
+   Bases: :py:obj:`abc.ABC`
+
+   .. autodoc2-docstring:: ralsei.types.to_sql.ToSql
+      :parser: autodoc2_napoleon
+
+   .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
+      :canonical: ralsei.types.to_sql.ToSql.to_sql
+      :abstractmethod:
+
+      .. autodoc2-docstring:: ralsei.types.to_sql.ToSql.to_sql
+         :parser: autodoc2_napoleon

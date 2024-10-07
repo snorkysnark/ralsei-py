@@ -1,0 +1,82 @@
+:py:mod:`ralsei.task.map_to_new_columns`
+========================================
+
+.. py:module:: ralsei.task.map_to_new_columns
+
+.. autodoc2-docstring:: ralsei.task.map_to_new_columns
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`MapToNewColumns <ralsei.task.map_to_new_columns.MapToNewColumns>`
+     - .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: MapToNewColumns
+   :canonical: ralsei.task.map_to_new_columns.MapToNewColumns
+
+   Bases: :py:obj:`ralsei.task.base.TaskDef`
+
+   .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns
+      :parser: autodoc2_napoleon
+
+   .. py:attribute:: select
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.select
+      :type: str
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.select
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: table
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.table
+      :type: ralsei.graph.Resolves[ralsei.types.Table]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.table
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: columns
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.columns
+      :type: typing.Sequence[ralsei.types.ValueColumnBase]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.columns
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: fn
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.fn
+      :type: ralsei.wrappers.OneToOne
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.fn
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: is_done_column
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column
+      :type: typing.Optional[str]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: id_fields
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.id_fields
+      :type: typing.Optional[list[ralsei.types.IdColumn]]
+      :value: None
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.id_fields
+         :parser: autodoc2_napoleon
