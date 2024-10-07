@@ -17,7 +17,7 @@ from .task import (
     MapToNewTable,
     MapToNewColumns,
 )
-from .graph import Pipeline, OutputOf, CyclicGraphError
+from .graph import Pipeline, OutputOf, Resolves, CyclicGraphError
 from .app import Ralsei
 from .utils import folder
 
@@ -50,6 +50,7 @@ __all__ = [
     "MapToNewColumns",
     "Pipeline",
     "OutputOf",
+    "Resolves",
     "CyclicGraphError",
     "Ralsei",
     "folder",
