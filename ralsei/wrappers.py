@@ -68,9 +68,9 @@ def pop_id_fields(
     .. code-block:: pycon
 
         >>> @pop_id_fields("id")
-        >>> def foo(a: int):
-        >>>     yield {"b": a * 2}
-        >>>
+        ... def foo(a: int):
+        ...     yield {"b": a * 2}
+        ...
         >>> next(foo(id=5, a=3))
         {"id": 5, "b": 6}
 
@@ -84,9 +84,9 @@ def pop_id_fields(
             .. code-block:: pycon
 
                 >>> @pop_id_fields("year")
-                >>> def foo(year: int, name: str):
-                >>>     yield {"html": download(year, name) }
-                >>>
+                ... def foo(year: int, name: str):
+                ...     yield {"html": download(year, name) }
+                ...
                 >>> next(foo(year=2015, name="Tokyo"))
                 {"year": 2015, "json": {...}}
     """
@@ -141,9 +141,9 @@ def rename_output(**mapping: str) -> Callable[[OneToMany], OneToMany]:
     .. code-block:: pycon
 
         >>> @rename_output(a="b")
-        >>> def foo():
-        >>>     yield {"a": 5}
-        >>>
+        ... def foo():
+        ...     yield {"a": 5}
+        ...
         >>> next(foo())
         {"b": 5}
     """
@@ -187,9 +187,9 @@ def add_to_output(**add_values: Any) -> Callable[[OneToMany], OneToMany]:
     .. code-block:: pycon
 
         >>> @add_to_output(b="meow")
-        >>> def foo():
-        >>>     yield {"a": 10}
-        >>>
+        ... def foo():
+        ...     yield {"a": 10}
+        ...
         >>> next(foo())
         {"a": 10, "b": "meow"}
     """
