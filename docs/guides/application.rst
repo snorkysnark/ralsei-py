@@ -58,3 +58,60 @@ to automatically create schemas or inject values into jinja templates
 .. autodoc2-object:: ralsei.app.Ralsei._on_connect
 
    no_index = true
+
+CLI Arguments
+-------------
+
+Usage: ``app.py [COMMON OPTIONS] COMMAND [COMMAND ARGS]``
+
+Common Options
+^^^^^^^^^^^^^^
+
+.. list-table::
+
+   * - ``-d`` ``--db URL``
+     - SQLAlchemy `database url <https://docs.sqlalchemy.org/en/20/core/engines.html>`_
+   * - Custom arguments
+     -
+
+Commands
+^^^^^^^^
+.. _CLIArgs:
+
+run, delete, redo
+%%%%%%%%%%%%%%%%%
+
+All three commands have the same set of arguments:
+
+.. list-table::
+
+   * - ``--one TASK``
+     - Filter to run only this task
+   * - ``--from TASK``
+     - Filter to run only this task and its descendants
+
+The filtered sets are then added together, so
+
+.. code-block::
+
+    --one records --from orgs --from export.person
+
+is read as
+
+.. code-block::
+
+    The task "records"
+    AND the task "orgs" and its descendants
+    AND the task "export.person" and its descendants
+
+describe
+%%%%%%%%
+
+Positional argument: ``TASK``
+
+Print SQL scripts rendered by this task, useful for debugging templates
+
+graph
+%%%%%
+
+Show visualization of the task graph (must have Graphviz installed)

@@ -76,7 +76,7 @@ class DAG:
         self, from_filters: Sequence[TreePath], single_filters: Sequence[TreePath]
     ) -> TaskSequence:
         """Perform topological sort and apply a set of filters.
-        See example in the CLI section.
+        See example in the :ref:`CLI section <CLIArgs>`.
 
         Filters are combined as a union of both sets of tasks.
         If both filters are empty, returns the whole graph.
