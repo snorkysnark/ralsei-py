@@ -54,7 +54,18 @@ html_theme_options = {
                 "name": "Switch to light mode",
             },
         },
-    ]
+    ],
+    "repo_url": "https://github.com/snorkysnark/ralsei-py",
+    "social": [
+        {
+            "icon": "fontawesome/brands/github",
+            "link": "https://github.com/snorkysnark/ralsei-py",
+        },
+        {
+            "icon": "fontawesome/brands/python",
+            "link": "https://pypi.org/project/ralsei/",
+        },
+    ],
 }
 
 html_css_files = ["css/index.css", "css/fix-summary.css"]
