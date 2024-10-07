@@ -25,17 +25,11 @@ jobs:
       - uses: snorkysnark/ralsei-py/.github/find-latest-tag@main
       - name: Checkout latest tag
         run: git checkout $LATEST_TAG
-      - name: Setup PDM
-        uses: pdm-project/setup-pdm@v4
-        with:
-          python-version: 3.12
-          cache: true
-      - name: Install dependencies
-        run: pdm install
+      - uses: snorkysnark/ralsei-py/.github/install-poetry-dependencies@main
       - name: Run Tests
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres
-        run: pdm run pytest ./tests
+        run: poetry run pytest ./tests
 
   publish:
     needs: test
@@ -54,15 +48,9 @@ jobs:
       - uses: snorkysnark/ralsei-py/.github/find-latest-tag@main
       - name: Checkout latest tag
         run: git checkout $LATEST_TAG
-      - name: Setup PDM
-        uses: pdm-project/setup-pdm@v4
-        with:
-          python-version: 3.12
-          cache: true
-      - name: Install dependencies
-        run: pdm install
+      - uses: snorkysnark/ralsei-py/.github/install-poetry-dependencies@main
       - name: Build
-        run: pdm build
+        run: poetry build
       - name: Github Release
         uses: softprops/action-gh-release@v2
         with:
@@ -70,4 +58,4 @@ jobs:
           tag_name: ${{ env.LATEST_TAG }}
           prerelease: ${{ contains(env.LATEST_TAG, '.dev') }}
       - name: PyPi Release
-        run: pdm publish --skip-existing
+        run: poetry publish --skip-existing
