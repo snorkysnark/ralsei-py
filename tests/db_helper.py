@@ -1,9 +1,11 @@
 from typing import Optional
 
-from ralsei import SqlConnection, Table
+from ralsei import ConnectionEnvironment, Table
 
 
-def get_rows(conn: SqlConnection, table: Table, order_by: Optional[list[str]] = None):
+def get_rows(
+    conn: ConnectionEnvironment, table: Table, order_by: Optional[list[str]] = None
+):
     return conn.render_execute(
         """\
         SELECT * FROM {{table}}{%if order_by%}

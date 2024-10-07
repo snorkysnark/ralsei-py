@@ -21,10 +21,12 @@ def _print_separated(statements: list[object]):
         _print_sql(statement)
 
 
-def print_task_info(task: Task):
-    for name, script in task.sql_scripts():
-        console.print(Rule(name, align="right"))
+def print_task_scripts(task: Task):
+    for name, script in task.scripts():
+        if script is None:
+            continue
 
+        console.print(Rule(name, align="right"))
         if isinstance(script, list):
             _print_separated(script)
         else:

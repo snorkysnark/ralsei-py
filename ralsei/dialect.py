@@ -1,21 +1,58 @@
-from __future__ import annotations
-from typing import Optional
+from typing import Callable
 
-from ralsei.sql_adapter import ToSql
-from ralsei.types import Sql
+from ralsei.types import Sql, ToSql
+from ralsei.console import console
 
 
 class BaseDialectInfo:
-    name: str = "base"
+    """SQL dialect settings"""
+
     autoincrement_key: ToSql = Sql("SERIAL PRIMARY KEY")
     supports_column_if_not_exists: bool = True
     supports_rowcount: bool = True
 
 
+type DialectInfo = BaseDialectInfo | type[BaseDialectInfo]
+"""You can use both a class instance or a class as dialect"""
+
+
+_dialect_map: dict[str, DialectInfo] = {}
+
+
+def register_dialect[D: DialectInfo](driver: str) -> Callable[[D], D]:
+    """Decorator for registering a custom dialect
+
+    Example:
+        .. code-block:: python
+
+            @register_dialect("duckdb")
+            class DuckdbDialectInfo(BaseDialectInfo):
+                pass
+    """
+
+    def decorator(dialect: D):
+        _dialect_map[driver] = dialect
+        return dialect
+
+    return decorator
+
+
+def get_dialect(driver: str) -> DialectInfo:
+    """Get DialectInfo for a given sqlalchemy dialect name"""
+
+    if dialect := _dialect_map.get(driver, None):
+        return dialect
+    else:
+        console.log("Unknown sql driver:", driver)
+        return BaseDialectInfo
+
+
+@register_dialect("postgresql")
 class PostgresDialectInfo(BaseDialectInfo):
-    name = "postgres"
+    pass
 
 
+@register_dialect("sqlite")
 class SqliteDialectInfo(BaseDialectInfo):
     name = "sqlite"
     autoincrement_key = Sql("INTEGER PRIMARY KEY AUTOINCREMENT")
@@ -23,40 +60,11 @@ class SqliteDialectInfo(BaseDialectInfo):
     supports_rowcount = False
 
 
-class DialectNotFoundError(KeyError):
-    pass
-
-
-class DialectRegistry:
-    def __init__(self, by_name: Optional[dict[str, BaseDialectInfo]]) -> None:
-        self._by_name = by_name or {}
-
-    def register(self, dialect_name: str, dialect_info: BaseDialectInfo):
-        self._by_name[dialect_name] = dialect_info
-
-    def get_info(self, dialect_name: str) -> BaseDialectInfo:
-        dialect_info = self._by_name.get(dialect_name, None)
-        if not dialect_info:
-            raise DialectNotFoundError(dialect_name)
-
-        return dialect_info
-
-    def copy(self) -> DialectRegistry:
-        return DialectRegistry(self._by_name.copy())
-
-
-DEFAULT_DIALECT_REGISTRY = DialectRegistry(
-    {
-        "postgresql": PostgresDialectInfo(),
-        "sqlite": SqliteDialectInfo(),
-    }
-)
-
 __all__ = [
     "BaseDialectInfo",
     "PostgresDialectInfo",
     "SqliteDialectInfo",
-    "DialectNotFoundError",
-    "DialectRegistry",
-    "DEFAULT_DIALECT_REGISTRY",
+    "DialectInfo",
+    "register_dialect",
+    "get_dialect",
 ]

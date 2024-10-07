@@ -1,7 +1,13 @@
 from contextvars import ContextVar
 
 ROW_CONTEXT_VAR: ContextVar[dict] = ContextVar("ROW_CONTEXT")
+"""ContextVar storing the popped fields of the currently processed row
+(used by :py:data:`ralsei.console.console` for logging purposes)
+"""
 ROW_CONTEXT_ATRRIBUTE = "__ralsei_row_context"
+"""Attribute that gets added to exceptions that occured in a row processing context. |br|
+Stores the popped fields of the aforementioned row
+"""
 
 
 class RowContext:

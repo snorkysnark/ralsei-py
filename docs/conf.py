@@ -20,6 +20,7 @@ author = "snorkysnark"
 
 extensions = [
     "sphinx_immaterial",
+    "sphinx_immaterial.graphviz",
     "autodoc2",
     "sphinx.ext.intersphinx",
 ]
@@ -56,7 +57,7 @@ html_theme_options = {
     ]
 }
 
-html_css_files = ["css/columns.css", "css/fix-summary.css"]
+html_css_files = ["css/index.css", "css/fix-summary.css"]
 html_static_path = ["_static"]
 
 rst_prolog = """\
@@ -69,31 +70,15 @@ rst_prolog = """\
 autodoc2_packages = ["../ralsei"]
 autodoc2_module_all_regexes = [r"ralsei\..*"]
 autodoc2_skip_module_regexes = [r".*\._.*"]
-autodoc2_hidden_objects = ["inherited", "private"]
-autodoc2_hidden_regexes = [
-    r"ralsei\.wrappers\.OneToOne",
-    r"ralsei\.wrappers\.OneToMany",
-    r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
-    r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
-    r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
-    r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
-]
+
 autodoc2_replace_annotations = [
     (
-        "ralsei.wrappers.OneToOne",
-        "collections.abc.Callable[..., dict[str, typing.Any]]",
+        "sqlalchemy.Engine",
+        "sqlalchemy.engine.Engine",
     ),
     (
-        "ralsei.wrappers.OneToMany",
-        "collections.abc.Callable[..., collections.abc.Iterator[dict[str, typing.Any]]]",
-    ),
-    (
-        "sqlalchemy.TextClause",
-        "sqlalchemy.sql.expression.TextClause",
-    ),
-    (
-        "sqlalchemy.Executable",
-        "sqlalchemy.sql.expression.Executable",
+        "sqlalchemy.URL",
+        "sqlalchemy.engine.URL",
     ),
     (
         "sqlalchemy.CursorResult",
@@ -104,12 +89,16 @@ autodoc2_replace_annotations = [
         "sqlalchemy.engine.Row",
     ),
     (
-        "sqlalchemy.Engine",
-        "sqlalchemy.engine.Engine",
+        "sqlalchemy.Executable",
+        "sqlalchemy.sql.expression.Executable",
     ),
     (
-        "sqlalchemy.URL",
-        "sqlalchemy.engine.URL",
+        "sqlalchemy.TextClause",
+        "sqlalchemy.sql.elements.TextClause",
+    ),
+    (
+        "sqlalchemy.engine.interfaces._CoreSingleExecuteParams",
+        "typing.Mapping[str, typing.Any]",
     ),
 ]
 autodoc2_replace_bases = [
@@ -118,6 +107,17 @@ autodoc2_replace_bases = [
         "sqlalchemy.engine.Connection",
     ),
 ]
+autodoc2_hidden_regexes = [
+    r"ralsei\.jinja\.environment\.SqlTemplate\._from_namespace",
+    r"ralsei\.jinja\.environment\.SqlEnvironment\.getattr",
+    r"ralsei\.app\.Ralsei\.__build_subcommand",
+    r"ralsei\.task\.create_table_sql\.CreateTableSql\.Impl",
+    r"ralsei\.task\.add_columns_sql\.AddColumnsSql\.Impl",
+    r"ralsei\.task\.map_to_new_table\.MapToNewTable\.Impl",
+    r"ralsei\.task\.map_to_new_columns\.MapToNewColumns\.Impl",
+    r"ralsei\.graph\.pipeline\.Pipeline\.__flatten",
+]
+
 autodoc2_docstring_parser_regexes = [(r".*", "autodoc2_napoleon")]
 
 napoleon_use_admonition_for_examples = False
@@ -128,4 +128,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
     "click": ("https://click.palletsprojects.com/en/8.1.x/", None),
+    "jinja2": ("https://jinja.palletsprojects.com/en/3.1.x/", None),
+    "graphviz": ("https://graphviz.readthedocs.io/en/stable/", None),
+    "rich": ("https://rich.readthedocs.io/en/stable/", None),
 }

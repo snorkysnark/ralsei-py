@@ -1,4 +1,4 @@
-from .connection import SqlConnection, SqlEngine
+from .connection import ConnectionEnvironment, create_engine
 from .types import (
     Sql,
     Identifier,
@@ -17,13 +17,13 @@ from .task import (
     MapToNewTable,
     MapToNewColumns,
 )
-from .graph import Pipeline, OutputOf, CyclicGraphError
+from .graph import Pipeline, OutputOf, Resolves, CyclicGraphError
 from .app import Ralsei
 from .utils import folder
 
 __all__ = [
-    "SqlConnection",
-    "SqlEngine",
+    "ConnectionEnvironment",
+    "create_engine",
     "Sql",
     "Identifier",
     "Table",
@@ -50,6 +50,7 @@ __all__ = [
     "MapToNewColumns",
     "Pipeline",
     "OutputOf",
+    "Resolves",
     "CyclicGraphError",
     "Ralsei",
     "folder",

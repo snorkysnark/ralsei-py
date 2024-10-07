@@ -1,37 +1,28 @@
-[project]
+[tool.poetry]
 name = "ralsei"
 version = "3.0.0.dev3"
 description = "Build modular data pipelines running inside the postgres database"
-authors = [
-    {name = "snorkysnark", email = "snorkysnark@gmail.com"},
-]
-dependencies = [
-    "rich>=12.5.1",
-    "sqlalchemy>=2.0.19",
-    "returns>=0.22.0",
-    "graphviz>=0.20.1",
-    "click>=8.1.7",
-    "jinja2>=3.1.3",
-]
-requires-python = ">=3.10"
+authors = ["snorkysnark <snorkysnark@gmail.com>"]
 readme = "README.md"
-license = {text = "MIT"}
-[tool]
-[tool.pdm]
-[tool.pdm.dev-dependencies]
-dev = [
-    "pytest>=7.1.2",
-    "psycopg2>=2.9.9",
-    "sphinx>=7.2.6",
-    "sphinx-autobuild>=2021.3.14",
-    "sphinx-immaterial>=0.11.10",
-    "sphinx-autodoc2>=0.5.0",
-]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+rich = "^12.5.1"
+sqlalchemy = "^2.0.19"
+returns = "^0.22.0"
+graphviz = "^0.20.1"
+click = "^8.1.7"
+jinja2 = "^3.1.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.2"
+psycopg2 = "^2.9.9"
+sphinx = "^7.2.6"
+sphinx-autobuild = "^2021.3.14"
+sphinx-immaterial = "^0.11.10"
+sphinx-autodoc2 = {git = "https://github.com/snorkysnark/sphinx-autodoc2.git", rev = "type-alias"}
 
 [build-system]
-requires = ["pdm-pep517>=0.12.0"]
-build-backend = "pdm.pep517.api"
-
-[project.urls]
-Repository = "https://github.com/snorkysnark/ralsei-py"
-Documentation = "https://snorkysnark.github.io/ralsei-py/"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

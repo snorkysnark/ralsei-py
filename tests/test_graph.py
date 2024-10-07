@@ -1,6 +1,6 @@
 import pytest
 from ralsei import (
-    SqlConnection,
+    ConnectionEnvironment,
     Pipeline,
     MapToNewTable,
     Table,
@@ -74,7 +74,7 @@ class TestPipeline(Pipeline):
 
                     INSERT INTO {{table}}(description)
                     VALUES ({{ extras.name }});""",
-                params={
+                locals={
                     "source": self.outputof("description", "sum"),
                     "extras": self.outputof("extras"),
                 },
@@ -82,8 +82,8 @@ class TestPipeline(Pipeline):
         }
 
 
-def test_graph(conn: SqlConnection):
-    dag = TestPipeline().build_dag(conn.jinja)
+def test_graph(conn: ConnectionEnvironment):
+    dag = TestPipeline().build_dag(conn.jinja.base)
 
     assert set(dag.tasks_str()) == {"aa", "description", "sum", "grouped", "extras"}
     assert dag.relations_str() == {
@@ -114,7 +114,7 @@ class ChildPipeline(Pipeline):
                     SELECT value FROM {{source}}
                     {%-endfor%}
                     """,
-                params={"sources": self.source_tables},
+                locals={"sources": self.source_tables},
             ),
             "extend": MapToNewColumns(
                 table=self.outputof("join"),
@@ -156,8 +156,8 @@ class RootPipeline(Pipeline):
         }
 
 
-def test_graph_nested(conn: SqlConnection):
-    dag = RootPipeline().build_dag(conn.jinja)
+def test_graph_nested(conn: ConnectionEnvironment):
+    dag = RootPipeline().build_dag(conn.jinja.base)
 
     assert set(dag.tasks_str()) == {"aa", "bb", "child.join", "child.extend"}
     assert dag.relations_str() == {
@@ -176,7 +176,7 @@ class RecursivePipeline(Pipeline):
                 CREATE TABLE {{table}}(
                     field REFERENCES {{other}}
                 )""",
-                params={"other": self.outputof("task_b")},
+                locals={"other": self.outputof("task_b")},
             ),
             "task_b": CreateTableSql(
                 table=Table("table_b"),
@@ -184,20 +184,23 @@ class RecursivePipeline(Pipeline):
                 CREATE TABLE {{table}}(
                     field REFERENCES {{other}}
                 )""",
-                params={"other": self.outputof("task_a")},
+                locals={"other": self.outputof("task_a")},
             ),
         }
 
 
-def test_recursion(conn: SqlConnection):
+def test_recursion(conn: ConnectionEnvironment):
     with pytest.raises(CyclicGraphError):
-        RecursivePipeline().build_dag(conn.jinja)
+        RecursivePipeline().build_dag(conn.jinja.base)
 
 
-def test_topological_sort(conn: SqlConnection):
+def test_topological_sort(conn: ConnectionEnvironment):
     sorted = [
         named_task.name
-        for named_task in RootPipeline().build_dag(conn.jinja).topological_sort().steps
+        for named_task in RootPipeline()
+        .build_dag(conn.jinja.base)
+        .topological_sort()
+        .steps
     ]
 
     assert sorted == ["aa", "bb", "child.join", "child.extend"] or sorted == [

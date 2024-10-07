@@ -1,19 +1,14 @@
-from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Iterable
-
-from .base import TaskDef, TaskImpl
+from ralsei.connection import ConnectionEnvironment
 from ralsei.types import Table
-from ralsei.jinja import SqlEnvironment
-from ralsei.connection import SqlConnection
-from ralsei import db_actions
+
+from .base import TaskDef
+from .create_table import CreateTableTask
 
 
-@dataclass
 class CreateTableSql(TaskDef):
     """Runs a ``CREATE TABLE`` sql script
 
-    Variables passed to the template: :py:attr:`~table`, :py:attr:`~view`, `**`:py:attr:`~params`
+    Variables passed to the template: :py:attr:`~table`, :py:attr:`~view`
 
     Example:
 
@@ -36,9 +31,12 @@ class CreateTableSql(TaskDef):
 
             "unnest": CreateTableSql(
                 sql=Path("./unnest.sql").read_text(),
-                table=table_names,
-                params={"table": table_sources},
+                table=Table("new_table"),
+                locals={"sources": self.outputof("other")},
             )
+
+    Note:
+        You can use :py:func:`ralsei.utils.folder` to find SQL files relative to current file
     """
 
     sql: str | list[str]
@@ -48,44 +46,25 @@ class CreateTableSql(TaskDef):
     """
     table: Table
     """Table being created"""
-    params: dict = field(default_factory=dict)
-    """parameters passed to the jinja template"""
     view: bool = False
     """whether this is a ``VIEW`` instead of a ``TABLE``"""
 
-    class Impl(TaskImpl):
-        def __init__(self, this: CreateTableSql, env: SqlEnvironment) -> None:
-            template_params = {"table": this.table, "view": this.view, **this.params}
-            self._sql = (
-                env.render_sql_split(this.sql, **template_params)
+    class Impl(CreateTableTask):
+        def prepare(self, this: "CreateTableSql"):
+            locals = {"table": this.table, "view": this.view}
+
+            self.__sql = (
+                self.env.render_sql_split(this.sql, **locals)
                 if isinstance(this.sql, str)
-                else [env.render_sql(sql, **template_params) for sql in this.sql]
+                else [self.env.render_sql(sql, **locals) for sql in this.sql]
             )
+            self._prepare_table(this.table, this.view)
 
-            self._drop_sql = env.render_sql(
-                "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
-                table=this.table,
-                view=this.view,
-            )
+            self._scripts["Create"] = self.__sql
+            self._scripts["Drop"] = self._drop_sql
 
-            self._table = this.table
-
-        @property
-        def output(self) -> Any:
-            return self._table
-
-        def exists(self, conn: SqlConnection) -> bool:
-            return db_actions.table_exists(conn, self._table)
-
-        def run(self, conn: SqlConnection) -> None:
-            conn.sqlalchemy.executescript(self._sql)
-
-        def delete(self, conn: SqlConnection) -> None:
-            conn.sqlalchemy.execute(self._drop_sql)
-
-        def sql_scripts(self) -> Iterable[tuple[str, object | list[object]]]:
-            yield "Main", self._sql
-            yield "Drop table", self._drop_sql
+        def _run(self, conn: ConnectionEnvironment):
+            conn.sqlalchemy.executescript(self.__sql)
 
 
 __all__ = ["CreateTableSql"]

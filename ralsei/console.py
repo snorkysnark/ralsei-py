@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, Sequence, TypeVar, Union
+from typing import Any, Iterable, Optional, Sequence, Union
 from rich.progress import Progress
 from operator import length_hint
 from rich.console import Console, JustifyMethod
@@ -21,7 +21,7 @@ class RalseiConsole(Console):
     ) -> None:
         from ralsei.task import ROW_CONTEXT_VAR
 
-        if row_ctx := ROW_CONTEXT_VAR.get():
+        if row_ctx := ROW_CONTEXT_VAR.get(None):
             objects = (row_ctx, *objects)
 
         super().log(
@@ -39,16 +39,32 @@ class RalseiConsole(Console):
 
 
 console: Console = RalseiConsole()
+"""Rich console used for logging
 
-T = TypeVar("T")
+When calling :py:meth:`rich.console.Console.log`
+from within :py:attr:`MapToNewTable.fn <ralsei.task.MapToNewTable.fn>` or :py:attr:`MapToNewColumns.fn <ralsei.task.MapToNewColumns.fn>`,
+will print additional information related to the current row"""
+
 PROGRESS = Progress(console=console, transient=True)
 
 
-def track(
+def track[
+    T
+](
     sequence: Sequence[T] | Iterable[T],
     description: str = "Working...",
     total: Optional[float] = None,
 ) -> Iterable[T]:
+    """Track progress by iterating over a sequence.
+
+    Unlike :py:func:`rich.progress.track`, this supports multiple nested progress bars
+
+    Args:
+        sequence: A sequence of values you want to iterate over and track progress.
+        description: Description of the task
+        total: Total number of steps. Default is ``length_hint(sequence)``
+    """
+
     if total is None:
         total = length_hint(sequence)
 

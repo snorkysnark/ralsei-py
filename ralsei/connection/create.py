@@ -20,6 +20,12 @@ def _sqlite_on_begin(conn: sqlalchemy.Connection):
 
 
 def create_engine(url: str | sqlalchemy.URL, **kwargs) -> sqlalchemy.Engine:
+    """Wrapper around :py:func:`sqlalchemy.create_engine`
+
+    Applies additional configurations for sqlite, such as enabling ``foreign_keys``
+    and fixing transaction issues (`<https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl>`_)
+    """
+
     engine = sqlalchemy.create_engine(url, **kwargs)
 
     # Fix transactions in SQLite

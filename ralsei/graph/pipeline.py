@@ -2,8 +2,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Iterable, Mapping, Union
 
-from ralsei.connection import SqlEngine
-
 from ._resolver import DependencyResolver
 from ._flattened import ScopedTaskDef, FlattenedPipeline
 from .path import TreePath
@@ -14,7 +12,15 @@ if TYPE_CHECKING:
     from ralsei.task import TaskDef
     from ralsei.jinja import SqlEnvironment
 
-Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
+type Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
+"""A dictionary with task name to value pairs, used to define a :py:class:`~Pipeline`
+
+Acceptable values:
+    
+* A task definition (:py:class:`ralsei.task.TaskDef`)
+* A nested :py:class:`~Pipeline`
+* A nested dictionary
+"""
 
 
 def _iter_tasks_flattened(
@@ -32,13 +38,31 @@ def _iter_tasks_flattened(
 
 
 class Pipeline(ABC):
-    @abstractmethod
-    def create_tasks(self) -> Tasks: ...
+    """This is where you declare your tasks, that later get compiled into a :py:class:`ralsei.graph.DAG`"""
 
-    def prepare_engine(self, engine: SqlEngine):
-        pass
+    @abstractmethod
+    def create_tasks(self) -> Tasks:
+        """
+        Returns:
+            :A dictionary with task name to value pairs, where the value can be:
+
+            * A task definition (:py:class:`ralsei.task.TaskDef`)
+            * A nested :py:class:`ralsei.graph.Pipeline`
+            * A nested dictionary
+        """
 
     def outputof(self, *task_paths: str | TreePath) -> OutputOf:
+        """Refer to the output of another task from this pipeline, that will later be resolved.
+
+        Dependencies are taken into account when deciding the order of task execution.
+
+        Args:
+            task_paths: path from the root of the pipeline, either a string separated with ``.`` or a TreePath object
+
+                Multiple paths are allowed, but all tasks must have the same output.
+                This is useful when depending on multiple :py:class:`AddColumnsSql <ralsei.task.AddColumnsSql>` tasks if both sets of columns are required
+        """
+
         return OutputOf(
             self,
             [
@@ -47,13 +71,13 @@ class Pipeline(ABC):
             ],
         )
 
-    def _flatten(self) -> FlattenedPipeline:
+    def __flatten(self) -> FlattenedPipeline:
         task_definitions: dict[TreePath, ScopedTaskDef] = {}
         pipeline_to_path: dict[Pipeline, TreePath] = {self: TreePath()}
 
         for name, value in _iter_tasks_flattened(self.create_tasks()):
             if isinstance(value, Pipeline):
-                subtree = value._flatten()
+                subtree = value.__flatten()
 
                 for relative_path, definition in subtree.task_definitions.items():
                     task_definitions[TreePath(*name, *relative_path)] = definition
@@ -71,7 +95,9 @@ class Pipeline(ABC):
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
     def build_dag(self, env: "SqlEnvironment") -> DAG:
-        return DependencyResolver.from_definition(self._flatten()).build_dag(env)
+        """Resolve dependencies and generate a graph of tasks"""
+
+        return DependencyResolver.from_definition(self.__flatten()).build_dag(env)
 
 
-__all__ = ["Pipeline"]
+__all__ = ["Pipeline", "Tasks"]
