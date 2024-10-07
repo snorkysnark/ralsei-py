@@ -62,3 +62,22 @@ jobs:
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
         run: poetry publish --skip-existing
+
+  docs:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: snorkysnark/ralsei-py/.github/find-latest-tag@main
+      - name: Checkout latest tag
+        run: git checkout $LATEST_TAG
+      - uses: snorkysnark/ralsei-py/.github/install-poetry-dependencies@main
+      - name: Build docs
+        run: poetry run sphinx-build docs docs/_build
+      - name: Deploy docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: docs/_build
