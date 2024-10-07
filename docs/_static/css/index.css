@@ -4,6 +4,7 @@ div.container.flex {
 
 div.container.logo img {
   object-fit: cover;
+  min-width: 200px;
 }
 
 .type-definition-anchor>dt>em {

@@ -20,6 +20,7 @@ author = "snorkysnark"
 
 extensions = [
     "sphinx_immaterial",
+    "sphinx_immaterial.graphviz",
     "autodoc2",
     "sphinx.ext.intersphinx",
 ]
