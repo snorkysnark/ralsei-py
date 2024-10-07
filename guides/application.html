@@ -384,6 +384,60 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#cli-arguments" class="md-nav__link">
+    <span class="md-ellipsis">CLI Arguments</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-options" class="md-nav__link">
+    <span class="md-ellipsis">Common Options</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">Commands</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-delete-redo" class="md-nav__link">
+    <span class="md-ellipsis">run, delete, redo</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">describe</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph" class="md-nav__link">
+    <span class="md-ellipsis">graph</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -486,6 +540,60 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#cli-arguments" class="md-nav__link">
+    <span class="md-ellipsis">CLI Arguments</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Arguments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-options" class="md-nav__link">
+    <span class="md-ellipsis">Common Options</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">Commands</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-delete-redo" class="md-nav__link">
+    <span class="md-ellipsis">run, delete, redo</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#describe" class="md-nav__link">
+    <span class="md-ellipsis">describe</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph" class="md-nav__link">
+    <span class="md-ellipsis">graph</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -585,6 +693,47 @@ to automatically create schemas or inject values into jinja templates</p>
 <dd><p>Run custom code after database connection</p>
 </dd></dl>
 
+<h2 id="cli-arguments">CLI Arguments<a class="headerlink" href="#cli-arguments" title="Link to this heading">¶</a></h2>
+<p>Usage: <code class="docutils literal notranslate"><span class="pre">app.py</span> <span class="pre">[COMMON</span> <span class="pre">OPTIONS]</span> <span class="pre">COMMAND</span> <span class="pre">[COMMAND</span> <span class="pre">ARGS]</span></code></p>
+<h3 id="common-options">Common Options<a class="headerlink" href="#common-options" title="Link to this heading">¶</a></h3>
+<table class="docutils data align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-d</span></code> <code class="docutils literal notranslate"><span class="pre">--db</span> <span class="pre">URL</span></code></p></td>
+<td><p>SQLAlchemy <a class="reference external" href="https://docs.sqlalchemy.org/en/20/core/engines.html">database url</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Custom arguments</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="commands">Commands<a class="headerlink" href="#commands" title="Link to this heading">¶</a></h3>
+<h4 id="run-delete-redo"><span id="cliargs"></span>run, delete, redo<a class="headerlink" href="#run-delete-redo" title="Link to this heading">¶</a></h4>
+<p>All three commands have the same set of arguments:</p>
+<table class="docutils data align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--one</span> <span class="pre">TASK</span></code></p></td>
+<td><p>Filter to run only this task</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--from</span> <span class="pre">TASK</span></code></p></td>
+<td><p>Filter to run only this task and its descendants</p></td>
+</tr>
+</tbody>
+</table>
+<p>The filtered sets are then added together, so</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="o">--</span><span class="n">one</span> <span class="n">records</span> <span class="o">--</span><span class="kn">from</span> <span class="nn">orgs</span> <span class="o">--</span><span class="kn">from</span> <span class="nn">export.person</span>
+</code></pre></div>
+</div>
+<p>is read as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="n">The</span> <span class="n">task</span> <span class="s2">&quot;records&quot;</span>
+<span class="n">AND</span> <span class="n">the</span> <span class="n">task</span> <span class="s2">&quot;orgs&quot;</span> <span class="ow">and</span> <span class="n">its</span> <span class="n">descendants</span>
+<span class="n">AND</span> <span class="n">the</span> <span class="n">task</span> <span class="s2">&quot;export.person&quot;</span> <span class="ow">and</span> <span class="n">its</span> <span class="n">descendants</span>
+</code></pre></div>
+</div>
+<h4 id="describe">describe<a class="headerlink" href="#describe" title="Link to this heading">¶</a></h4>
+<p>Positional argument: <code class="docutils literal notranslate"><span class="pre">TASK</span></code></p>
+<p>Print SQL scripts rendered by this task, useful for debugging templates</p>
+<h4 id="graph">graph<a class="headerlink" href="#graph" title="Link to this heading">¶</a></h4>
+<p>Show visualization of the task graph (must have Graphviz installed)</p>
 
 
 
