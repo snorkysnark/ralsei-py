@@ -13,6 +13,14 @@ Welcome to ralsei's documentation!
       Inspired by `kedro <https://kedro.org/>`_ and `dbt <https://www.getdbt.com/>`_, it aims to
       combine data collection (through scraping/APIs) and data processing in a single declarative pipeline.
 
+Design goals
+------------
+
+* Lightweight and portable
+* Preserve knowledge of how certain data was acquired, in form of a pipeline script
+* Both for data collection/downloading and analysis
+* Control of workflow: rerun any specific task on-demand
+* Support for resumable long-running tasks
 
 Installation
 ------------
