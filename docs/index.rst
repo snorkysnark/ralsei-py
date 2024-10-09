@@ -7,7 +7,7 @@ Welcome to ralsei's documentation!
 
       .. image:: _static/logo.png
 
-   .. container:: box
+   .. container:: logo-text
 
       **Ralsei** is a Python framework for building modular data pipelines acting on a SQL database.
       Inspired by `kedro <https://kedro.org/>`_ and `dbt <https://www.getdbt.com/>`_, it aims to
