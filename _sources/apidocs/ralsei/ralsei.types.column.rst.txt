@@ -145,3 +145,6 @@ API
 
    .. py:method:: to_sql(env: ralsei.jinja.ISqlEnvironment) -> str
       :canonical: ralsei.types.column.ColumnDefinition.to_sql
+
+      .. autodoc2-docstring:: ralsei.types.column.ColumnDefinition.to_sql
+         :parser: autodoc2_napoleon

@@ -1,12 +1,24 @@
 div.container.flex {
   display: flex;
+  align-items: center;
 }
 
 div.container.logo img {
-  object-fit: cover;
-  min-width: 120px;
+  object-fit: contain;
+  max-height: 150px;
 }
 
+div.container.logo-text {
+  flex: 1;
+}
+
+@media (max-width: 520px) {
+  div.container.flex {
+    flex-direction: column;
+  }
+}
+
+/* Hide the word 'class' in pseudo class directives */
 .type-definition-anchor>dt>em {
   display: none;
 }

@@ -33,7 +33,7 @@
       
     
         <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.3625f807144f53acf.min.css?v=fbfc4466" />
-        <link rel="stylesheet" type="text/css" href="_static/css/index.css?v=360f3564" />
+        <link rel="stylesheet" type="text/css" href="_static/css/index.css?v=bf82d753" />
         <link rel="stylesheet" type="text/css" href="_static/css/fix-summary.css?v=7eee24b7" />
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -316,23 +316,34 @@
 <div class="logo docutils container">
 <img alt="_images/logo.png" src="_images/logo.png" />
 </div>
-<div class="box docutils container">
-<p><strong>Ralsei</strong> is a Python framework for building modular data pipelines acting on a SQL database.
-Inspired by <a class="reference external" href="https://kedro.org/">kedro</a> and <a class="reference external" href="https://www.getdbt.com/">dbt</a>, it aims to
-combine data collection (through scraping/APIs) and data processing in a single declarative pipeline.</p>
+<div class="logo-text docutils container">
+<p><strong>Ralsei</strong> is a lightweight and portable Python framework designed for analysts
+who need to quickly build modular data pipelines.
+It enables users to create comprehensive data preparation workflows
+that integrate both data collection and processing in a single, declarative pipeline.
+This framework is particularly beneficial
+for those who prefer not to depend on cloud-based solutions or local infrastructure setups.</p>
 </div>
 </div>
 <h2 id="design-goals">Design goals<a class="headerlink" href="#design-goals" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>Lightweight and portable</p></li>
-<li><p>Preserve knowledge of how certain data was acquired, in form of a pipeline script</p></li>
-<li><p>Both for data collection/downloading and analysis</p></li>
-<li><p>Control of workflow: rerun any specific task on-demand</p></li>
-<li><p>Support for resumable long-running tasks</p></li>
+<li><p><strong>Modular Design</strong>: Allows for the creation of reusable tasks,
+making it easy to maintain and adapt pipelines as data requirements evolve.</p></li>
+<li><p><strong>SQL Database Integration</strong>: Operates directly on SQL databases,
+storing everything from raw data to processed results, thereby simplifying data tracking and analysis.</p></li>
+<li><p><strong>Resumable Tasks</strong>: Supports long-running tasks
+with the ability to resume operations at the row level,
+minimizing reprocessing in case of interruptions.</p></li>
+<li><p><strong>Workflow Control</strong>: Provides full control over the workflow,
+enabling users to rerun specific tasks on-demand and manage dependencies effectively.</p></li>
 </ul>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="n">pip</span> <span class="n">install</span> <span class="n">ralsei</span>
 </code></pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Tip</p>
+<p>Consider using <a class="reference external" href="https://python-poetry.org/">Poetry</a> for project-based dependency management</p>
 </div>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>
 <p><em>Click on + icons for an explaination</em></p>
