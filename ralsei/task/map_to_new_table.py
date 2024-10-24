@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Sequence
 from sqlalchemy import TextClause
 
@@ -20,7 +20,8 @@ from ralsei import db_actions
 
 from .base import TaskDef
 from .create_table import CreateTableTask
-from .context import RowContext
+from .rowcontext import RowContext
+from ._contextmanagers import MultiContextManager
 
 
 @dataclass
@@ -137,6 +138,7 @@ class MapToNewTable(TaskDef):
 
     If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
     from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`"""
+    context: dict = field(default_factory=dict)
     select: Optional[str] = None
     """The ``SELECT`` statement
     that generates rows passed to :py:attr:`~fn` as arguments
@@ -173,6 +175,7 @@ class MapToNewTable(TaskDef):
             source_table = self.resolve(this.source_table)
 
             self.__fn = this.fn
+            self.__context = this.context
             self.__popped_fields: set[str] = (
                 set(popped_fields) if popped_fields else set()
             )
@@ -283,12 +286,15 @@ class MapToNewTable(TaskDef):
                         )
                         conn.sqlalchemy.commit()
 
-            for input_row in (
-                iter_input_rows(self.__select) if self.__select is not None else [{}]
-            ):
-                with RowContext.from_input_row(input_row, self.__popped_fields):
-                    for output_row in self.__fn(**input_row):
-                        conn.sqlalchemy.execute(self.__insert, output_row)
+            with MultiContextManager(self.__context) as context:
+                for input_row in (
+                    iter_input_rows(self.__select)
+                    if self.__select is not None
+                    else [{}]
+                ):
+                    with RowContext.from_input_row(input_row, self.__popped_fields):
+                        for output_row in self.__fn(**input_row, **context):
+                            conn.sqlalchemy.execute(self.__insert, output_row)
 
         def _delete(self, conn: ConnectionEnvironment):
             if self.__marker_scripts:

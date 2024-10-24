@@ -1,3 +1,4 @@
+from dataclasses import field
 from typing import Any, Optional, Sequence
 
 from ralsei.console import track
@@ -14,8 +15,9 @@ from ralsei.connection import ConnectionEnvironment
 from ralsei import db_actions
 
 from .base import TaskDef
-from .context import RowContext
 from .add_columns import AddColumnsTask
+from .rowcontext import RowContext
+from ._contextmanagers import MultiContextManager
 
 
 class MapToNewColumns(TaskDef):
@@ -101,6 +103,7 @@ class MapToNewColumns(TaskDef):
     If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
     from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`
     """
+    context: dict = field(default_factory=dict)
     is_done_column: Optional[str] = None
     """Create a boolean column with the given name
     in :py:attr:`~table` that tracks which rows have been processed
@@ -125,6 +128,7 @@ class MapToNewColumns(TaskDef):
 
             popped_fields = get_popped_fields(this.fn)
             self.__fn = this.fn
+            self.__context = this.context
             self.__popped_fields: set[str] = (
                 set(popped_fields) if popped_fields else set()
             )
@@ -167,18 +171,21 @@ class MapToNewColumns(TaskDef):
         def _run(self, conn: ConnectionEnvironment):
             self._add_columns(conn)
 
-            for input_row in map(
-                lambda row: row._asdict(),
-                track(
-                    conn.execute_with_length_hint(self.__select),
-                    description="Task progress...",
-                ),
-            ):
-                with RowContext.from_input_row(input_row, self.__popped_fields):
-                    conn.sqlalchemy.execute(self.__update, self.__fn(**input_row))
+            with MultiContextManager(self.__context) as context:
+                for input_row in map(
+                    lambda row: row._asdict(),
+                    track(
+                        conn.execute_with_length_hint(self.__select),
+                        description="Task progress...",
+                    ),
+                ):
+                    with RowContext.from_input_row(input_row, self.__popped_fields):
+                        conn.sqlalchemy.execute(
+                            self.__update, self.__fn(**input_row, **context)
+                        )
 
-                    if self.__commit_each:
-                        conn.sqlalchemy.commit()
+                        if self.__commit_each:
+                            conn.sqlalchemy.commit()
 
         def _exists(self, conn: ConnectionEnvironment) -> bool:
             if not db_actions.columns_exist(

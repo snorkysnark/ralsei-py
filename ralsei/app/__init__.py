@@ -12,7 +12,7 @@ from ralsei.connection import (
     ConnectionEnvironment,
     ConnectionExt,
 )
-from ralsei.task import ROW_CONTEXT_ATRRIBUTE
+from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 from ralsei.jinja import SqlEnvironment
 from ralsei.dialect import get_dialect
 from ralsei.utils import expect
