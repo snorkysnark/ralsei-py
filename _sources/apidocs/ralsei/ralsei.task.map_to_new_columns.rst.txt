@@ -65,6 +65,14 @@ API
       .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.fn
          :parser: autodoc2_napoleon
 
+   .. py:attribute:: context
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.context
+      :type: dict[str, ralsei.contextmanagers.ContextManager[typing.Any]]
+      :value: 'field(...)'
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.context
+         :parser: autodoc2_napoleon
+
    .. py:attribute:: is_done_column
       :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column
       :type: typing.Optional[str]

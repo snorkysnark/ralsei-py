@@ -61,12 +61,12 @@ Data
    :class: autosummary longtable
    :align: left
 
-   * - :py:obj:`ROW_CONTEXT_ATRRIBUTE <ralsei.task.context.ROW_CONTEXT_ATRRIBUTE>`
-     - .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+   * - :py:obj:`ROW_CONTEXT_ATRRIBUTE <ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE>`
+     - .. autodoc2-docstring:: ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE
           :parser: autodoc2_napoleon
           :summary:
-   * - :py:obj:`ROW_CONTEXT_VAR <ralsei.task.context.ROW_CONTEXT_VAR>`
-     - .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_VAR
+   * - :py:obj:`ROW_CONTEXT_VAR <ralsei.task.rowcontext.ROW_CONTEXT_VAR>`
+     - .. autodoc2-docstring:: ralsei.task.rowcontext.ROW_CONTEXT_VAR
           :parser: autodoc2_napoleon
           :summary:
 
@@ -323,6 +323,14 @@ API
       .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.fn
          :parser: autodoc2_napoleon
 
+   .. py:attribute:: context
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.context
+      :type: dict[str, ralsei.contextmanagers.ContextManager[typing.Any]]
+      :value: 'field(...)'
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.context
+         :parser: autodoc2_napoleon
+
    .. py:attribute:: select
       :canonical: ralsei.task.map_to_new_table.MapToNewTable.select
       :type: typing.Optional[str]
@@ -393,6 +401,14 @@ API
       :value: None
 
       .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.fn
+         :parser: autodoc2_napoleon
+
+   .. py:attribute:: context
+      :canonical: ralsei.task.map_to_new_columns.MapToNewColumns.context
+      :type: dict[str, ralsei.contextmanagers.ContextManager[typing.Any]]
+      :value: 'field(...)'
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_columns.MapToNewColumns.context
          :parser: autodoc2_napoleon
 
    .. py:attribute:: is_done_column
@@ -526,16 +542,16 @@ API
          :parser: autodoc2_napoleon
 
 .. py:data:: ROW_CONTEXT_ATRRIBUTE
-   :canonical: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+   :canonical: ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE
    :value: '__ralsei_row_context'
 
-   .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_ATRRIBUTE
+   .. autodoc2-docstring:: ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE
       :parser: autodoc2_napoleon
 
 .. py:data:: ROW_CONTEXT_VAR
-   :canonical: ralsei.task.context.ROW_CONTEXT_VAR
+   :canonical: ralsei.task.rowcontext.ROW_CONTEXT_VAR
    :type: contextvars.ContextVar[dict]
    :value: 'ContextVar(...)'
 
-   .. autodoc2-docstring:: ralsei.task.context.ROW_CONTEXT_VAR
+   .. autodoc2-docstring:: ralsei.task.rowcontext.ROW_CONTEXT_VAR
       :parser: autodoc2_napoleon

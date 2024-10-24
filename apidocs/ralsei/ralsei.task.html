@@ -845,6 +845,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ralsei.task.MapToNewTable.context" class="md-nav__link">
+    <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewTable.context (Python attribute) — Task-scoped context-manager arguments passed to fn" class="md-ellipsis">context</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ralsei.task.MapToNewTable.select" class="md-nav__link">
     <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewTable.select (Python attribute) — The SELECT statement that generates rows passed to fn as arguments" class="md-ellipsis">select</span>
   </a>
@@ -909,6 +916,13 @@
           <li class="md-nav__item">
   <a href="#ralsei.task.MapToNewColumns.fn" class="md-nav__link">
     <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewColumns.fn (Python attribute) — Function that maps one row to values of the new columns in the same row" class="md-ellipsis">fn</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ralsei.task.MapToNewColumns.context" class="md-nav__link">
+    <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewColumns.context (Python attribute) — Task-scoped context-manager arguments passed to fn" class="md-ellipsis">context</span>
   </a>
   
 </li>
@@ -1578,6 +1592,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ralsei.task.MapToNewTable.context" class="md-nav__link">
+    <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewTable.context (Python attribute) — Task-scoped context-manager arguments passed to fn" class="md-ellipsis">context</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ralsei.task.MapToNewTable.select" class="md-nav__link">
     <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewTable.select (Python attribute) — The SELECT statement that generates rows passed to fn as arguments" class="md-ellipsis">select</span>
   </a>
@@ -1642,6 +1663,13 @@
           <li class="md-nav__item">
   <a href="#ralsei.task.MapToNewColumns.fn" class="md-nav__link">
     <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewColumns.fn (Python attribute) — Function that maps one row to values of the new columns in the same row" class="md-ellipsis">fn</span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ralsei.task.MapToNewColumns.context" class="md-nav__link">
+    <span aria-label="Python attribute" class="objinfo-icon objinfo-icon__alias" title="Python attribute">A</span><span title="ralsei.task.MapToNewColumns.context (Python attribute) — Task-scoped context-manager arguments passed to fn" class="md-ellipsis">context</span>
   </a>
   
 </li>
@@ -1867,11 +1895,11 @@ saving outputs into new columns on the same row</p></td>
 <h3 id="data">Data<a class="headerlink" href="#data" title="Link to this heading">¶</a></h3>
 <table class="autosummary longtable docutils data align-left">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="ralsei.task.context.html#ralsei.task.context.ROW_CONTEXT_ATRRIBUTE" title="ralsei.task.context.ROW_CONTEXT_ATRRIBUTE (Python data) — Attribute that gets added to exceptions that occured in a row processing context. br Stores the popped fields of the aforementioned row"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ROW_CONTEXT_ATRRIBUTE</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="ralsei.task.rowcontext.html#ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE" title="ralsei.task.rowcontext.ROW_CONTEXT_ATRRIBUTE (Python data) — Attribute that gets added to exceptions that occured in a row processing context. br Stores the popped fields of the aforementioned row"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ROW_CONTEXT_ATRRIBUTE</span></code></a></p></td>
 <td><p>Attribute that gets added to exceptions that occured in a row processing context. <br>
 Stores the popped fields of the aforementioned row</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="ralsei.task.context.html#ralsei.task.context.ROW_CONTEXT_VAR" title="ralsei.task.context.ROW_CONTEXT_VAR (Python data) — ContextVar storing the popped fields of the currently processed row (used by ralsei.console.console for logging purposes)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ROW_CONTEXT_VAR</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="ralsei.task.rowcontext.html#ralsei.task.rowcontext.ROW_CONTEXT_VAR" title="ralsei.task.rowcontext.ROW_CONTEXT_VAR (Python data) — ContextVar storing the popped fields of the currently processed row (used by ralsei.console.console for logging purposes)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ROW_CONTEXT_VAR</span></code></a></p></td>
 <td><p>ContextVar storing the popped fields of the currently processed row
 (used by <a class="reference internal" href="ralsei.console.html#ralsei.console.console" title="ralsei.console.console (Python data) — Rich console used for logging"><code class="xref py py-data docutils literal notranslate"><span class="pre">ralsei.console.console</span></code></a> for logging purposes)</p></td>
 </tr>
@@ -2309,6 +2337,33 @@ from metadata left by <a class="reference internal" href="ralsei.wrappers.html#r
 </dd></dl>
 
 <dl class="py attribute objdesc">
+<dt class="sig sig-object highlight sig-wrap py" id="ralsei.task.MapToNewTable.context">
+<span class="sig-name descname"><span class="pre">context</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="ralsei.contextmanagers.html#ralsei.contextmanagers.ContextManager" title="ralsei.contextmanagers.ContextManager (Python class) — Bases: typing.Protocol"><span class="pre">ralsei.contextmanagers.ContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="s1">&#39;field(...)&#39;</span></code><a class="headerlink" href="#ralsei.task.MapToNewTable.context" title="Link to this definition">¶</a></dt>
+<dd><p>Task-scoped context-manager arguments passed to <a class="reference internal" href="#ralsei.task.MapToNewTable.fn" title="ralsei.task.MapToNewTable.fn (Python attribute) — A generator function, mapping one row to many rows"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fn</span></code></a></p>
+<div class="example admonition">
+<p class="admonition-title">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ralsei.contextmanagers</span> <span class="kn">import</span> <span class="n">reusable_contextmanager_const</span>
+<span class="kn">from</span> <span class="nn">selenium</span> <span class="kn">import</span> <span class="n">webdriver</span>
+
+<span class="nd">@reusable_contextmanager_const</span>
+<span class="k">def</span> <span class="nf">browser_context</span><span class="p">():</span>
+    <span class="n">browser</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">browser</span>
+    <span class="n">browser</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">scrape_page</span><span class="p">(</span><span class="n">browser</span><span class="p">:</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">MapToNewTable</span><span class="p">(</span>
+    <span class="n">fn</span><span class="o">=</span><span class="n">scrape_page</span><span class="p">,</span>
+    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;browser&quot;</span><span class="p">:</span> <span class="n">browser_context</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py attribute objdesc">
 <dt class="sig sig-object highlight py" id="ralsei.task.MapToNewTable.select">
 <span class="sig-name descname"><span class="pre">select</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="kc">None</span></code><a class="headerlink" href="#ralsei.task.MapToNewTable.select" title="Link to this definition">¶</a></dt>
 <dd><p>The <code class="docutils literal notranslate"><span class="pre">SELECT</span></code> statement
@@ -2440,6 +2495,33 @@ passed to <a class="reference internal" href="#ralsei.task.MapToNewColumns.fn" t
 in the same row</p>
 <p>If <a class="reference internal" href="#ralsei.task.MapToNewColumns.id_fields" title="ralsei.task.MapToNewColumns.id_fields (Python attribute) — Columns that uniquely identify a row in table, so that you can update is_done_column"><code class="xref py py-attr docutils literal notranslate"><span class="pre">id_fields</span></code></a> argument is omitted, will try to infer the <code class="docutils literal notranslate"><span class="pre">id_fields</span></code>
 from metadata left by <a class="reference internal" href="ralsei.wrappers.html#ralsei.wrappers.pop_id_fields" title="ralsei.wrappers.pop_id_fields (Python function) — Create function wrapper that 'pops' id_fields off the keyword arguments, calls the inner function without them, then re-inserts them into the output rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">ralsei.wrappers.pop_id_fields()</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute objdesc">
+<dt class="sig sig-object highlight sig-wrap py" id="ralsei.task.MapToNewColumns.context">
+<span class="sig-name descname"><span class="pre">context</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="ralsei.contextmanagers.html#ralsei.contextmanagers.ContextManager" title="ralsei.contextmanagers.ContextManager (Python class) — Bases: typing.Protocol"><span class="pre">ralsei.contextmanagers.ContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="s1">&#39;field(...)&#39;</span></code><a class="headerlink" href="#ralsei.task.MapToNewColumns.context" title="Link to this definition">¶</a></dt>
+<dd><p>Task-scoped context-manager arguments passed to <a class="reference internal" href="#ralsei.task.MapToNewColumns.fn" title="ralsei.task.MapToNewColumns.fn (Python attribute) — Function that maps one row to values of the new columns in the same row"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fn</span></code></a></p>
+<div class="example admonition">
+<p class="admonition-title">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ralsei.contextmanagers</span> <span class="kn">import</span> <span class="n">reusable_contextmanager_const</span>
+<span class="kn">from</span> <span class="nn">selenium</span> <span class="kn">import</span> <span class="n">webdriver</span>
+
+<span class="nd">@reusable_contextmanager_const</span>
+<span class="k">def</span> <span class="nf">browser_context</span><span class="p">():</span>
+    <span class="n">browser</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">browser</span>
+    <span class="n">browser</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">scrape_page</span><span class="p">(</span><span class="n">browser</span><span class="p">:</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">MapToNewColumns</span><span class="p">(</span>
+    <span class="n">fn</span><span class="o">=</span><span class="n">scrape_page</span><span class="p">,</span>
+    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;browser&quot;</span><span class="p">:</span> <span class="n">browser_context</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
 </dd></dl>
 
 <dl class="py attribute objdesc">

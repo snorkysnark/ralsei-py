@@ -32,6 +32,7 @@ Submodules
    ralsei.utils
    ralsei.wrappers
    ralsei.db_actions
+   ralsei.contextmanagers
    ralsei.dialect
 
 Package Contents

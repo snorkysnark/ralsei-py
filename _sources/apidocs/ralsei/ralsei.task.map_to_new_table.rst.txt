@@ -57,6 +57,14 @@ API
       .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.fn
          :parser: autodoc2_napoleon
 
+   .. py:attribute:: context
+      :canonical: ralsei.task.map_to_new_table.MapToNewTable.context
+      :type: dict[str, ralsei.contextmanagers.ContextManager[typing.Any]]
+      :value: 'field(...)'
+
+      .. autodoc2-docstring:: ralsei.task.map_to_new_table.MapToNewTable.context
+         :parser: autodoc2_napoleon
+
    .. py:attribute:: select
       :canonical: ralsei.task.map_to_new_table.MapToNewTable.select
       :type: typing.Optional[str]

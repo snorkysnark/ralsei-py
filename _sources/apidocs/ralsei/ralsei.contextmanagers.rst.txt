@@ -1,0 +1,101 @@
+:py:mod:`ralsei.contextmanagers`
+================================
+
+.. py:module:: ralsei.contextmanagers
+
+.. autodoc2-docstring:: ralsei.contextmanagers
+   :parser: autodoc2_napoleon
+   :allowtitles:
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`ContextManager <ralsei.contextmanagers.ContextManager>`
+     - .. autodoc2-docstring:: ralsei.contextmanagers.ContextManager
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`MultiContextManager <ralsei.contextmanagers.MultiContextManager>`
+     - .. autodoc2-docstring:: ralsei.contextmanagers.MultiContextManager
+          :parser: autodoc2_napoleon
+          :summary:
+
+Functions
+~~~~~~~~~
+
+.. list-table::
+   :class: autosummary longtable
+   :align: left
+
+   * - :py:obj:`reusable_contextmanager <ralsei.contextmanagers.reusable_contextmanager>`
+     - .. autodoc2-docstring:: ralsei.contextmanagers.reusable_contextmanager
+          :parser: autodoc2_napoleon
+          :summary:
+   * - :py:obj:`reusable_contextmanager_const <ralsei.contextmanagers.reusable_contextmanager_const>`
+     - .. autodoc2-docstring:: ralsei.contextmanagers.reusable_contextmanager_const
+          :parser: autodoc2_napoleon
+          :summary:
+
+API
+~~~
+
+.. py:class:: ContextManager
+   :canonical: ralsei.contextmanagers.ContextManager
+
+   Bases: :py:obj:`typing.Protocol`
+
+   .. autodoc2-docstring:: ralsei.contextmanagers.ContextManager
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __enter__() -> T
+      :canonical: ralsei.contextmanagers.ContextManager.__enter__
+
+      .. autodoc2-docstring:: ralsei.contextmanagers.ContextManager.__enter__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __exit__(__exc_type: typing.Optional[type[BaseException]], __exc_value: typing.Optional[BaseException], __traceback: typing.Optional[types.TracebackType]) -> typing.Optional[bool]
+      :canonical: ralsei.contextmanagers.ContextManager.__exit__
+
+      .. autodoc2-docstring:: ralsei.contextmanagers.ContextManager.__exit__
+         :parser: autodoc2_napoleon
+
+.. py:class:: MultiContextManager(context_managers: dict[str, ralsei.contextmanagers.ContextManager[T]])
+   :canonical: ralsei.contextmanagers.MultiContextManager
+
+   .. autodoc2-docstring:: ralsei.contextmanagers.MultiContextManager
+      :parser: autodoc2_napoleon
+
+   .. rubric:: Initialization
+
+   .. autodoc2-docstring:: ralsei.contextmanagers.MultiContextManager.__init__
+      :parser: autodoc2_napoleon
+
+   .. py:method:: __enter__() -> dict[str, T]
+      :canonical: ralsei.contextmanagers.MultiContextManager.__enter__
+
+      .. autodoc2-docstring:: ralsei.contextmanagers.MultiContextManager.__enter__
+         :parser: autodoc2_napoleon
+
+   .. py:method:: __exit__(__exc_type, __exc_value, __traceback)
+      :canonical: ralsei.contextmanagers.MultiContextManager.__exit__
+
+      .. autodoc2-docstring:: ralsei.contextmanagers.MultiContextManager.__exit__
+         :parser: autodoc2_napoleon
+
+.. py:function:: reusable_contextmanager(func: typing.Callable[ralsei.contextmanagers.reusable_contextmanager.P, typing.Generator[ralsei.contextmanagers.reusable_contextmanager.T, None, None]]) -> typing.Callable[ralsei.contextmanagers.reusable_contextmanager.P, ralsei.contextmanagers._ReusableGeneratorContextManager[ralsei.contextmanagers.reusable_contextmanager.T, ralsei.contextmanagers.reusable_contextmanager.P]]
+   :canonical: ralsei.contextmanagers.reusable_contextmanager
+
+   .. autodoc2-docstring:: ralsei.contextmanagers.reusable_contextmanager
+      :parser: autodoc2_napoleon
+
+.. py:function:: reusable_contextmanager_const(func: typing.Callable[[], typing.Generator[ralsei.contextmanagers.reusable_contextmanager_const.T, None, None]]) -> ralsei.contextmanagers._ReusableGeneratorContextManager[ralsei.contextmanagers.reusable_contextmanager_const.T, []]
+   :canonical: ralsei.contextmanagers.reusable_contextmanager_const
+
+   .. autodoc2-docstring:: ralsei.contextmanagers.reusable_contextmanager_const
+      :parser: autodoc2_napoleon

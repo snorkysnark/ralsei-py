@@ -384,6 +384,33 @@ from metadata left by <a class="reference internal" href="ralsei.wrappers.html#r
 </dd></dl>
 
 <dl class="py attribute objdesc">
+<dt class="sig sig-object highlight sig-wrap py" id="ralsei.task.map_to_new_columns.MapToNewColumns.context">
+<span class="sig-name descname"><span class="pre">context</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="ralsei.contextmanagers.html#ralsei.contextmanagers.ContextManager" title="ralsei.contextmanagers.ContextManager (Python class) — Bases: typing.Protocol"><span class="pre">ralsei.contextmanagers.ContextManager</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.13)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="s1">&#39;field(...)&#39;</span></code><a class="headerlink" href="#ralsei.task.map_to_new_columns.MapToNewColumns.context" title="Link to this definition">¶</a></dt>
+<dd><p>Task-scoped context-manager arguments passed to <a class="reference internal" href="#ralsei.task.map_to_new_columns.MapToNewColumns.fn" title="ralsei.task.map_to_new_columns.MapToNewColumns.fn (Python attribute) — Function that maps one row to values of the new columns in the same row"><code class="xref py py-attr docutils literal notranslate"><span class="pre">fn</span></code></a></p>
+<div class="example admonition">
+<p class="admonition-title">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ralsei.contextmanagers</span> <span class="kn">import</span> <span class="n">reusable_contextmanager_const</span>
+<span class="kn">from</span> <span class="nn">selenium</span> <span class="kn">import</span> <span class="n">webdriver</span>
+
+<span class="nd">@reusable_contextmanager_const</span>
+<span class="k">def</span> <span class="nf">browser_context</span><span class="p">():</span>
+    <span class="n">browser</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">browser</span>
+    <span class="n">browser</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">scrape_page</span><span class="p">(</span><span class="n">browser</span><span class="p">:</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Chrome</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">MapToNewColumns</span><span class="p">(</span>
+    <span class="n">fn</span><span class="o">=</span><span class="n">scrape_page</span><span class="p">,</span>
+    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;browser&quot;</span><span class="p">:</span> <span class="n">browser_context</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</dd></dl>
+
+<dl class="py attribute objdesc">
 <dt class="sig sig-object highlight py" id="ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column">
 <span class="sig-name descname"><span class="pre">is_done_column</span></span><span class="p"> <span class="pre">:</span> </span><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="p"> <span class="pre">=</span> </span><code class="code python docutils literal highlight highlight-python"><span class="kc">None</span></code><a class="headerlink" href="#ralsei.task.map_to_new_columns.MapToNewColumns.is_done_column" title="Link to this definition">¶</a></dt>
 <dd><p>Create a boolean column with the given name
