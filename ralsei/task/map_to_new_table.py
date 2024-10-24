@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 from sqlalchemy import TextClause
 
 from ralsei.types import (
@@ -16,12 +16,12 @@ from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.graph import Resolves
 from ralsei.connection import ConnectionEnvironment
 from ralsei.console import track
+from ralsei.contextmanagers import ContextManager, MultiContextManager
 from ralsei import db_actions
 
 from .base import TaskDef
 from .create_table import CreateTableTask
 from .rowcontext import RowContext
-from ._contextmanagers import MultiContextManager
 
 
 @dataclass
@@ -138,7 +138,30 @@ class MapToNewTable(TaskDef):
 
     If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
     from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`"""
-    context: dict = field(default_factory=dict)
+    context: dict[str, ContextManager[Any]] = field(default_factory=dict)
+    """
+    Task-scoped context-manager arguments passed to :py:attr:`~fn`
+
+    Example:
+        .. code-block:: python
+
+            from ralsei.contextmanagers import reusable_contextmanager_const
+            from selenium import webdriver
+
+            @reusable_contextmanager_const
+            def browser_context():
+                browser = webdriver.Chrome()
+                yield browser
+                browser.quit()
+
+            def scrape_page(browser: webdriver.Chrome):
+                ...
+
+            MapToNewTable(
+                fn=scrape_page,
+                context={"browser": browser_context}
+            )
+    """
     select: Optional[str] = None
     """The ``SELECT`` statement
     that generates rows passed to :py:attr:`~fn` as arguments

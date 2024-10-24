@@ -12,12 +12,12 @@ from ralsei.types import (
 )
 from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.connection import ConnectionEnvironment
+from ralsei.contextmanagers import ContextManager, MultiContextManager
 from ralsei import db_actions
 
 from .base import TaskDef
 from .add_columns import AddColumnsTask
 from .rowcontext import RowContext
-from ._contextmanagers import MultiContextManager
 
 
 class MapToNewColumns(TaskDef):
@@ -103,7 +103,30 @@ class MapToNewColumns(TaskDef):
     If :py:attr:`~id_fields` argument is omitted, will try to infer the ``id_fields``
     from metadata left by :py:func:`ralsei.wrappers.pop_id_fields`
     """
-    context: dict = field(default_factory=dict)
+    context: dict[str, ContextManager[Any]] = field(default_factory=dict)
+    """
+    Task-scoped context-manager arguments passed to :py:attr:`~fn`
+
+    Example:
+        .. code-block:: python
+
+            from ralsei.contextmanagers import reusable_contextmanager_const
+            from selenium import webdriver
+
+            @reusable_contextmanager_const
+            def browser_context():
+                browser = webdriver.Chrome()
+                yield browser
+                browser.quit()
+
+            def scrape_page(browser: webdriver.Chrome):
+                ...
+
+            MapToNewColumns(
+                fn=scrape_page,
+                context={"browser": browser_context}
+            )
+    """
     is_done_column: Optional[str] = None
     """Create a boolean column with the given name
     in :py:attr:`~table` that tracks which rows have been processed
