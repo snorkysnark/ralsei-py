@@ -82,9 +82,9 @@ class AddColumnsSql(TaskDef):
 
             self._prepare_columns(table, columns)
 
-            self._scripts["Add Columns"] = self._add_columns
-            self._scripts["Main"] = self.__sql
-            self._scripts["Drop Columns"] = self._drop_columns
+            self._set_script("Add Columns", self._add_columns, creation=True)
+            self._set_script("Main", self.__sql)
+            self._set_script("Drop Columns", self._drop_columns)
 
         def _run(self, conn: ConnectionEnvironment):
             self._add_columns(conn)

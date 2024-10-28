@@ -5,6 +5,7 @@ from sqlalchemy import TextClause
 from ralsei.connection import ConnectionEnvironment
 from ralsei.types import Table, ColumnRendered
 from ralsei.jinja import ISqlEnvironment
+from ralsei.sql_description import AsStatements
 
 
 def _get_column_names(conn: ConnectionEnvironment, table: Table):
@@ -37,7 +38,7 @@ def columns_exist(
     return True
 
 
-class AddColumns:
+class AddColumns(AsStatements):
     """Action for adding columns to a table
 
     Args:
@@ -70,6 +71,9 @@ class AddColumns:
         self._table, self._columns = table, columns
         self._if_not_exists = if_not_exists
 
+    def as_statements(self) -> list[str]:
+        return [str(statement) for statement in self.statements]
+
     def __call__(self, conn: ConnectionEnvironment):
         """Execute action"""
         if self._if_not_exists and not conn.dialect_info.supports_column_if_not_exists:
@@ -84,7 +88,7 @@ class AddColumns:
         return "\n".join(map(str, self.statements))
 
 
-class DropColumns:
+class DropColumns(AsStatements):
     """Action for dropping columns from a table
 
     Args:
@@ -115,6 +119,9 @@ class DropColumns:
         ]
         self._table, self._columns = table, columns
         self._if_exists = if_exists
+
+    def as_statements(self) -> list[str]:
+        return [str(statement) for statement in self.statements]
 
     def __call__(self, conn: ConnectionEnvironment):
         """Execute action"""

@@ -186,10 +186,10 @@ class MapToNewColumns(TaskDef):
                 id_fields=id_fields,
             )
 
-            self._scripts["Add columns"] = self._add_columns
-            self._scripts["Select"] = self.__select
-            self._scripts["Update"] = self.__update
-            self._scripts["Drop columns"] = self._drop_columns
+            self._set_script("Add columns", self._add_columns, creation=True)
+            self._set_script("Select", self.__select)
+            self._set_script("Update", self.__update)
+            self._set_script("Drop columns", self._drop_columns)
 
         def _run(self, conn: ConnectionEnvironment):
             self._add_columns(conn)

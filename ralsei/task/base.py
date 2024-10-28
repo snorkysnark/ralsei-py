@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from ralsei.jinja import SqlEnvironment, ISqlEnvironment, SqlEnvironmentWrapper
 from ralsei.graph import Resolves, resolve
 from ralsei.connection import ConnectionExt, ConnectionEnvironment
+from ralsei.sql_description import as_statements
 
 
 class Task(ABC):
@@ -36,7 +37,7 @@ class Task(ABC):
     def exists(self, conn: ConnectionExt) -> bool:
         """Check if task has already been done"""
 
-    def scripts(self) -> Iterable[tuple[str, object]]:
+    def scripts(self) -> Iterable[tuple[str, list[str]]]:
         """Get SQL scripts rendered by this task
 
         Returns:
@@ -45,6 +46,9 @@ class Task(ABC):
             #. a string-like object, usually :py:class:`str` or :py:class:`sqlalchemy.sql.elements.TextClause`
             #. a list of string-like objects (in case of multiple statements)
         """
+        return []
+
+    def creation_script(self) -> list[str]:
         return []
 
 
@@ -67,7 +71,8 @@ class TaskImpl[D](Task):
     """
 
     env: ISqlEnvironment
-    _scripts: dict[str, object]
+    __scripts: dict[str, list[str]]
+    __creation_script: list[str]
     """You can save your sql scripts here when you render them,
     the key-value pairs will be returned by :py:meth:`~TaskImpl.scripts`
 
@@ -82,7 +87,8 @@ class TaskImpl[D](Task):
     def __init__(self, this: D, env: ISqlEnvironment) -> None:
         self.env = env
 
-        self._scripts = {}
+        self.__scripts = {}
+        self.__creation_script = []
         self.prepare(this)
 
     def prepare(self, this: D):
@@ -124,9 +130,22 @@ class TaskImpl[D](Task):
     def _exists(self, conn: ConnectionEnvironment) -> bool:
         """Check if task has already been done"""
 
-    def scripts(self) -> Iterable[tuple[str, object]]:
+    def _set_script(self, name: str, value: object, creation: bool = False):
+        statements = as_statements(value)
+
+        self.__scripts[name] = statements
+        if creation:
+            self.__creation_script = statements
+
+    def _set_creation_script(self, value: object):
+        self.__creation_script = as_statements(value)
+
+    def scripts(self) -> Iterable[tuple[str, list[str]]]:
         """Get SQL scripts rendered by this task"""
-        return self._scripts.items()
+        return self.__scripts.items()
+
+    def creation_script(self) -> list[str]:
+        return self.__creation_script
 
 
 class TaskDef(metaclass=TaskDefMeta):

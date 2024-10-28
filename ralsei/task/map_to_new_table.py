@@ -280,13 +280,14 @@ class MapToNewTable(TaskDef):
                 )
 
             if self.__marker_scripts:
-                self._scripts["Add marker"] = self.__marker_scripts.add_marker
-            self._scripts["Select"] = self.__select
-            self._scripts["Create table"] = self.__create_table
-            self._scripts["Insert"] = self.__insert
-            self._scripts["Drop table"] = self._drop_sql
+                self._set_script("Add marker", self.__marker_scripts.add_marker)
+            if self.__select is not None:
+                self._set_script("Select", self.__select)
+            self._set_script("Create table", self.__create_table, creation=True)
+            self._set_script("Insert", self.__insert)
+            self._set_script("Drop table", self._drop_sql)
             if self.__marker_scripts:
-                self._scripts["Drop marker"] = self.__marker_scripts.drop_marker
+                self._set_script("Drop marker", self.__marker_scripts.drop_marker)
 
         def _run(self, conn: ConnectionEnvironment):
             conn.sqlalchemy.execute(self.__create_table)

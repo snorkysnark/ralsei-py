@@ -1,7 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+import itertools
 from graphviz import Digraph
 from typing import TYPE_CHECKING, Iterable, Optional, Sequence
+import html
 
 from .path import TreePath
 from .sequence import NamedTask, TaskSequence
@@ -108,10 +110,21 @@ class DAG:
         """Generate graphviz diagram"""
 
         dot = Digraph()
-        dot.attr("node", shape="box")
+        dot.attr("graph", rankdir="LR")
+        dot.attr("node", shape="record")
 
         for path, task in self.tasks.items():
-            dot.node(str(path), f"<<b>{path}</b><br/>{task.output}>")
+            name = str(path)
+            description = list(
+                itertools.chain(
+                    *(str(line).split("\n") for line in task.creation_script())
+                )
+            )
+
+            dot.node(
+                name,
+                f"<{html.escape(name)} |\n{''.join(html.escape(line) + '<br align="left"/>' for line in description)}>",
+            )
 
         for path_from, children in self.relations.items():
             for path_to in children:

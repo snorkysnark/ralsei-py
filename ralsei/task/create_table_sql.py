@@ -60,8 +60,10 @@ class CreateTableSql(TaskDef):
             )
             self._prepare_table(this.table, this.view)
 
-            self._scripts["Create"] = self.__sql
-            self._scripts["Drop"] = self._drop_sql
+            self._set_script("Create", self.__sql)
+            self._set_script("Drop", self._drop_sql)
+            if len(self.__sql) > 0:
+                self._set_creation_script(self.__sql[0])
 
         def _run(self, conn: ConnectionEnvironment):
             conn.sqlalchemy.executescript(self.__sql)
