@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from ralsei.console import console, track
+from ralsei.injector import DIContainer
 from .path import TreePath
 
 if TYPE_CHECKING:
-    from ralsei.connection import ConnectionExt
     from ralsei.task import Task
 
 
@@ -28,32 +28,24 @@ class TaskSequence:
     def __init__(self, steps: list[NamedTask]) -> None:
         self.steps = steps
 
-    def run(self, conn: "ConnectionExt"):
-        """Run, committing after each successful task"""
-
+    def run(self, di: DIContainer):
         for named_task in track(self.steps, description="Running tasks..."):
-            if named_task.task.exists(conn):
+            if di.execute(named_task.task.output.exists):
                 console.print(
                     f"Skipping [bold green]{named_task.name}[/bold green]: already done"
                 )
             else:
                 console.print(f"Running [bold green]{named_task.name}")
+                di.execute(named_task.task.run)
 
-                named_task.task.run(conn)
-                conn.commit()
-
-    def delete(self, conn: "ConnectionExt"):
-        """Delete, committing after each successful task"""
+    def delete(self, di: DIContainer):
         for named_task in track(reversed(self.steps), description="Undoing tasks..."):
             console.print(f"Deleting [bold green]{named_task.name}")
+            di.execute(named_task.task.output.delete)
 
-            named_task.task.delete(conn)
-            conn.commit()
-
-    def redo(self, conn: "ConnectionExt"):
-        """:py:meth:`~TaskSequence.delete` + :py:meth:`~TaskSequence.run`"""
-        self.delete(conn)
-        self.run(conn)
+    def redo(self, di: DIContainer):
+        self.delete(di)
+        self.run(di)
 
 
 __all__ = ["NamedTask", "TaskSequence"]

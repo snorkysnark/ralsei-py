@@ -1,94 +1,54 @@
-from typing import Optional, Sequence
-from sqlalchemy import TextClause
+from typing import Sequence, Optional, Any
+from dataclasses import field
 
+import sqlalchemy
+
+from ralsei.connection import ConnectionEnvironment
 from ralsei.graph import Resolves
+from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table, ColumnBase
 from ralsei.utils import expect
-from ralsei.connection import ConnectionEnvironment
 
-from .base import TaskDef
-from .add_columns import AddColumnsTask
+from .base import TaskDef, Task
+from .colum_output import ColumnOutput
 
 
 class AddColumnsSql(TaskDef):
-    """Adds the specified Columns to an existing Table
-    and runs the SQL script to fill them with data
-
-    Variables passed to the template: :py:attr:`~table` |br|
-    Columns can be defined in the template itself, using ``{% set columns = [...] %}``
-
-    Example:
-
-        **postprocess.sql**
-
-        .. code-block:: sql
-
-            {% set columns = [Column("name_upper", "TEXT")] -%}
-
-            UPDATE {{table}}
-            SET name_upper = UPPER(name);
-
-        **pipeline.py**
-
-        .. code-block:: python
-
-            "postprocess": AddColumnsSql(
-                sql=Path("./postprocess.sql").read_text(),
-                table=Table("people"),
-            )
-
-    Note:
-        You can use :py:func:`ralsei.utils.folder` to find SQL files relative to current file
-    """
-
     sql: str | list[str]
-    """Sql template strings
-
-    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
-    """
     table: Resolves[Table]
-    """Table to add columns to
-
-    May be the output of another task
-    """
     columns: Optional[Sequence[ColumnBase]] = None
-    """these column definitions take precedence over those defined in the template"""
+    params: dict[str, Any] = field(default_factory=dict)
 
-    class Impl(AddColumnsTask):
-        def prepare(self, this: "AddColumnsSql"):
-            table = self.resolve(this.table)
+    class Impl(Task[ColumnOutput]):
+        def __init__(self, this: "AddColumnsSql", env: SqlEnvironment) -> None:
+            table = env.resolve(this.table)
+            params = {**this.params, "table": table}
 
             def render_script() -> (
-                tuple[list[TextClause], Optional[Sequence[ColumnBase]]]
+                tuple[list[sqlalchemy.TextClause], Optional[Sequence[ColumnBase]]]
             ):
                 if isinstance(this.sql, str):
-                    template_module = self.env.from_string(this.sql).make_module(
-                        {"table": table}
-                    )
+                    template_module = env.from_string(this.sql).make_module(params)
                     columns: Optional[Sequence[ColumnBase]] = getattr(
                         template_module, "columns", None
                     )
 
                     return template_module.render_sql_split(), columns
                 else:
-                    return [
-                        self.env.render_sql(sql, table=table) for sql in this.sql
-                    ], None
+                    return [env.render_sql(sql, **params) for sql in this.sql], None
 
             self.__sql, template_columns = render_script()
-            columns = expect(
-                this.columns or template_columns, ValueError("Columns not specified")
-            )
+            columns = [
+                column.render(env, **params)
+                for column in expect(
+                    this.columns or template_columns,
+                    ValueError("Columns not specified"),
+                )
+            ]
 
-            self._prepare_columns(table, columns)
+            self.output = ColumnOutput(env, table, columns)
 
-            self._set_script("Add Columns", self._add_columns, creation=True)
-            self._set_script("Main", self.__sql)
-            self._set_script("Drop Columns", self._drop_columns)
-
-        def _run(self, conn: ConnectionEnvironment):
-            self._add_columns(conn)
-            conn.sqlalchemy.executescript(self.__sql)
-
-
-__all__ = ["AddColumnsSql"]
+        def run(self, conn: ConnectionEnvironment):
+            self.output.add_columns(conn)
+            conn.executescript(self.__sql)
+            conn.sqlalchemy.commit()

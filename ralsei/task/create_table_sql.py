@@ -1,72 +1,31 @@
-from ralsei.connection import ConnectionEnvironment
+import sqlalchemy
+from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
+from dataclasses import field
+from typing import Any
 
-from .base import TaskDef
-from .create_table import CreateTableTask
+from ralsei.connection.utils import executescript
+from .base import TaskDef, Task
+from .table_output import TableOutput
 
 
 class CreateTableSql(TaskDef):
-    """Runs a ``CREATE TABLE`` sql script
-
-    Variables passed to the template: :py:attr:`~table`, :py:attr:`~view`
-
-    Example:
-
-        **unnest.sql**
-
-        .. code-block:: sql
-
-            CREATE TABLE {{table}}(
-                id SERIAL PRIMARY KEY,
-                name TEXT
-            );
-            {%-split-%}
-            INSERT INTO {{table}}(name)
-            SELECT json_array_elements_text(json->'names')
-            FROM {{sources}};
-
-        **pipeline.py**
-
-        .. code-block:: python
-
-            "unnest": CreateTableSql(
-                sql=Path("./unnest.sql").read_text(),
-                table=Table("new_table"),
-                locals={"sources": self.outputof("other")},
-            )
-
-    Note:
-        You can use :py:func:`ralsei.utils.folder` to find SQL files relative to current file
-    """
-
     sql: str | list[str]
-    """Sql template strings
-
-    Individual statements must be either separated by ``{%split%}`` tag or pre-split into a list
-    """
     table: Table
-    """Table being created"""
     view: bool = False
-    """whether this is a ``VIEW`` instead of a ``TABLE``"""
+    params: dict[str, Any] = field(default_factory=dict)
 
-    class Impl(CreateTableTask):
-        def prepare(self, this: "CreateTableSql"):
-            locals = {"table": this.table, "view": this.view}
+    class Impl(Task):
+        def __init__(self, this: "CreateTableSql", env: SqlEnvironment) -> None:
+            params = {**this.params, "table": this.table, "view": this.view}
 
             self.__sql = (
-                self.env.render_sql_split(this.sql, **locals)
+                env.render_sql_split(this.sql, **params)
                 if isinstance(this.sql, str)
-                else [self.env.render_sql(sql, **locals) for sql in this.sql]
+                else [env.render_sql(sql, **params) for sql in this.sql]
             )
-            self._prepare_table(this.table, this.view)
+            self.output = TableOutput(env, this.table, view=this.view)
 
-            self._set_script("Create", self.__sql)
-            self._set_script("Drop", self._drop_sql)
-            if len(self.__sql) > 0:
-                self._set_creation_script(self.__sql[0])
-
-        def _run(self, conn: ConnectionEnvironment):
-            conn.sqlalchemy.executescript(self.__sql)
-
-
-__all__ = ["CreateTableSql"]
+        def run(self, conn: sqlalchemy.Connection):
+            executescript(conn, self.__sql)
+            conn.commit()

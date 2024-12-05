@@ -1,46 +1,55 @@
-from __future__ import annotations
-from typing import Any, Iterable, Mapping, Optional
+from typing import Optional, Any, Iterable, Mapping
 import sqlalchemy
 from sqlalchemy.engine.interfaces import _CoreSingleExecuteParams, _CoreAnyExecuteParams
 
-from ralsei.dialect import DialectInfo, get_dialect
-from ralsei.jinja import ISqlEnvironment, SqlEnvironment
-
-from .ext import ConnectionExt
-from ._length_hint import CountableCursorResult
+from ralsei.dialect import DialectInfo
+from ralsei.jinja import SqlEnvironment
+from . import utils
 
 
 class ConnectionEnvironment:
-    """Combines of a database connection with a jinja sql environment,
-
-    letting you execute dynamically rendered SQL
-
-    Args:
-        sqlalchemy_conn: use exsisting connection or create a new one from engine
-        env: if not provided, a new environment will be created from the engine's dialect
-    """
-
-    sqlalchemy: ConnectionExt
-    jinja: ISqlEnvironment
-
-    def __init__(
-        self,
-        sqlalchemy_conn: sqlalchemy.Engine | ConnectionExt,
-        env: ISqlEnvironment | None = None,
-    ) -> None:
-        self.sqlalchemy = (
-            ConnectionExt(sqlalchemy_conn)
-            if isinstance(sqlalchemy_conn, sqlalchemy.Engine)
-            else sqlalchemy_conn
-        )
-        self.jinja = (
-            env if env else SqlEnvironment(get_dialect(self.sqlalchemy.dialect.name))
-        )
+    def __init__(self, sqlalchemy_conn: sqlalchemy.Connection, env: SqlEnvironment):
+        self.sqlalchemy = sqlalchemy_conn
+        self.jinja = env
 
     @property
-    def dialect_info(self) -> DialectInfo:
-        """Quick access to :py:attr:`~ConnectionEnvironment.jinja` environment's DialectInfo"""
-        return self.jinja.dialect_info
+    def dialect(self) -> DialectInfo:
+        return self.jinja.dialect
+
+    def execute(
+        self,
+        statement: sqlalchemy.Executable,
+        parameters: Optional[_CoreAnyExecuteParams] = None,
+    ) -> sqlalchemy.CursorResult[Any]:
+        return self.sqlalchemy.execute(statement, parameters)
+
+    def execute_text(
+        self, statement: str, parameters: Optional[_CoreAnyExecuteParams] = None
+    ) -> sqlalchemy.CursorResult[Any]:
+        return utils.execute_text(self.sqlalchemy, statement, parameters)
+
+    def executescript(
+        self,
+        statements: Iterable[sqlalchemy.Executable],
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+    ):
+        utils.executescript(self.sqlalchemy, statements, parameters)
+
+    def executescript_text(
+        self,
+        statements: Iterable[str],
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+    ):
+        utils.executescript_text(self.sqlalchemy, statements, parameters)
+
+    def execute_with_length_hint(
+        self,
+        statement: sqlalchemy.Executable,
+        parameters: Optional[_CoreSingleExecuteParams] = None,
+    ) -> Iterable[sqlalchemy.Row[Any]]:
+        return utils.execute_with_length_hint(
+            self.sqlalchemy, self.dialect.meta, statement, parameters
+        )
 
     def render_execute(
         self,
@@ -73,7 +82,7 @@ class ConnectionEnvironment:
             bind_params: sql bind parameters
         """
 
-        self.sqlalchemy.executescript(
+        self.executescript(
             (
                 self.jinja.render_sql_split(source, **template_params)
                 if isinstance(source, str)
@@ -84,30 +93,6 @@ class ConnectionEnvironment:
             ),
             bind_params,
         )
-
-    def execute_with_length_hint(
-        self,
-        statement: sqlalchemy.Executable,
-        parameters: Optional[_CoreSingleExecuteParams] = None,
-    ) -> Iterable[sqlalchemy.Row[Any]]:
-        """Execute a sql expression, returning an object with a :py:meth:`object.__length_hint__` method,
-        letting you see the estimated number or rows.
-
-        Concrete implementation depends on the sql dialect
-        """
-
-        result = self.sqlalchemy.execute(statement, parameters)
-        return (
-            CountableCursorResult(result)
-            if self.dialect_info.supports_rowcount
-            else result.all()
-        )
-
-    def __enter__(self) -> ConnectionEnvironment:
-        return self
-
-    def __exit__(self, type_: Any, value: Any, traceback: Any) -> None:
-        self.sqlalchemy.close()
 
 
 __all__ = ["ConnectionEnvironment"]

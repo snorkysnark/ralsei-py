@@ -17,11 +17,12 @@ from jinja2.nodes import Template as TemplateNode
 import itertools
 from sqlalchemy import TextClause
 
-from ralsei.dialect import DialectInfo, BaseDialectInfo
-from ralsei.types import ToSql, Sql, Column, Identifier
-from ralsei.graph import resolve
+from ralsei.types import Sql, Column, Identifier
+from ralsei.graph import OutputOf, DependencyResolver, Resolves
+from ralsei.dialect import DialectInfo
 
-from .adapter import SqlAdapter
+from .adapter import SqlAdapter, default_adapter
+from .globals import joiner, create_join
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
 
@@ -107,17 +108,6 @@ class SqlTemplate(jinja2.Template):
         return SqlTemplateModule(self, ctx)
 
 
-def create_adapter(env: SqlEnvironment):
-    adapter = SqlAdapter()
-    adapter.register_type(str, lambda value: "'{}'".format(value.replace("'", "''")))
-    adapter.register_type(int, str)
-    adapter.register_type(float, str)
-    adapter.register_type(type(None), lambda value: "NULL")
-    adapter.register_type(ToSql, lambda value: value.to_sql(env))
-
-    return adapter
-
-
 class SqlEnvironment(jinja2.Environment):
     """Type-aware jinja environment for rendering SQL
 
@@ -125,68 +115,40 @@ class SqlEnvironment(jinja2.Environment):
         dialect_info: dialect-specific settings
     """
 
-    def __init__(self, dialect_info: DialectInfo = BaseDialectInfo):
-        super().__init__(undefined=StrictUndefined)
-
-        self._adapter = create_adapter(self)
-        self._dialect_info = dialect_info
+    def __init__(
+        self,
+        adapter: Optional[SqlAdapter] = None,
+        resolver: Optional[DependencyResolver] = None,
+        filters: Optional[dict[str, Callable]] = None,
+        globals: Optional[dict[str, Any]] = None,
+    ):
+        self.adapter = adapter or default_adapter.copy()
+        self.resolver = resolver
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):
                 return value
             else:
-                return self.adapter.to_sql(resolve(self, value))
+                return self.adapter.to_sql(self, self.resolve(value))
 
-        def joiner(sep: str = ", ") -> Callable[[], Sql]:
-            inner = jinja2.utils.Joiner(sep)
-            return lambda: Sql(inner())
+        super().__init__(undefined=StrictUndefined, finalize=finalize)
 
-        def join(
-            values: Iterable[Any],
-            delimiter: str,
-            attribute: Optional[str] = None,
-        ) -> Sql:
-            return Sql(
-                delimiter.join(
-                    map(
-                        lambda value: self.adapter.to_sql(
-                            getattr(value, attribute) if attribute else value
-                        ),
-                        values,
-                    )
-                )
-            )
-
-        self.finalize = finalize
         self.template_class = SqlTemplate
         self.code_generator_class = SqlCodeGenerator
+        self.add_extension(SplitTag)
 
-        self.filters = {
+        self.filters = filters or {
             "sql": Sql,
-            "join": join,
             "identifier": Identifier,
         }
-        self.globals = {
+        self.filters["join"] = create_join(self)
+
+        self.globals = globals or {
             "range": range,
             "dict": dict,
             "joiner": joiner,
             "Column": Column,
-            "dialect": dialect_info,
         }
-
-        self.add_extension(SplitTag)
-
-    @property
-    def adapter(self) -> SqlAdapter:
-        """Type adapter that turns values in braces (like ``{{value}}``) into SQL strings"""
-
-        return self._adapter
-
-    @property
-    def dialect_info(self) -> DialectInfo:
-        """Dialect-specific settings"""
-
-        return self._dialect_info
 
     @overload
     def from_string(
@@ -245,12 +207,48 @@ class SqlEnvironment(jinja2.Environment):
 
         return self.from_string(source).render_sql_split(*args, **kwargs)
 
+    @overload
+    def resolve[T](self, value: Resolves[T]) -> T: ...
+
+    @overload
+    def resolve(self, value: Any) -> Any: ...
+
+    def resolve(self, value: Any):
+        if self.resolver:
+            return self.resolver.resolve(value)
+        elif isinstance(value, OutputOf):
+            raise RuntimeError(
+                "Tried to resolve dependency outside of dependency resolution context"
+            )
+        else:
+            return value
+
+    def format(self, source: str, /, *args, **kwargs) -> str:
+        """Similar to :py:meth:`str.format`, but applies :py:meth:`~SqlAdapter.to_sql` to each parameter"""
+
+        return source.format(
+            *(self.adapter.to_sql(self, value) for value in args),
+            **{key: self.adapter.to_sql(self, value) for key, value in kwargs.items()},
+        )
+
     def getattr(self, obj: Any, attribute: str) -> Any:
-        return super().getattr(resolve(self, obj), attribute)
+        return super().getattr(self.resolve(obj), attribute)
+
+    def copy(self) -> "SqlEnvironment":
+        return SqlEnvironment(
+            adapter=self.adapter,
+            resolver=self.resolver,
+            filters={**self.filters},
+            globals={**self.globals},
+        )
 
     @property
-    def base(self) -> SqlEnvironment:
-        return self
+    def dialect(self) -> DialectInfo:
+        return self.globals["dialect"]
+
+    @dialect.setter
+    def dialect(self, dialect: DialectInfo):
+        self.globals["dialect"] = dialect
 
 
 __all__ = ["SqlTemplateModule", "SqlTemplate", "SqlEnvironment"]

@@ -1,32 +1,31 @@
 from typing import Iterable
-from sqlalchemy import inspect
-from sqlalchemy import TextClause
+import sqlalchemy
 
 from ralsei.connection import ConnectionEnvironment
 from ralsei.types import Table, ColumnRendered
-from ralsei.jinja import ISqlEnvironment
+from ralsei.jinja import SqlEnvironment
 from ralsei.sql_description import AsStatements
 
 
-def _get_column_names(conn: ConnectionEnvironment, table: Table):
+def _get_column_names(conn: sqlalchemy.Connection, table: Table):
     if table_exists(conn, table):
         return set(
             map(
                 lambda col: col["name"],
-                inspect(conn.sqlalchemy).get_columns(table.name, table.schema),
+                sqlalchemy.inspect(conn).get_columns(table.name, table.schema),
             )
         )
     else:
         return set()
 
 
-def table_exists(conn: ConnectionEnvironment, table: Table) -> bool:
+def table_exists(conn: sqlalchemy.Connection, table: Table) -> bool:
     """Check if table exists"""
-    return inspect(conn.sqlalchemy).has_table(table.name, table.schema)
+    return sqlalchemy.inspect(conn).has_table(table.name, table.schema)
 
 
 def columns_exist(
-    conn: ConnectionEnvironment, table: Table, columns: Iterable[str]
+    conn: sqlalchemy.Connection, table: Table, columns: Iterable[str]
 ) -> bool:
     """Check if all columns exist on a table"""
 
@@ -50,12 +49,12 @@ class AddColumns(AsStatements):
 
     def __init__(
         self,
-        env: ISqlEnvironment,
+        env: SqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_not_exists: bool = False,
     ) -> None:
-        self.statements: list[TextClause] = [
+        self.statements: list[sqlalchemy.TextClause] = [
             env.render_sql(
                 """\
             ALTER TABLE {{table}}
@@ -64,7 +63,7 @@ class AddColumns(AsStatements):
                 table=table,
                 column=column,
                 if_not_exists=if_not_exists
-                and env.dialect_info.supports_column_if_not_exists,
+                and env.dialect.meta.supports_column_if_not_exists,
             )
             for column in columns
         ]
@@ -76,13 +75,13 @@ class AddColumns(AsStatements):
 
     def __call__(self, conn: ConnectionEnvironment):
         """Execute action"""
-        if self._if_not_exists and not conn.dialect_info.supports_column_if_not_exists:
-            existing = _get_column_names(conn, self._table)
+        if self._if_not_exists and not conn.dialect.meta.supports_column_if_not_exists:
+            existing = _get_column_names(conn.sqlalchemy, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if not column.name in existing:
                     conn.sqlalchemy.execute(statement)
         else:
-            conn.sqlalchemy.executescript(self.statements)
+            conn.executescript(self.statements)
 
     def __str__(self) -> str:
         return "\n".join(map(str, self.statements))
@@ -100,12 +99,12 @@ class DropColumns(AsStatements):
 
     def __init__(
         self,
-        env: ISqlEnvironment,
+        env: SqlEnvironment,
         table: Table,
         columns: Iterable[ColumnRendered],
         if_exists: bool = False,
     ) -> None:
-        self.statements: list[TextClause] = [
+        self.statements: list[sqlalchemy.TextClause] = [
             env.render_sql(
                 """\
                 ALTER TABLE {{table}}
@@ -113,7 +112,7 @@ class DropColumns(AsStatements):
                 {{column.identifier}};""",
                 table=table,
                 column=column,
-                if_exists=if_exists and env.dialect_info.supports_column_if_not_exists,
+                if_exists=if_exists and env.dialect.meta.supports_column_if_not_exists,
             )
             for column in columns
         ]
@@ -125,16 +124,16 @@ class DropColumns(AsStatements):
 
     def __call__(self, conn: ConnectionEnvironment):
         """Execute action"""
-        if self._if_exists and not table_exists(conn, self._table):
+        if self._if_exists and not table_exists(conn.sqlalchemy, self._table):
             return
 
-        if self._if_exists and not conn.dialect_info.supports_column_if_not_exists:
-            existing = _get_column_names(conn, self._table)
+        if self._if_exists and not conn.dialect.meta.supports_column_if_not_exists:
+            existing = _get_column_names(conn.sqlalchemy, self._table)
             for column, statement in zip(self._columns, self.statements):
                 if column.name in existing:
                     conn.sqlalchemy.execute(statement)
         else:
-            conn.sqlalchemy.executescript(self.statements)
+            conn.executescript(self.statements)
 
     def __str__(self) -> str:
         return "\n".join(map(str, self.statements))

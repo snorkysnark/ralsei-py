@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from .to_sql import ToSql
 
 if TYPE_CHECKING:
-    from ralsei.jinja import ISqlEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 
 @dataclass
@@ -14,7 +14,7 @@ class Sql(ToSql):
 
     value: str
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return self.value
 
 
@@ -24,7 +24,7 @@ class Identifier(ToSql):
 
     value: str
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return '"{}"'.format(self.value.replace('"', '""'))
 
 
@@ -41,7 +41,7 @@ class Table(ToSql):
         else:
             return self.name
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return env.render(
             "{%if schema%}{{schema | identifier}}.{%endif%}{{name | identifier}}",
             name=self.name,
@@ -61,7 +61,7 @@ class Placeholder(ToSql):
         if not re.match(r"\w+", self.name):
             raise ValueError("Invalid placeholder name")
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
+    def to_sql(self, env: "SqlEnvironment") -> str:
         return f":{self.name}"
 
 

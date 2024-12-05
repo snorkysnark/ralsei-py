@@ -7,7 +7,7 @@ from .primitives import Identifier, Placeholder
 from .column import ColumnBase, Column, ColumnRendered
 
 if TYPE_CHECKING:
-    from ralsei.jinja import ISqlEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 
 FROM_NAME = object()
@@ -40,7 +40,7 @@ class ValueColumnBase(ColumnBase):
         return ValueColumnSetStatement(self)
 
     @abstractmethod
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ValueColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ValueColumnRendered:
         """Turn into the rendered version"""
 
 
@@ -60,7 +60,7 @@ class ValueColumn(Column, ValueColumnBase):
         Column.__init__(self, name, type)
         ValueColumnBase.__init__(self, name, value)
 
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ValueColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ValueColumnRendered:
         """Render the type template"""
 
         return ValueColumnRendered(
@@ -84,7 +84,7 @@ class ValueColumnRendered(ColumnRendered, ValueColumnBase):
         ColumnRendered.__init__(self, name, type)
         ValueColumnBase.__init__(self, name, value)
 
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ValueColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ValueColumnRendered:
         return self
 
 
@@ -96,8 +96,8 @@ class ValueColumnSetStatement(ToSql):
     def __init__(self, value_column: ValueColumnBase) -> None:
         self.value_column = value_column
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
-        return env.adapter.format(
+    def to_sql(self, env: "SqlEnvironment") -> str:
+        return env.format(
             "{} = {}", self.value_column.identifier, self.value_column.value
         )
 
@@ -127,8 +127,8 @@ class IdColumn(ToSql):
 
         return Identifier(self.name)
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
-        return env.adapter.format("{} = {}", self.identifier, self.value)
+    def to_sql(self, env: "SqlEnvironment") -> str:
+        return env.format("{} = {}", self.identifier, self.value)
 
 
 __all__ = [

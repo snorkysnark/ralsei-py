@@ -6,7 +6,7 @@ from .to_sql import ToSql
 from .primitives import Sql, Identifier
 
 if TYPE_CHECKING:
-    from ralsei.jinja import ISqlEnvironment
+    from ralsei.jinja import SqlEnvironment
 
 
 class ColumnBase(ABC):
@@ -24,7 +24,7 @@ class ColumnBase(ABC):
         return Identifier(self.name)
 
     @abstractmethod
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         """Turn into the rendered version"""
 
 
@@ -41,7 +41,7 @@ class Column(ColumnBase):
         super().__init__(name)
         self._template = type
 
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         """Render the type template"""
 
         return ColumnRendered(self.name, env.render(self._template, **params))
@@ -68,7 +68,7 @@ class ColumnRendered(ColumnBase):
 
         return ColumnDefinition(self)
 
-    def render(self, env: "ISqlEnvironment", /, **params: Any) -> ColumnRendered:
+    def render(self, env: "SqlEnvironment", /, **params: Any) -> ColumnRendered:
         return self
 
 
@@ -80,8 +80,8 @@ class ColumnDefinition(ToSql):
     def __init__(self, column: ColumnRendered) -> None:
         self.column = column
 
-    def to_sql(self, env: "ISqlEnvironment") -> str:
-        return env.adapter.format("{} {}", self.column.identifier, self.column.type)
+    def to_sql(self, env: "SqlEnvironment") -> str:
+        return env.format("{} {}", self.column.identifier, self.column.type)
 
 
 __all__ = ["ColumnBase", "Column", "ColumnRendered", "ColumnDefinition"]

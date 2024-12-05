@@ -2,15 +2,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Iterable, Mapping, Union
 
-from ._resolver import DependencyResolver
+from ralsei.injector import DIContainer
+
 from ._flattened import ScopedTaskDef, FlattenedPipeline
+from .resolver import RootDependencyResolver
 from .path import TreePath
 from .dag import DAG
 from .outputof import OutputOf
 
 if TYPE_CHECKING:
     from ralsei.task import TaskDef
-    from ralsei.jinja import SqlEnvironment
 
 type Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
 """A dictionary with task name to value pairs, used to define a :py:class:`~Pipeline`
@@ -94,10 +95,10 @@ class Pipeline(ABC):
 
         return FlattenedPipeline(task_definitions, pipeline_to_path)
 
-    def build_dag(self, env: "SqlEnvironment") -> DAG:
+    def build_dag(self, di: DIContainer) -> DAG:
         """Resolve dependencies and generate a graph of tasks"""
 
-        return DependencyResolver.from_definition(self.__flatten()).build_dag(env)
+        return RootDependencyResolver(di, self.__flatten()).build_dag()
 
 
 __all__ = ["Pipeline", "Tasks"]
