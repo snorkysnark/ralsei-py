@@ -1,4 +1,4 @@
-from ralsei import ConnectionEnvironment, Table, AddColumnsSql, Column
+from ralsei import ConnectionEnvironment, Ralsei, Table, AddColumnsSql, Column
 
 from tests.db_helper import get_rows
 
@@ -16,66 +16,78 @@ def create_table(conn: ConnectionEnvironment, table: Table):
     )
 
 
-def test_add_columns(conn: ConnectionEnvironment):
+def test_add_columns(app: Ralsei):
     table = Table("test_add_column")
-    create_table(conn, table)
 
-    task = AddColumnsSql(
-        sql=[
-            "UPDATE {{ table }} SET b = a * 2;",
-            "UPDATE {{ table }} SET c = a || '-' || b;",
-        ],
-        table=table,
-        columns=[Column("b", "INT"), Column("c", "TEXT")],
-    ).create(conn.jinja.base)
+    with app.init_context() as init:
+        task = AddColumnsSql(
+            sql=[
+                "UPDATE {{ table }} SET b = a * 2;",
+                "UPDATE {{ table }} SET c = a || '-' || b;",
+            ],
+            table=table,
+            columns=[Column("b", "INT"), Column("c", "TEXT")],
+        ).create(init)
 
-    task.run(conn.sqlalchemy)
-    assert get_rows(conn, table) == [
-        (2, 4, "2-4"),
-        (5, 10, "5-10"),
-    ]
-    task.delete(conn.sqlalchemy)
-    assert get_rows(conn, table) == [(2,), (5,)]
+    with app.runtime_context() as runtime:
+        conn = runtime.get(ConnectionEnvironment)
+        create_table(conn, table)
+
+        runtime.execute(task.run)
+        assert get_rows(conn, table) == [
+            (2, 4, "2-4"),
+            (5, 10, "5-10"),
+        ]
+        runtime.execute(task.output.delete)
+        assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_add_columns_jinja_var(conn: ConnectionEnvironment):
+def test_add_columns_jinja_var(app: Ralsei):
     table = Table("test_add_column")
-    create_table(conn, table)
 
-    task = AddColumnsSql(
-        sql="""\
-        {% set columns = [
-            Column("b", "INT"),
-            Column("c", "TEXT")
-        ] -%}
+    with app.init_context() as init:
+        task = AddColumnsSql(
+            sql="""\
+            {% set columns = [
+                Column("b", "INT"),
+                Column("c", "TEXT")
+            ] -%}
 
-        UPDATE {{ table }} SET b = a * 2;
-        {%-split-%}
-        UPDATE {{ table }} SET c = a || '-' || b;""",
-        table=table,
-    ).create(conn.jinja.base)
+            UPDATE {{ table }} SET b = a * 2;
+            {%-split-%}
+            UPDATE {{ table }} SET c = a || '-' || b;""",
+            table=table,
+        ).create(init)
 
-    task.run(conn.sqlalchemy)
-    assert get_rows(conn, table) == [
-        (2, 4, "2-4"),
-        (5, 10, "5-10"),
-    ]
-    task.delete(conn.sqlalchemy)
-    assert get_rows(conn, table) == [(2,), (5,)]
+    with app.runtime_context() as runtime:
+        conn = runtime.get(ConnectionEnvironment)
+        create_table(conn, table)
+
+        runtime.execute(task.run)
+        assert get_rows(conn, table) == [
+            (2, 4, "2-4"),
+            (5, 10, "5-10"),
+        ]
+        runtime.execute(task.output.delete)
+        assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_column_template(conn: ConnectionEnvironment):
+def test_column_template(app: Ralsei):
     table = Table("test_add_column")
-    create_table(conn, table)
 
-    task = AddColumnsSql(
-        sql="",
-        table=table,
-        columns=[Column("b", "TEXT DEFAULT {{ default }}")],
-        locals={"default": "Hello"},
-    ).create(conn.jinja.base)
+    with app.init_context() as init:
+        task = AddColumnsSql(
+            sql="",
+            table=table,
+            columns=[Column("b", "TEXT DEFAULT {{ default }}")],
+            params={"default": "Hello"},
+        ).create(init)
 
-    task.run(conn.sqlalchemy)
-    assert get_rows(conn, table) == [(2, "Hello"), (5, "Hello")]
-    task.delete(conn.sqlalchemy)
-    assert get_rows(conn, table) == [(2,), (5,)]
+    with app.runtime_context() as runtime:
+        conn = runtime.get(ConnectionEnvironment)
+        create_table(conn, table)
+
+        runtime.execute(task.run)
+        assert get_rows(conn, table) == [(2, "Hello"), (5, "Hello")]
+        runtime.execute(task.output.delete)
+        assert get_rows(conn, table) == [(2,), (5,)]

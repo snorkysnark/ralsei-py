@@ -1,9 +1,9 @@
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Callable, Generator
 import sqlalchemy
 from sqlalchemy import event
 
-from ralsei.graph import DependencyResolver
+from ralsei.graph import DependencyResolver, UnimplementedDependencyResolver
 from ralsei.injector import DIContainer
 
 from .base import Plugin
@@ -33,6 +33,8 @@ class SqlPlugin(Plugin):
     def __init__(self, url: str | sqlalchemy.URL) -> None:
         self._dialects: dict[str, DialectMetadata] = {}
         self._register_dialects()
+
+        self._connect_listeners: list[Callable[[ConnectionEnvironment], None]] = []
 
         self.engine = self._create_engine(url)
         self.dialect = DialectInfo(
@@ -67,6 +69,9 @@ class SqlPlugin(Plugin):
 
         return env
 
+    def on_connect(self, listener: Callable[[ConnectionEnvironment], None]):
+        self._connect_listeners.append(listener)
+
     def _bind_common_services(self, di: DIContainer):
         di.bind_value(sqlalchemy.Engine, self.engine)
         di.bind_value(DialectInfo, self.dialect)
@@ -80,6 +85,7 @@ class SqlPlugin(Plugin):
 
         self._bind_common_services(di)
         di.bind_factory(SqlEnvironment, create_environment)
+        di.bind_value(DependencyResolver, UnimplementedDependencyResolver())
 
         yield
 

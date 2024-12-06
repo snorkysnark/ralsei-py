@@ -18,7 +18,12 @@ import itertools
 from sqlalchemy import TextClause
 
 from ralsei.types import Sql, Column, Identifier
-from ralsei.graph import OutputOf, DependencyResolver, Resolves
+from ralsei.graph import (
+    OutputOf,
+    DependencyResolver,
+    Resolves,
+    UnimplementedDependencyResolver,
+)
 from ralsei.dialect import DialectInfo
 
 from .adapter import SqlAdapter, default_adapter
@@ -123,7 +128,7 @@ class SqlEnvironment(jinja2.Environment):
         globals: Optional[dict[str, Any]] = None,
     ):
         self.adapter = adapter or default_adapter.copy()
-        self.resolver = resolver
+        self.resolver = resolver or UnimplementedDependencyResolver()
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):
@@ -214,14 +219,7 @@ class SqlEnvironment(jinja2.Environment):
     def resolve(self, value: Any) -> Any: ...
 
     def resolve(self, value: Any):
-        if self.resolver:
-            return self.resolver.resolve(value)
-        elif isinstance(value, OutputOf):
-            raise RuntimeError(
-                "Tried to resolve dependency outside of dependency resolution context"
-            )
-        else:
-            return value
+        return self.resolver.resolve(value)
 
     def format(self, source: str, /, *args, **kwargs) -> str:
         """Similar to :py:meth:`str.format`, but applies :py:meth:`~SqlAdapter.to_sql` to each parameter"""

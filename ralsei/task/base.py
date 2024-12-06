@@ -1,6 +1,8 @@
 from typing import Callable, ClassVar, Any, dataclass_transform
 from dataclasses import dataclass
 
+from ralsei.injector import DIContainer
+
 
 @dataclass_transform(kw_only_default=True)
 class TaskDefMeta(type):
@@ -23,3 +25,6 @@ class Task[OUTPUT: TaskOutput]:
 
 class TaskDef(metaclass=TaskDefMeta):
     Impl: ClassVar[type[Task]]
+
+    def create(self, di: DIContainer) -> Task[TaskOutput]:
+        return di.execute(self.Impl, self)

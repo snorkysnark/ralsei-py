@@ -27,6 +27,15 @@ class DependencyResolver(ABC):
     def resolve(self, value: Any) -> Any: ...
 
 
+class UnimplementedDependencyResolver(DependencyResolver):
+    def resolve(self, value: Any) -> Any:
+        if isinstance(value, OutputOf):
+            raise NotImplementedError(
+                "Tried to resolve a dependency outside of dependency resolution context"
+            )
+        return value
+
+
 @dataclass
 class CallStack:
     callers: set[TreePath]
@@ -130,4 +139,8 @@ class ChildDependencyResolver(DependencyResolver):
         return self._root._resolve_inernal(value, call_stack=self._call_stack)
 
 
-__all__ = ["DependencyResolver", "RootDependencyResolver"]
+__all__ = [
+    "DependencyResolver",
+    "RootDependencyResolver",
+    "UnimplementedDependencyResolver",
+]

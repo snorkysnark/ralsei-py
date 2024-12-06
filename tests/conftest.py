@@ -1,39 +1,36 @@
 import os
 from pathlib import Path
+from sqlalchemy import text
 from pytest import fixture, FixtureRequest
 
-import sqlalchemy
-from ralsei.connection import create_engine, ConnectionExt, ConnectionEnvironment
+from ralsei.plugin.sql import SqlPlugin
+from ralsei.types import Sql
+from ralsei.app import Ralsei
 
 
-# Helper module used in multiple tests
-# sys.path.append(str(Path(__file__).parent.joinpath("common")))
+def sql_plugin_postgres():
+    sql = SqlPlugin(os.environ.get("POSTGRES_URL", "postgresql:///ralsei_test"))
+    sql.env.globals["autoincrement_primary_key"] = Sql("SERIAL PRIMARY KEY")
 
-
-def postgres_engine():
-    db_url = os.environ.get("POSTGRES_URL", "postgresql:///ralsei_test")
-    engine = create_engine(db_url)
-
-    with ConnectionExt(engine) as conn:
-        conn.execute_text("DROP SCHEMA public CASCADE;")
-        conn.execute_text("CREATE SCHEMA public;")
+    with sql.engine.connect() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE;"))
+        conn.execute(text("CREATE SCHEMA public;"))
         conn.commit()
 
-    return engine
+    return sql
 
 
-def sqlite_engine():
+def sql_plugin_sqlite():
     Path("ralsei_test.sqlite").unlink(missing_ok=True)
 
-    return create_engine("sqlite:///ralsei_test.sqlite")
+    sql = SqlPlugin("sqlite:///ralsei_test.sqlite")
+    sql.env.globals["autoincrement_primary_key"] = Sql(
+        "INTEGER PRIMARY KEY AUTOINCREMENT"
+    )
+
+    return sql
 
 
-@fixture(params=[postgres_engine, sqlite_engine])
-def engine(request: FixtureRequest):
-    return request.param()
-
-
-@fixture()
-def conn(engine: sqlalchemy.Engine):
-    with ConnectionEnvironment(engine) as conn:
-        yield conn
+@fixture(params=[sql_plugin_postgres, sql_plugin_sqlite])
+def app(request: FixtureRequest):
+    return Ralsei(plugins=[request.param()])

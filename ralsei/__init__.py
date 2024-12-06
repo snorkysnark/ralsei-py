@@ -1,4 +1,4 @@
-from .connection import ConnectionEnvironment, create_engine
+from .connection import ConnectionEnvironment
 from .types import (
     Sql,
     Identifier,
@@ -23,7 +23,6 @@ from .utils import folder
 
 __all__ = [
     "ConnectionEnvironment",
-    "create_engine",
     "Sql",
     "Identifier",
     "Table",

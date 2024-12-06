@@ -1,0 +1,2 @@
+class IntentionallyFailError(RuntimeError):
+    pass
