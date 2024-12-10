@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from ralsei.injector import DIContainer
 
 
-@dataclass_transform(kw_only_default=True)
+@dataclass_transform()
 class TaskDefMeta(type):
     def __new__(cls, name, bases, attrs):
-        return dataclass(kw_only=True)(super().__new__(cls, name, bases, attrs))
+        return dataclass()(super().__new__(cls, name, bases, attrs))
 
 
 class TaskOutput:
