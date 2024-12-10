@@ -5,12 +5,12 @@ import sqlalchemy
 
 from ralsei import Table, CreateTableSql, ConnectionEnvironment
 from ralsei.db_actions import table_exists
-from ralsei.app import Ralsei
+from ralsei.app import App
 
 from tests.db_helper import get_rows
 
 
-def test_create_table(app: Ralsei):
+def test_create_table(app: App):
     table = Table("test_create_table")
 
     with app.init_context() as init:
@@ -47,7 +47,7 @@ def test_create_table(app: Ralsei):
         (False, []),
     ],
 )
-def test_create_table_jinja_args(app: Ralsei, flag: bool, expected: list[Tuple]):
+def test_create_table_jinja_args(app: App, flag: bool, expected: list[Tuple]):
     table = Table("test_create_table_jinja_args")
 
     with app.init_context() as init:
@@ -70,7 +70,7 @@ def test_create_table_jinja_args(app: Ralsei, flag: bool, expected: list[Tuple])
         assert not table_exists(runtime.get(sqlalchemy.Connection), table)
 
 
-def test_create_table_literal(app: Ralsei):
+def test_create_table_literal(app: App):
     table = Table("test_create_table_literal")
 
     with app.init_context() as init:

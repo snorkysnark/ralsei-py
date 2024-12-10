@@ -5,7 +5,7 @@ from pytest import fixture, FixtureRequest
 
 from ralsei.plugin.sql import SqlPlugin
 from ralsei.types import Sql
-from ralsei.app import Ralsei
+from ralsei.app import App
 
 
 def sql_plugin_postgres():
@@ -33,4 +33,4 @@ def sql_plugin_sqlite():
 
 @fixture(params=[sql_plugin_postgres, sql_plugin_sqlite])
 def app(request: FixtureRequest):
-    return Ralsei(plugins=[request.param()])
+    return App(plugins=[request.param()])

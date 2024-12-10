@@ -1,6 +1,6 @@
 import pytest
 from ralsei import (
-    Ralsei,
+    App,
     ConnectionEnvironment,
     Table,
     MapToNewTable,
@@ -16,7 +16,7 @@ from tests.db_helper import get_rows
 from tests.error import IntentionallyFailError
 
 
-def test_map_new_table_noselect(app: Ralsei):
+def test_map_new_table_noselect(app: App):
     def make_rows():
         yield {"foo": 1, "bar": "a"}
         yield {"foo": 2, "bar": "b"}
@@ -44,7 +44,7 @@ def test_map_new_table_noselect(app: Ralsei):
         assert not table_exists(runtime.get(sqlalchemy.Connection), table)
 
 
-def test_map_table_jinja(app: Ralsei):
+def test_map_table_jinja(app: App):
     def double(foo: int):
         yield {"foo": foo * 2}
 
@@ -83,7 +83,7 @@ def test_map_table_jinja(app: Ralsei):
         assert not table_exists(conn.sqlalchemy, table)
 
 
-def test_map_table_resumable(app: Ralsei):
+def test_map_table_resumable(app: App):
     def failing(val: int):
         yield {"doubled": val * 2}
         if val >= 10:
@@ -131,7 +131,7 @@ def test_map_table_resumable(app: Ralsei):
         assert not table_exists(conn.sqlalchemy, table)
 
 
-def test_map_table_continue(app: Ralsei):
+def test_map_table_continue(app: App):
     table_source = Table("test_continue_source")
     table_dest = Table("test_continue_dest")
 

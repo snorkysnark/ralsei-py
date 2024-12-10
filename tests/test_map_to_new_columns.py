@@ -1,6 +1,6 @@
 import pytest
 from ralsei import (
-    Ralsei,
+    App,
     ConnectionEnvironment,
     Table,
     MapToNewColumns,
@@ -13,7 +13,7 @@ from tests.db_helper import get_rows
 from tests.error import IntentionallyFailError
 
 
-def test_map_columns(app: Ralsei):
+def test_map_columns(app: App):
     table = Table("test_map_columns")
 
     def double(val: int):
@@ -55,7 +55,7 @@ def test_map_columns(app: Ralsei):
         ]
 
 
-def test_map_columns_resumable(app: Ralsei):
+def test_map_columns_resumable(app: App):
     table = Table("test_map_columns_resumable")
 
     def failing(val: int):
@@ -104,7 +104,7 @@ def test_map_columns_resumable(app: Ralsei):
         ]
 
 
-def test_map_columns_continue(app: Ralsei):
+def test_map_columns_continue(app: App):
     table = Table("resumable")
 
     def double(num: int):

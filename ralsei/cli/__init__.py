@@ -1,18 +1,22 @@
-from typing import Callable, Sequence
+from typing import Callable, NamedTuple, Sequence
 import click
 from rich.console import Console
-from typer import Typer
-import typer.main
 
-from ralsei.app import Ralsei
-from ralsei.graph import TaskSequence
-from ralsei.graph import TreePath
+from ralsei.app import App
+from ralsei.graph import TaskSequence, TreePath, Pipeline
 from ralsei.injector import DIContainer
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
+from ralsei.utils import expect
 
 from .click_types import type_treepath
+from .reflection import constructor_to_click_command
 
 error_console = Console(stderr=True)
+
+
+class PipelineContext(NamedTuple):
+    app: App
+    pipeline: Pipeline
 
 
 def _build_subcommand(
@@ -41,28 +45,35 @@ def _build_subcommand(
         from_filters: Sequence[TreePath],
         single_filters: Sequence[TreePath],
     ):
-        app = ctx.find_object(Ralsei)
-        if not app:
-            raise RuntimeError("click context not set")
+        app, pipeline = expect(
+            ctx.find_object(PipelineContext), RuntimeError("click context not set")
+        )
 
-        sequence = app.dag.sort_filtered(from_filters, single_filters)
-        with app.runtime() as runtime:
+        with app.init_context() as init:
+            dag = pipeline.build_dag(init)
+            sequence = dag.sort_filtered(from_filters, single_filters)
+        with app.runtime_context() as runtime:
             action(sequence, runtime)
 
 
-def build_cli(app_constructor: Callable[..., Ralsei]) -> click.Group:
-    typer_app = Typer(add_completion=False, add_help_option=False)
-    typer_app.command()(app_constructor)
-
-    app_constructor_click = typer.main.get_command(typer_app)
+def build_cli(pipeline_constructor: Callable[..., Pipeline]) -> click.Group:
+    constructor_cmd, app_param_name = constructor_to_click_command(pipeline_constructor)
 
     @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.pass_context
     def cli(ctx: click.Context, **kwargs):
-        # Pass custom arguments to app constructor
-        ctx.obj = app_constructor_click.callback(**kwargs)  # type:ignore
+        app = App()
+        if app_param_name:
+            kwargs[app_param_name] = app
 
-    for param in app_constructor_click.params:
+        # Pass custom arguments to pipeline constructor
+        pipeline = constructor_cmd.callback(
+            **kwargs
+        )  # pyright: ignore[reportOptionalCall]
+
+        ctx.obj = PipelineContext(app, pipeline)
+
+    for param in constructor_cmd.params:
         if not isinstance(param, click.Option):
             raise ValueError(
                 f"{param.human_readable_name} is a positional argument. Only typer.Option arguments are allowed!"
@@ -77,9 +88,9 @@ def build_cli(app_constructor: Callable[..., Ralsei]) -> click.Group:
     return cli
 
 
-def run_cli(app_constructor: Callable[..., Ralsei], *args, **kwargs):
+def run_cli(pipeline_constructor: Callable[..., Pipeline], *args, **kwargs):
     try:
-        build_cli(app_constructor)(*args, **kwargs)
+        build_cli(pipeline_constructor)(*args, **kwargs)
     except Exception as err:
         if row_context := getattr(err, ROW_CONTEXT_ATRRIBUTE, None):
             error_console.print("Row context:", row_context)

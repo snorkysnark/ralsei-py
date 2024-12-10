@@ -1,4 +1,4 @@
-from ralsei import ConnectionEnvironment, Ralsei, Table, AddColumnsSql, Column
+from ralsei import ConnectionEnvironment, App, Table, AddColumnsSql, Column
 
 from tests.db_helper import get_rows
 
@@ -16,7 +16,7 @@ def create_table(conn: ConnectionEnvironment, table: Table):
     )
 
 
-def test_add_columns(app: Ralsei):
+def test_add_columns(app: App):
     table = Table("test_add_column")
 
     with app.init_context() as init:
@@ -42,7 +42,7 @@ def test_add_columns(app: Ralsei):
         assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_add_columns_jinja_var(app: Ralsei):
+def test_add_columns_jinja_var(app: App):
     table = Table("test_add_column")
 
     with app.init_context() as init:
@@ -72,7 +72,7 @@ def test_add_columns_jinja_var(app: Ralsei):
         assert get_rows(conn, table) == [(2,), (5,)]
 
 
-def test_column_template(app: Ralsei):
+def test_column_template(app: App):
     table = Table("test_add_column")
 
     with app.init_context() as init:
