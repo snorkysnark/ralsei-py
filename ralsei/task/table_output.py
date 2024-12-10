@@ -11,7 +11,7 @@ from .base import TaskOutput
 
 class TableOutput(TaskOutput):
     def __init__(self, env: SqlEnvironment, table: Table, view: bool = False) -> None:
-        self._table = table
+        self.table = table
         self._drop_sql = env.render_sql(
             "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
             table=table,
@@ -22,14 +22,14 @@ class TableOutput(TaskOutput):
         pass
 
     def exists(self, conn: ConnectionEnvironment) -> bool:
-        return db_actions.table_exists(conn.sqlalchemy, self._table)
+        return db_actions.table_exists(conn.sqlalchemy, self.table)
 
     def delete(self, conn: ConnectionEnvironment):
         conn.execute(self._drop_sql)
         conn.sqlalchemy.commit()
 
     def as_import(self) -> Any:
-        return self._table
+        return self.table
 
 
 class TableOutputResumable(TableOutput):

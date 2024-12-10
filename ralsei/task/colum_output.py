@@ -18,19 +18,19 @@ class ColumnOutput(TaskOutput):
         *,
         if_not_exists: bool = False,
     ) -> None:
-        self._table = table
-        self._columns = columns
+        self.table = table
+        self.columns = columns
 
         self.add_columns = db_actions.AddColumns(
-            env, self._table, self._columns, if_not_exists=if_not_exists
+            env, self.table, self.columns, if_not_exists=if_not_exists
         )
         self._drop_columns = db_actions.DropColumns(
-            env, self._table, self._columns, if_exists=True
+            env, self.table, self.columns, if_exists=True
         )
 
     def exists(self, conn: ConnectionEnvironment) -> bool:
         return db_actions.columns_exist(
-            conn.sqlalchemy, self._table, (col.name for col in self._columns)
+            conn.sqlalchemy, self.table, (col.name for col in self.columns)
         )
 
     def delete(self, conn: ConnectionEnvironment):
