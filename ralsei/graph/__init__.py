@@ -4,7 +4,7 @@ from .name import TaskName
 from .outputof import OutputOf, Resolves
 from .error import ResolverContextError, CyclicGraphError
 from .sequence import NamedTask, TaskSequence
-from .resolver import DependencyResolver, UnimplementedDependencyResolver
+from .resolver import DependencyResolver, DummyDependencyResolver
 
 __all__ = [
     "Pipeline",
@@ -18,5 +18,5 @@ __all__ = [
     "NamedTask",
     "TaskSequence",
     "DependencyResolver",
-    "UnimplementedDependencyResolver",
+    "DummyDependencyResolver",
 ]

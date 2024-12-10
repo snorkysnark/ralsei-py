@@ -1,15 +1,14 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional, overload
 
 from ralsei.injector import DIContainer
 
-from .dag import DAG
+from ._flattened import FlattenedPipeline
+from .outputof import OutputOf, Resolves
 from .name import TaskName
 from .error import CyclicGraphError
-from .outputof import OutputOf, Resolves
-from ._flattened import FlattenedPipeline
+from .dag import DAG
 
 if TYPE_CHECKING:
     from ralsei.task import Task
@@ -27,7 +26,7 @@ class DependencyResolver(ABC):
     def resolve(self, value: Any) -> Any: ...
 
 
-class UnimplementedDependencyResolver(DependencyResolver):
+class DummyDependencyResolver(DependencyResolver):
     def resolve(self, value: Any) -> Any:
         if isinstance(value, OutputOf):
             raise NotImplementedError(
@@ -36,47 +35,53 @@ class UnimplementedDependencyResolver(DependencyResolver):
         return value
 
 
-@dataclass
 class CallStack:
-    callers: set[TaskName]
-    last_caller: TaskName
+    def __init__(self) -> None:
+        self._set: set[TaskName] = set()
+        self._list: list[TaskName] = []
 
-    @staticmethod
-    def push(stack: Optional["CallStack"], task_name: TaskName):
-        if stack:
-            if task_name in stack.callers:
-                raise CyclicGraphError(
-                    f"Recursion detected during dependency resolution: {task_name} occurred twice"
-                )
-            return CallStack({*stack.callers, task_name}, task_name)
-        else:
-            return CallStack({task_name}, task_name)
+    def push(self, task_name: TaskName):
+        if task_name in self._set:
+            raise CyclicGraphError(
+                f"Recursion detected during dependency resolution: {task_name} occurred twice"
+            )
+
+        self._set.add(task_name)
+        self._list.append(task_name)
+
+    def pop(self) -> TaskName:
+        task_name = self._list.pop()
+        self._set.remove(task_name)
+        return task_name
+
+    @property
+    def last_caller(self) -> Optional[TaskName]:
+        return self._list[-1] if len(self._list) > 0 else None
 
 
-class RootDependencyResolver(DependencyResolver):
-    def __init__(self, di: DIContainer, definition: FlattenedPipeline) -> None:
+class GraphBuildingDependencyResolver(DependencyResolver):
+    def __init__(self, di: DIContainer, pipeline_flat: FlattenedPipeline) -> None:
         self._di = di.clone()
         self._di.bind_value(DependencyResolver, self)
 
-        self._definition = definition
+        self._pipeline_flat = pipeline_flat
         self._tasks: dict[TaskName, "Task"] = {}
         self._relations: defaultdict[TaskName, set[TaskName]] = defaultdict(set)
 
-    def resolve(self, value: Any) -> Any:
-        return self._resolve_inernal(value)
+        self._stack = CallStack()
 
-    def _resolve_inernal(self, value: Any, *, call_stack: Optional[CallStack] = None):
+    def resolve(self, value: Any) -> Any:
         if not isinstance(value, OutputOf):
             return value
 
         task_names = iter(value.task_names)
-        first_output = self.resolve_relative_path(
-            value.pipeline, next(task_names), call_stack=call_stack
+        first_output = self._resolve_name_relative(
+            value.pipeline, next(task_names)
         ).output.as_import()
 
         for task_name in task_names:
-            output = self.resolve_relative_path(
-                value.pipeline, task_name, call_stack=call_stack
+            output = self._resolve_name_relative(
+                value.pipeline, task_name
             ).output.as_import()
             if output != first_output:
                 raise RuntimeError(
@@ -85,62 +90,39 @@ class RootDependencyResolver(DependencyResolver):
 
         return first_output
 
-    def resolve_relative_path(
-        self,
-        pipeline: "Pipeline",
-        relative_path: TaskName,
-        *,
-        call_stack: Optional[CallStack] = None,
+    def _resolve_name_relative(
+        self, pipeline: "Pipeline", name_relative: TaskName
     ) -> "Task":
         return self.resolve_name(
-            TaskName(
-                *self._definition.pipeline_paths[pipeline],
-                *relative_path,
-            ),
-            call_stack=call_stack,
+            TaskName(*self._pipeline_flat.pipeline_paths[pipeline], *name_relative)
         )
 
-    def resolve_name(
-        self,
-        task_name: TaskName,
-        *,
-        call_stack: Optional[CallStack] = None,
-    ) -> "Task":
-        if call_stack:
-            self._relations[task_name].add(call_stack.last_caller)
+    def resolve_name(self, task_name: TaskName) -> "Task":
+        if last_caller := self._stack.last_caller:
+            self._relations[task_name].add(last_caller)
 
         if cached_task := self._tasks.get(task_name, None):
             return cached_task
 
-        child_di = self._di.clone()
-        child_di.bind_value(
-            DependencyResolver,
-            ChildDependencyResolver(self, CallStack.push(call_stack, task_name)),
-        )
-        task_def = self._definition.scoped_tasks[task_name].task
-        task = child_di.execute(task_def.Impl, task_def)
+        self._stack.push(task_name)
+        try:
+            task_def = self._pipeline_flat.scoped_tasks[task_name].task
+            task = self._di.execute(task_def.Impl, task_def)
+        finally:
+            self._stack.pop()
 
         self._tasks[task_name] = task
         return task
 
     def build_dag(self) -> DAG:
-        for task_name in self._definition.scoped_tasks:
+        for task_name in self._pipeline_flat.scoped_tasks:
             self.resolve_name(task_name)
 
         return DAG(self._tasks, dict(self._relations))
 
 
-class ChildDependencyResolver(DependencyResolver):
-    def __init__(self, root: RootDependencyResolver, call_stack: CallStack) -> None:
-        self._root = root
-        self._call_stack = call_stack
-
-    def resolve(self, value: Any) -> Any:
-        return self._root._resolve_inernal(value, call_stack=self._call_stack)
-
-
 __all__ = [
     "DependencyResolver",
-    "RootDependencyResolver",
-    "UnimplementedDependencyResolver",
+    "GraphBuildingDependencyResolver",
+    "DummyDependencyResolver",
 ]

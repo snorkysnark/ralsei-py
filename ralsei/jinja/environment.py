@@ -19,10 +19,9 @@ from sqlalchemy import TextClause
 
 from ralsei.types import Sql, Column, Identifier
 from ralsei.graph import (
-    OutputOf,
     DependencyResolver,
     Resolves,
-    UnimplementedDependencyResolver,
+    DummyDependencyResolver,
 )
 from ralsei.dialect import DialectInfo
 
@@ -128,7 +127,7 @@ class SqlEnvironment(jinja2.Environment):
         globals: Optional[dict[str, Any]] = None,
     ):
         self.adapter = adapter or default_adapter.copy()
-        self.resolver = resolver or UnimplementedDependencyResolver()
+        self.resolver = resolver or DummyDependencyResolver()
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):

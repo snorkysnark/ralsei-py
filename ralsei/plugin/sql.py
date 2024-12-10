@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Callable, Generator
 import sqlalchemy
 from sqlalchemy import event
 
-from ralsei.graph import DependencyResolver, UnimplementedDependencyResolver
+from ralsei.graph import DependencyResolver, DummyDependencyResolver
 from ralsei.injector import DIContainer
 
 from .base import Plugin
@@ -85,7 +85,7 @@ class SqlPlugin(Plugin):
 
         self._bind_common_services(di)
         di.bind_factory(SqlEnvironment, create_environment)
-        di.bind_value(DependencyResolver, UnimplementedDependencyResolver())
+        di.bind_value(DependencyResolver, DummyDependencyResolver())
 
         yield
 

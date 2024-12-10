@@ -6,7 +6,7 @@ from ._flattened import FlattenedPipeline, ScopedTaskDef
 from .name import TaskName
 from .outputof import OutputOf
 from .dag import DAG
-from .resolver import RootDependencyResolver
+from .resolver import GraphBuildingDependencyResolver
 
 if TYPE_CHECKING:
     from ralsei.task import TaskDef
@@ -51,4 +51,4 @@ class Pipeline:
         return FlattenedPipeline(scoped_tasks, pipeline_paths)
 
     def build_dag(self, di: DIContainer) -> DAG:
-        return RootDependencyResolver(di, self._flatten()).build_dag()
+        return GraphBuildingDependencyResolver(di, self._flatten()).build_dag()
