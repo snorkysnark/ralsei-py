@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterable, Optional, Sequence
 
-from .path import TreePath
+from .name import TaskName
 from .sequence import NamedTask, TaskSequence
 
 if TYPE_CHECKING:
@@ -13,9 +13,9 @@ if TYPE_CHECKING:
 class TopologicalSort:
     dag: DAG
     stack: list[NamedTask] = field(default_factory=list)
-    visited: set[TreePath] = field(default_factory=set)
+    visited: set[TaskName] = field(default_factory=set)
 
-    def _visit_recursive(self, path: TreePath):
+    def _visit_recursive(self, path: TaskName):
         self.visited.add(path)
 
         if relations := self.dag.relations.get(path, None):
@@ -26,7 +26,7 @@ class TopologicalSort:
         self.stack.append(NamedTask(path, self.dag.tasks[path]))
 
     def run(
-        self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
+        self, constrain_starting_nodes: Optional[Iterable[TaskName]] = None
     ) -> TaskSequence:
         starting_nodes = (
             self.dag.tasks
@@ -46,9 +46,9 @@ class TopologicalSort:
 class DAG:
     """A graph of tasks"""
 
-    tasks: dict[TreePath, "Task"]
+    tasks: dict[TaskName, "Task"]
     """All tasks by name"""
-    relations: dict[TreePath, set[TreePath]]
+    relations: dict[TaskName, set[TaskName]]
     """``from -> to`` relations (left task is executed first)"""
 
     def tasks_str(self) -> dict[str, "Task"]:
@@ -61,7 +61,7 @@ class DAG:
         }
 
     def topological_sort(
-        self, constrain_starting_nodes: Optional[Iterable[TreePath]] = None
+        self, constrain_starting_nodes: Optional[Iterable[TaskName]] = None
     ) -> TaskSequence:
         """Topological sort
 
@@ -72,7 +72,7 @@ class DAG:
         return TopologicalSort(self).run(constrain_starting_nodes)
 
     def sort_filtered(
-        self, from_filters: Sequence[TreePath], single_filters: Sequence[TreePath]
+        self, from_filters: Sequence[TaskName], single_filters: Sequence[TaskName]
     ) -> TaskSequence:
         """Perform topological sort and apply a set of filters.
         See example in the :ref:`CLI section <CLIArgs>`.
@@ -88,17 +88,17 @@ class DAG:
         sequence = self.topological_sort()
 
         if from_filters or single_filters:
-            mask: set[TreePath] = set()
+            mask: set[TaskName] = set()
 
             for task in self.topological_sort(
                 constrain_starting_nodes=from_filters
             ).steps:
-                mask.add(task.path)
+                mask.add(task.name)
             for single_path in single_filters:
                 mask.add(single_path)
 
             sequence = TaskSequence(
-                [task for task in sequence.steps if task.path in mask]
+                [task for task in sequence.steps if task.name in mask]
             )
 
         return sequence

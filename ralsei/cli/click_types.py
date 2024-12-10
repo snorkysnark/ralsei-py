@@ -1,21 +1,21 @@
 from typing import Any, Optional
 import click
 
-from ralsei.graph import TreePath
+from ralsei.graph import TaskName
 
 
-class TreePathType(click.ParamType):
-    name = "treepath"
+class TaskNameType(click.ParamType):
+    name = "task"
 
     def convert(
         self, value: Any, param: Optional[click.Parameter], ctx: Optional[click.Context]
     ) -> Any:
-        if isinstance(value, TreePath):
+        if isinstance(value, TaskName):
             return value
         elif isinstance(value, str):
-            return TreePath.parse(value)
+            return TaskName.parse(value)
         else:
-            self.fail("Must be of type str or TreePath")
+            self.fail("Must be of type str or TaskName")
 
 
-type_treepath = TreePathType()
+type_taskname = TaskNameType()

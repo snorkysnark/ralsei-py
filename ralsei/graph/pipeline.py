@@ -1,104 +1,54 @@
-from __future__ import annotations
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Iterable, Mapping, Union
+from typing import TYPE_CHECKING, Callable, Mapping, Union
 
 from ralsei.injector import DIContainer
 
-from ._flattened import ScopedTaskDef, FlattenedPipeline
-from .resolver import RootDependencyResolver
-from .path import TreePath
-from .dag import DAG
+from ._flattened import FlattenedPipeline, ScopedTaskDef
+from .name import TaskName
 from .outputof import OutputOf
+from .dag import DAG
+from .resolver import RootDependencyResolver
 
 if TYPE_CHECKING:
     from ralsei.task import TaskDef
 
-type Tasks = Mapping[str, Union["TaskDef", "Pipeline", "Tasks"]]
-"""A dictionary with task name to value pairs, used to define a :py:class:`~Pipeline`
 
-Acceptable values:
-    
-* A task definition (:py:class:`ralsei.task.TaskDef`)
-* A nested :py:class:`~Pipeline`
-* A nested dictionary
-"""
+type PipelineTasks = Mapping[str, Union["TaskDef", "Pipeline"]]
 
 
-def _iter_tasks_flattened(
-    tasks: Tasks,
-) -> Iterable[tuple[TreePath, Union["TaskDef", "Pipeline"]]]:
-    for name, value in tasks.items():
-        if "." in name:
-            raise ValueError(". symbol not allowed in task name")
+class Pipeline:
+    def __init__(self, constructor: Callable[["Pipeline"], PipelineTasks]) -> None:
+        self._mapping = constructor(self)
 
-        if isinstance(value, Mapping):
-            for sub_name, sub_value in _iter_tasks_flattened(value):
-                yield TreePath(name, *sub_name), sub_value
-        else:
-            yield TreePath(name), value
-
-
-class Pipeline(ABC):
-    """This is where you declare your tasks, that later get compiled into a :py:class:`ralsei.graph.DAG`"""
-
-    @abstractmethod
-    def create_tasks(self) -> Tasks:
-        """
-        Returns:
-            :A dictionary with task name to value pairs, where the value can be:
-
-            * A task definition (:py:class:`ralsei.task.TaskDef`)
-            * A nested :py:class:`ralsei.graph.Pipeline`
-            * A nested dictionary
-        """
-
-    def outputof(self, *task_paths: str | TreePath) -> OutputOf:
-        """Refer to the output of another task from this pipeline, that will later be resolved.
-
-        Dependencies are taken into account when deciding the order of task execution.
-
-        Args:
-            task_paths: path from the root of the pipeline, either a string separated with ``.`` or a TreePath object
-
-                Multiple paths are allowed, but all tasks must have the same output.
-                This is useful when depending on multiple :py:class:`AddColumnsSql <ralsei.task.AddColumnsSql>` tasks if both sets of columns are required
-        """
-
+    def outputof(self, *task_names: str | TaskName) -> OutputOf:
         return OutputOf(
             self,
             [
-                TreePath.parse(path) if isinstance(path, str) else path
-                for path in task_paths
+                name if isinstance(name, TaskName) else TaskName.parse(name)
+                for name in task_names
             ],
         )
 
-    def __flatten(self) -> FlattenedPipeline:
-        task_definitions: dict[TreePath, ScopedTaskDef] = {}
-        pipeline_to_path: dict[Pipeline, TreePath] = {self: TreePath()}
+    def _flatten(self) -> FlattenedPipeline:
+        scoped_tasks: dict[TaskName, ScopedTaskDef] = {}
+        pipeline_paths: dict[Pipeline, TaskName] = {self: TaskName()}
 
-        for name, value in _iter_tasks_flattened(self.create_tasks()):
+        for name, value in self._mapping.items():
             if isinstance(value, Pipeline):
-                subtree = value.__flatten()
+                subtree = value._flatten()
 
-                for relative_path, definition in subtree.task_definitions.items():
-                    task_definitions[TreePath(*name, *relative_path)] = definition
+                for relative_path, scoped_task in subtree.scoped_tasks.items():
+                    scoped_tasks[TaskName(name, *relative_path)] = scoped_task
 
                 for pipeline, relative_path in subtree.pipeline_paths.items():
-                    if pipeline in pipeline_to_path:
+                    if pipeline in pipeline_paths:
                         raise ValueError(
                             "The same pipeline object cannot be used twice"
                         )
-                    pipeline_to_path[pipeline] = TreePath(*name, *relative_path)
-
+                    pipeline_paths[pipeline] = TaskName(name, *relative_path)
             else:
-                task_definitions[name] = ScopedTaskDef(self, value)
+                scoped_tasks[TaskName(name)] = ScopedTaskDef(self, value)
 
-        return FlattenedPipeline(task_definitions, pipeline_to_path)
+        return FlattenedPipeline(scoped_tasks, pipeline_paths)
 
     def build_dag(self, di: DIContainer) -> DAG:
-        """Resolve dependencies and generate a graph of tasks"""
-
-        return RootDependencyResolver(di, self.__flatten()).build_dag()
-
-
-__all__ = ["Pipeline", "Tasks"]
+        return RootDependencyResolver(di, self._flatten()).build_dag()

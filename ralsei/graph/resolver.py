@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Optional, overload
 from ralsei.injector import DIContainer
 
 from .dag import DAG
-from .path import TreePath
+from .name import TaskName
 from .error import CyclicGraphError
 from .outputof import OutputOf, Resolves
 from ._flattened import FlattenedPipeline
@@ -38,19 +38,19 @@ class UnimplementedDependencyResolver(DependencyResolver):
 
 @dataclass
 class CallStack:
-    callers: set[TreePath]
-    last_caller: TreePath
+    callers: set[TaskName]
+    last_caller: TaskName
 
     @staticmethod
-    def push(stack: Optional["CallStack"], task_path: TreePath):
+    def push(stack: Optional["CallStack"], task_name: TaskName):
         if stack:
-            if task_path in stack.callers:
+            if task_name in stack.callers:
                 raise CyclicGraphError(
-                    f"Recursion detected during dependency resolution: {task_path} occurred twice"
+                    f"Recursion detected during dependency resolution: {task_name} occurred twice"
                 )
-            return CallStack({*stack.callers, task_path}, task_path)
+            return CallStack({*stack.callers, task_name}, task_name)
         else:
-            return CallStack({task_path}, task_path)
+            return CallStack({task_name}, task_name)
 
 
 class RootDependencyResolver(DependencyResolver):
@@ -59,8 +59,8 @@ class RootDependencyResolver(DependencyResolver):
         self._di.bind_value(DependencyResolver, self)
 
         self._definition = definition
-        self._tasks: dict[TreePath, "Task"] = {}
-        self._relations: defaultdict[TreePath, set[TreePath]] = defaultdict(set)
+        self._tasks: dict[TaskName, "Task"] = {}
+        self._relations: defaultdict[TaskName, set[TaskName]] = defaultdict(set)
 
     def resolve(self, value: Any) -> Any:
         return self._resolve_inernal(value)
@@ -69,14 +69,14 @@ class RootDependencyResolver(DependencyResolver):
         if not isinstance(value, OutputOf):
             return value
 
-        task_paths = iter(value.task_paths)
+        task_names = iter(value.task_names)
         first_output = self.resolve_relative_path(
-            value.pipeline, next(task_paths), call_stack=call_stack
+            value.pipeline, next(task_names), call_stack=call_stack
         ).output.as_import()
 
-        for task_path in task_paths:
+        for task_name in task_names:
             output = self.resolve_relative_path(
-                value.pipeline, task_path, call_stack=call_stack
+                value.pipeline, task_name, call_stack=call_stack
             ).output.as_import()
             if output != first_output:
                 raise RuntimeError(
@@ -88,44 +88,44 @@ class RootDependencyResolver(DependencyResolver):
     def resolve_relative_path(
         self,
         pipeline: "Pipeline",
-        relative_path: TreePath,
+        relative_path: TaskName,
         *,
         call_stack: Optional[CallStack] = None,
     ) -> "Task":
-        return self.resolve_path(
-            TreePath(
+        return self.resolve_name(
+            TaskName(
                 *self._definition.pipeline_paths[pipeline],
                 *relative_path,
             ),
             call_stack=call_stack,
         )
 
-    def resolve_path(
+    def resolve_name(
         self,
-        task_path: TreePath,
+        task_name: TaskName,
         *,
         call_stack: Optional[CallStack] = None,
     ) -> "Task":
         if call_stack:
-            self._relations[task_path].add(call_stack.last_caller)
+            self._relations[task_name].add(call_stack.last_caller)
 
-        if cached_task := self._tasks.get(task_path, None):
+        if cached_task := self._tasks.get(task_name, None):
             return cached_task
 
         child_di = self._di.clone()
         child_di.bind_value(
             DependencyResolver,
-            ChildDependencyResolver(self, CallStack.push(call_stack, task_path)),
+            ChildDependencyResolver(self, CallStack.push(call_stack, task_name)),
         )
-        task_def = self._definition.task_definitions[task_path].task
+        task_def = self._definition.scoped_tasks[task_name].task
         task = child_di.execute(task_def.Impl, task_def)
 
-        self._tasks[task_path] = task
+        self._tasks[task_name] = task
         return task
 
     def build_dag(self) -> DAG:
-        for task_path in self._definition.task_definitions:
-            self.resolve_path(task_path)
+        for task_name in self._definition.scoped_tasks:
+            self.resolve_name(task_name)
 
         return DAG(self._tasks, dict(self._relations))
 

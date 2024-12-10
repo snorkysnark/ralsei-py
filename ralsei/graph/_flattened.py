@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .path import TreePath
+from .name import TaskName
 
 if TYPE_CHECKING:
     from .pipeline import Pipeline
@@ -16,8 +16,8 @@ class ScopedTaskDef:
 
 @dataclass
 class FlattenedPipeline:
-    task_definitions: dict[TreePath, ScopedTaskDef]
-    pipeline_paths: dict["Pipeline", TreePath]
+    scoped_tasks: dict[TaskName, ScopedTaskDef]
+    pipeline_paths: dict["Pipeline", TaskName]
 
 
 __all__ = ["ScopedTaskDef", "FlattenedPipeline"]

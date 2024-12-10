@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from ralsei.console import console, track
 from ralsei.injector import DIContainer
-from .path import TreePath
+from .name import TaskName
 
 if TYPE_CHECKING:
     from ralsei.task import Task
@@ -13,13 +13,8 @@ if TYPE_CHECKING:
 class NamedTask:
     """Name and task pair"""
 
-    path: TreePath
+    name: TaskName
     task: "Task"
-
-    @property
-    def name(self) -> str:
-        """:py:attr:`~NamedTask.path` as a string"""
-        return str(self.path)
 
 
 class TaskSequence:

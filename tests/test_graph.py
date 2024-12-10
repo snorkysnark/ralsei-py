@@ -1,7 +1,6 @@
 import pytest
 from ralsei import (
-    Ralsei,
-    ConnectionEnvironment,
+    App,
     Pipeline,
     MapToNewTable,
     Table,
@@ -29,37 +28,38 @@ def create_description(aa: int, bb: str):
     return {"description": f"{bb} {{{aa}}}"}
 
 
-class TestPipeline(Pipeline):
-    def create_tasks(self):
-        return {
-            "aa": MapToNewTable(
-                table=Table("aa"),
-                columns=[
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT",
-                    ValueColumn("aa", "INT"),
-                    ValueColumn("bb", "TEXT"),
-                ],
-                fn=example_data,
-            ),
-            "description": MapToNewColumns(
-                table=self.outputof("aa"),
-                select="SELECT id, aa, bb FROM {{table}}",
-                columns=[ValueColumn("description", "TEXT")],
-                fn=compose_one(create_description, pop_id_fields("id")),
-            ),
-            "sum": AddColumnsSql(
-                table=self.outputof("aa"),
-                columns=[Column("sum", "INT")],
-                sql="""\
+def test_graph(app: App):
+    with app.init_context() as init:
+        dag = Pipeline(
+            lambda root: {
+                "aa": MapToNewTable(
+                    table=Table("aa"),
+                    columns=[
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT",
+                        ValueColumn("aa", "INT"),
+                        ValueColumn("bb", "TEXT"),
+                    ],
+                    fn=example_data,
+                ),
+                "description": MapToNewColumns(
+                    table=root.outputof("aa"),
+                    select="SELECT id, aa, bb FROM {{table}}",
+                    columns=[ValueColumn("description", "TEXT")],
+                    fn=compose_one(create_description, pop_id_fields("id")),
+                ),
+                "sum": AddColumnsSql(
+                    table=root.outputof("aa"),
+                    columns=[Column("sum", "INT")],
+                    sql="""\
                     UPDATE {{table}}
                     SET sum = aa + LENGTH(bb)""",
-            ),
-            "extras": CreateTableSql(
-                table=Table("extras"), sql="CREATE TABLE {{table}}()"
-            ),
-            "grouped": CreateTableSql(
-                table=Table("grouped"),
-                sql="""\
+                ),
+                "extras": CreateTableSql(
+                    table=Table("extras"), sql="CREATE TABLE {{table}}()"
+                ),
+                "grouped": CreateTableSql(
+                    table=Table("grouped"),
+                    sql="""\
                     CREATE TABLE {{table}}(
                         len INT, 
                         aa INT,
@@ -75,17 +75,13 @@ class TestPipeline(Pipeline):
 
                     INSERT INTO {{table}}(description)
                     VALUES ({{ extras.name }});""",
-                params={
-                    "source": self.outputof("description", "sum"),
-                    "extras": self.outputof("extras"),
-                },
-            ),
-        }
-
-
-def test_graph(app: Ralsei):
-    with app.init_context() as init:
-        dag = TestPipeline().build_dag(init)
+                    params={
+                        "source": root.outputof("description", "sum"),
+                        "extras": root.outputof("extras"),
+                    },
+                ),
+            }
+        ).build_dag(init)
 
     assert set(dag.tasks_str()) == {"aa", "description", "sum", "grouped", "extras"}
     assert dag.relations_str() == {
@@ -96,12 +92,33 @@ def test_graph(app: Ralsei):
     }
 
 
-class ChildPipeline(Pipeline):
-    def __init__(self, source_tables: list[Table | OutputOf]) -> None:
-        self.source_tables = source_tables
+def test_recursion(app: App):
+    with app.init_context() as init, pytest.raises(CyclicGraphError):
+        Pipeline(
+            lambda root: {
+                "task_a": CreateTableSql(
+                    table=Table("table_a"),
+                    sql="""\
+                    CREATE TABLE {{table}}(
+                        field REFERENCES {{other}}
+                    )""",
+                    params={"other": root.outputof("task_b")},
+                ),
+                "task_b": CreateTableSql(
+                    table=Table("table_b"),
+                    sql="""\
+                    CREATE TABLE {{table}}(
+                        field REFERENCES {{other}}
+                    )""",
+                    params={"other": root.outputof("task_a")},
+                ),
+            }
+        ).build_dag(init)
 
-    def create_tasks(self):
-        return {
+
+def create_child_pipeline(source_tables: list[Table | OutputOf]):
+    return Pipeline(
+        lambda root: {
             "join": CreateTableSql(
                 table=Table("joined"),
                 sql="""\
@@ -116,10 +133,10 @@ class ChildPipeline(Pipeline):
                     SELECT value FROM {{source}}
                     {%-endfor%}
                     """,
-                params={"sources": self.source_tables},
+                params={"sources": source_tables},
             ),
             "extend": MapToNewColumns(
-                table=self.outputof("join"),
+                table=root.outputof("join"),
                 select="SELECT id, value AS aa FROM {{table}}",
                 columns=[ValueColumn("description", "TEXT")],
                 fn=compose_one(
@@ -127,40 +144,41 @@ class ChildPipeline(Pipeline):
                 ),
             ),
         }
+    )
 
 
-class RootPipeline(Pipeline):
-    def create_tasks(self):
-        return {
-            "aa": CreateTableSql(
-                table=Table("aa"),
-                sql="""\
-                    CREATE TABLE {{table}}(
-                        value TEXT
-                    );
-                    {%-split-%}
-                    INSERT INTO {{table}}
-                    VALUES ('foo');
-                    """,
-            ),
-            "bb": CreateTableSql(
-                table=Table("bb"),
-                sql="""\
-                    CREATE TABLE {{table}}(
-                        value TEXT
-                    );
-                    {%-split-%}
-                    INSERT INTO {{table}}
-                    VALUES ('bar');
-                    """,
-            ),
-            "child": ChildPipeline([self.outputof("aa"), self.outputof("bb")]),
-        }
+nested_pipeline = Pipeline(
+    lambda outer: {
+        "aa": CreateTableSql(
+            table=Table("aa"),
+            sql="""\
+            CREATE TABLE {{table}}(
+                value TEXT
+            );
+            {%-split-%}
+            INSERT INTO {{table}}
+            VALUES ('foo');
+            """,
+        ),
+        "bb": CreateTableSql(
+            table=Table("bb"),
+            sql="""\
+            CREATE TABLE {{table}}(
+                value TEXT
+            );
+            {%-split-%}
+            INSERT INTO {{table}}
+            VALUES ('bar');
+            """,
+        ),
+        "child": create_child_pipeline([outer.outputof("aa"), outer.outputof("bb")]),
+    }
+)
 
 
-def test_graph_nested(app: Ralsei):
+def test_graph_nested(app: App):
     with app.init_context() as init:
-        dag = RootPipeline().build_dag(init)
+        dag = nested_pipeline.build_dag(init)
 
     assert set(dag.tasks_str()) == {"aa", "bb", "child.join", "child.extend"}
     assert dag.relations_str() == {
@@ -170,38 +188,11 @@ def test_graph_nested(app: Ralsei):
     }
 
 
-class RecursivePipeline(Pipeline):
-    def create_tasks(self):
-        return {
-            "task_a": CreateTableSql(
-                table=Table("table_a"),
-                sql="""\
-                CREATE TABLE {{table}}(
-                    field REFERENCES {{other}}
-                )""",
-                params={"other": self.outputof("task_b")},
-            ),
-            "task_b": CreateTableSql(
-                table=Table("table_b"),
-                sql="""\
-                CREATE TABLE {{table}}(
-                    field REFERENCES {{other}}
-                )""",
-                params={"other": self.outputof("task_a")},
-            ),
-        }
-
-
-def test_recursion(app: Ralsei):
-    with app.init_context() as init, pytest.raises(CyclicGraphError):
-        RecursivePipeline().build_dag(init)
-
-
-def test_topological_sort(app: Ralsei):
+def test_topological_sort(app: App):
     with app.init_context() as init:
         sorted = [
-            named_task.name
-            for named_task in RootPipeline().build_dag(init).topological_sort().steps
+            str(named_task.name)
+            for named_task in nested_pipeline.build_dag(init).topological_sort().steps
         ]
 
     assert sorted == ["aa", "bb", "child.join", "child.extend"] or sorted == [

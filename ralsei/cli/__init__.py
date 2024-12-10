@@ -3,12 +3,12 @@ import click
 from rich.console import Console
 
 from ralsei.app import App
-from ralsei.graph import TaskSequence, TreePath, Pipeline
+from ralsei.graph import TaskSequence, TaskName, Pipeline
 from ralsei.injector import DIContainer
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 from ralsei.utils import expect
 
-from .click_types import type_treepath
+from .click_types import type_taskname
 from .reflection import constructor_to_click_command
 
 error_console = Console(stderr=True)
@@ -28,22 +28,22 @@ def _build_subcommand(
         "--from",
         "from_filters",
         help="run this task and its descendants",
-        type=type_treepath,
+        type=type_taskname,
         multiple=True,
     )
     @click.option(
         "--one",
         "single_filters",
         help="run only this task",
-        type=type_treepath,
+        type=type_taskname,
         multiple=True,
     )
     @group.command(name)
     @click.pass_context
     def cmd(
         ctx: click.Context,
-        from_filters: Sequence[TreePath],
-        single_filters: Sequence[TreePath],
+        from_filters: Sequence[TaskName],
+        single_filters: Sequence[TaskName],
     ):
         app, pipeline = expect(
             ctx.find_object(PipelineContext), RuntimeError("click context not set")
