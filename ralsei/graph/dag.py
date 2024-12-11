@@ -1,6 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterable, Optional, Sequence
+from graphviz import Digraph
+import colorsys
+import html
 
 from .name import TaskName
 from .sequence import NamedTask, TaskSequence
@@ -102,6 +105,38 @@ class DAG:
             )
 
         return sequence
+
+    def graphviz(self) -> Digraph:
+        dot = Digraph()
+        dot.attr("graph", rankdir="LR")
+        dot.attr("node", shape="record", style="filled")
+
+        prefix_colors = {path[:-1]: "" for path in self.tasks}
+
+        color_step = 1 / len(prefix_colors)
+        for i, prefix in enumerate(prefix_colors):
+            color = (
+                round(value * 255)
+                for value in colorsys.hsv_to_rgb(i * color_step, 0.25, 1)
+            )
+            prefix_colors[prefix] = "#{:02x}{:02x}{:02x}".format(*color)
+
+        for path, task in self.tasks.items():
+            name = str(path)
+            description = task.describe().split("\n")
+            prefix = path[:-1]
+
+            dot.node(
+                name,
+                f"<{html.escape(name)} |\n{''.join(html.escape(line) + '<br align="left"/>' for line in description)}>",
+                fillcolor=prefix_colors[prefix],
+            )
+
+        for path_from, children in self.relations.items():
+            for path_to in children:
+                dot.edge(str(path_from), str(path_to))
+
+        return dot
 
 
 __all__ = ["DAG"]

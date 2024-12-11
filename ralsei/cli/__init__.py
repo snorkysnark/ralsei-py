@@ -1,3 +1,5 @@
+import sys
+import subprocess
 from typing import Callable, NamedTuple, Sequence
 import click
 from rich.console import Console
@@ -56,6 +58,15 @@ def _build_subcommand(
             action(sequence, runtime)
 
 
+def open_in_default_app(filename: str):
+    if sys.platform == "win32":
+        os.startfile(filename)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", filename])
+    elif sys.platform == "linux":
+        subprocess.Popen(["xdg-open", filename])
+
+
 def build_cli(pipeline_constructor: Callable[..., Pipeline]) -> click.Group:
     constructor_cmd, app_param_name = constructor_to_click_command(pipeline_constructor)
 
@@ -84,6 +95,20 @@ def build_cli(pipeline_constructor: Callable[..., Pipeline]) -> click.Group:
     _build_subcommand(cli, "run", TaskSequence.run)
     _build_subcommand(cli, "delete", TaskSequence.delete)
     _build_subcommand(cli, "redo", TaskSequence.redo)
+
+    @click.argument("filename", default="graph.dot")
+    @cli.command("graph")
+    @click.pass_context
+    def graph_cmd(ctx: click.Context, filename: str):
+        app, pipeline = expect(
+            ctx.find_object(PipelineContext), RuntimeError("click context not set")
+        )
+
+        with app.init_context() as init:
+            dag = pipeline.build_dag(init)
+
+        image = dag.graphviz().render(filename, format="png")
+        open_in_default_app(image)
 
     return cli
 
