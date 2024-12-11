@@ -16,8 +16,12 @@ type PipelineTasks = Mapping[str, Union["TaskDef", "Pipeline"]]
 
 
 class Pipeline:
-    def __init__(self, constructor: Callable[["Pipeline"], PipelineTasks]) -> None:
-        self._mapping = constructor(self)
+    def __init__(
+        self, constructor: PipelineTasks | Callable[["Pipeline"], PipelineTasks]
+    ) -> None:
+        self._mapping = (
+            constructor(self) if isinstance(constructor, Callable) else constructor
+        )
 
     def outputof(self, *task_names: str | TaskName) -> OutputOf:
         return OutputOf(
