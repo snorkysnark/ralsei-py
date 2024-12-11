@@ -1,7 +1,8 @@
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Callable, Generator
+from typing import TYPE_CHECKING, Annotated, Callable, Generator
 import sqlalchemy
 from sqlalchemy import event
+import typer
 
 from ralsei.graph import DependencyResolver, DummyDependencyResolver
 from ralsei.injector import DIContainer
@@ -98,3 +99,8 @@ class SqlPlugin(Plugin):
             di.bind_value(ConnectionEnvironment, ConnectionEnvironment(conn, self.env))
 
             yield
+
+
+UrlParam = Annotated[str, typer.Option("-d", "--db", help="database url")]
+
+__all__ = ["SqlPlugin", "UrlParam"]
