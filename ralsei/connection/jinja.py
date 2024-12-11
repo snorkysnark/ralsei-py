@@ -94,5 +94,8 @@ class ConnectionEnvironment:
             bind_params,
         )
 
+    def commit(self):
+        self.sqlalchemy.commit()
+
 
 __all__ = ["ConnectionEnvironment"]
