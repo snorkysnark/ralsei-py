@@ -94,9 +94,14 @@ class SqlPlugin(Plugin):
     def runtime_context(self, di: DIContainer) -> Generator:
         with self.engine.connect() as conn:
             self._bind_common_services(di)
+
+            conn_env = ConnectionEnvironment(conn, self.env)
             di.bind_value(SqlEnvironment, self.env)
             di.bind_value(sqlalchemy.Connection, conn)
             di.bind_value(ConnectionEnvironment, ConnectionEnvironment(conn, self.env))
+
+            for listener in self._connect_listeners:
+                listener(conn_env)
 
             yield
 
