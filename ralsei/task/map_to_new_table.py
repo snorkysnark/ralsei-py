@@ -148,3 +148,6 @@ class MapToNewTable(TaskDef):
                         conn.sqlalchemy.execute(self.__insert, output_row)
 
             conn.sqlalchemy.commit()
+
+        def describe(self) -> str:
+            return str(self.__create_table)

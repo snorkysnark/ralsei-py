@@ -91,3 +91,6 @@ class MapToNewColumns(TaskDef):
                         conn.sqlalchemy.commit()
 
             conn.sqlalchemy.commit()
+
+        def describe(self) -> str:
+            return str(self.output.add_columns)

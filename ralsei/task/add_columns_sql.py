@@ -52,3 +52,6 @@ class AddColumnsSql(TaskDef):
             self.output.add_columns(conn)
             conn.executescript(self.__sql)
             conn.sqlalchemy.commit()
+
+        def describe(self) -> str:
+            return str(self.output.add_columns)

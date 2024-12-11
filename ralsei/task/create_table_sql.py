@@ -29,3 +29,6 @@ class CreateTableSql(TaskDef):
         def run(self, conn: sqlalchemy.Connection):
             executescript(conn, self.__sql)
             conn.commit()
+
+        def describe(self) -> str:
+            return str(self.__sql[0]) if len(self.__sql) > 0 else ""

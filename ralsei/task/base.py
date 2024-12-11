@@ -22,6 +22,9 @@ class Task[OUTPUT: TaskOutput]:
     output: OUTPUT
     run: Callable[..., None]
 
+    def describe(self) -> str:
+        return ""
+
 
 class TaskDef(metaclass=TaskDefMeta):
     Impl: ClassVar[type[Task]]
