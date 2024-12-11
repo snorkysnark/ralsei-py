@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Any
 from sqlalchemy import TextClause
 
 from ralsei.connection import ConnectionEnvironment
@@ -36,6 +37,9 @@ class ColumnOutput(TaskOutput):
     def delete(self, conn: ConnectionEnvironment):
         self._drop_columns(conn)
         conn.sqlalchemy.commit()
+
+    def as_import(self) -> Any:
+        return self.table
 
 
 class ColumnOutputResumable(ColumnOutput):
