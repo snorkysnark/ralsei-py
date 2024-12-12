@@ -8,6 +8,7 @@ from ralsei.graph import Resolves
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table, ColumnBase
 from ralsei.utils import expect
+from ralsei.viz import GraphNode, WindowNode
 
 from .base import TaskDef, Task
 from .colum_output import ColumnOutput
@@ -53,5 +54,5 @@ class AddColumnsSql(TaskDef):
             conn.executescript(self.__sql)
             conn.sqlalchemy.commit()
 
-        def describe(self) -> str:
-            return str(self.output.add_columns)
+        def visualize(self) -> GraphNode:
+            return WindowNode(str(self.output.add_columns))

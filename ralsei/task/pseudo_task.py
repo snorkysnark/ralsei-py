@@ -1,6 +1,7 @@
 from typing import Any, Iterable
 
 from ralsei.graph import Resolves, DependencyResolver
+from ralsei.viz import GraphNode, CircleNode
 from .base import TaskDef, Task, TaskOutput
 
 
@@ -18,11 +19,11 @@ class ValueOutput[T](TaskOutput):
         return self.value
 
 
-class ConnectInputs[T](TaskDef):
+class PseudoTask[T](TaskDef):
     inputs: Iterable[Resolves[T]]
 
     class Impl(Task[ValueOutput[T]]):
-        def __init__(self, this: "ConnectInputs", resolver: DependencyResolver) -> None:
+        def __init__(self, this: "PseudoTask", resolver: DependencyResolver) -> None:
             inputs = iter(this.inputs)
             first_output = resolver.resolve(next(inputs))
 
@@ -38,5 +39,5 @@ class ConnectInputs[T](TaskDef):
         def run(self):
             pass
 
-        def describe(self) -> str:
-            return str(self.output.value)
+        def visualize(self) -> GraphNode:
+            return CircleNode()

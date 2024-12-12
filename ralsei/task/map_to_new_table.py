@@ -17,6 +17,7 @@ from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.graph import Resolves
 from ralsei.connection import ConnectionEnvironment
 from ralsei.console import track
+from ralsei.viz import GraphNode, WindowNode
 
 from .base import TaskDef, Task
 from .table_output import TableOutput, TableOutputResumable
@@ -149,5 +150,5 @@ class MapToNewTable(TaskDef):
 
             conn.sqlalchemy.commit()
 
-        def describe(self) -> str:
-            return str(self.__create_table)
+        def visualize(self) -> GraphNode:
+            return WindowNode(str(self.__create_table))

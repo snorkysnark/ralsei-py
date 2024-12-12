@@ -2,6 +2,7 @@ from typing import Callable, ClassVar, Any, dataclass_transform
 from dataclasses import dataclass
 
 from ralsei.injector import DIContainer
+from ralsei.viz import GraphNode, WindowNode
 
 
 @dataclass_transform()
@@ -22,8 +23,8 @@ class Task[OUTPUT: TaskOutput]:
     output: OUTPUT
     run: Callable[..., None]
 
-    def describe(self) -> str:
-        return ""
+    def visualize(self) -> GraphNode:
+        return WindowNode(str(self.output.as_import()))
 
 
 class TaskDef(metaclass=TaskDefMeta):

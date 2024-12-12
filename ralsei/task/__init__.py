@@ -6,7 +6,7 @@ from .map_to_new_columns import MapToNewColumns
 from .rowcontext import ROW_CONTEXT_ATRRIBUTE, ROW_CONTEXT_VAR
 from .table_output import TableOutput, TableOutputResumable
 from .colum_output import ColumnOutput, ColumnOutputResumable
-from .connect_inputs import ConnectInputs
+from .pseudo_task import PseudoTask
 
 __all__ = [
     "Task",
@@ -15,7 +15,7 @@ __all__ = [
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
-    "ConnectInputs",
+    "PseudoTask",
     "TableOutput",
     "TableOutputResumable",
     "ColumnOutput",

@@ -5,6 +5,7 @@ from dataclasses import field
 from typing import Any
 
 from ralsei.connection.utils import executescript
+from ralsei.viz import GraphNode, WindowNode
 from .base import TaskDef, Task
 from .table_output import TableOutput
 
@@ -30,5 +31,5 @@ class CreateTableSql(TaskDef):
             executescript(conn, self.__sql)
             conn.commit()
 
-        def describe(self) -> str:
-            return str(self.__sql[0]) if len(self.__sql) > 0 else ""
+        def visualize(self) -> GraphNode:
+            return WindowNode(str(self.__sql[0]) if len(self.__sql) > 0 else "")

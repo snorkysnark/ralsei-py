@@ -13,6 +13,7 @@ from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.jinja import SqlEnvironment
 from ralsei.connection import ConnectionEnvironment
 from ralsei.console import track
+from ralsei.viz import GraphNode, WindowNode
 
 from .base import TaskDef, Task
 from .colum_output import ColumnOutput, ColumnOutputResumable
@@ -92,5 +93,5 @@ class MapToNewColumns(TaskDef):
 
             conn.sqlalchemy.commit()
 
-        def describe(self) -> str:
-            return str(self.output.add_columns)
+        def visualize(self) -> GraphNode:
+            return WindowNode(str(self.output.add_columns))

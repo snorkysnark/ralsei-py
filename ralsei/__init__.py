@@ -16,7 +16,7 @@ from .task import (
     AddColumnsSql,
     MapToNewTable,
     MapToNewColumns,
-    ConnectInputs,
+    PseudoTask,
 )
 from .graph import Pipeline, OutputOf, Resolves, CyclicGraphError
 from .app import App
@@ -48,7 +48,7 @@ __all__ = [
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
-    "ConnectInputs",
+    "PseudoTask",
     "Pipeline",
     "OutputOf",
     "Resolves",

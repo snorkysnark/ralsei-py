@@ -108,8 +108,8 @@ class DAG:
 
     def graphviz(self) -> Digraph:
         dot = Digraph()
-        dot.attr("graph", rankdir="LR")
-        dot.attr("node", shape="record", style="filled")
+        dot.attr("graph", rankdir="LR", concentrate="true")
+        dot.attr("node", style="filled")
 
         prefix_colors = {path[:-1]: "" for path in self.tasks}
 
@@ -122,14 +122,9 @@ class DAG:
             prefix_colors[prefix] = "#{:02x}{:02x}{:02x}".format(*color)
 
         for path, task in self.tasks.items():
-            name = str(path)
-            description = task.describe().split("\n")
             prefix = path[:-1]
-
-            dot.node(
-                name,
-                f"<{html.escape(name)} |\n{''.join(html.escape(line) + '<br align="left"/>' for line in description)}>",
-                fillcolor=prefix_colors[prefix],
+            task.visualize().add_to_graph(
+                dot, str(path), fillcolor=prefix_colors[prefix]
             )
 
         for path_from, children in self.relations.items():
