@@ -12,14 +12,7 @@ class OutputOf:
     """Stores the relative path from the root of the pipeline to be resolved later"""
 
     pipeline: "Pipeline"
-    task_names: list[TaskName]
-    """More than one path is permitted, but but all tasks must have the same output.
-    This is useful when depending on multiple :py:class:`AddColumnsSql <ralsei.task.AddColumnsSql>` tasks if both sets of columns are required
-    """
-
-    def __post_init__(self):
-        if len(self.task_names) == 0:
-            raise ValueError("Must name at least one task")
+    task_name: TaskName
 
 
 type Resolves[T] = T | OutputOf

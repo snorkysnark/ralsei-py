@@ -23,13 +23,10 @@ class Pipeline:
             constructor(self) if isinstance(constructor, Callable) else constructor
         )
 
-    def outputof(self, *task_names: str | TaskName) -> OutputOf:
+    def outputof(self, task_name: str | TaskName) -> OutputOf:
         return OutputOf(
             self,
-            [
-                name if isinstance(name, TaskName) else TaskName.parse(name)
-                for name in task_names
-            ],
+            task_name if isinstance(task_name, TaskName) else TaskName.parse(task_name),
         )
 
     def _flatten(self) -> FlattenedPipeline:

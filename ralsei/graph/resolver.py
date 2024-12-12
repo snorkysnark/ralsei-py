@@ -74,21 +74,9 @@ class GraphBuildingDependencyResolver(DependencyResolver):
         if not isinstance(value, OutputOf):
             return value
 
-        task_names = iter(value.task_names)
-        first_output = self._resolve_name_relative(
-            value.pipeline, next(task_names)
+        return self._resolve_name_relative(
+            value.pipeline, value.task_name
         ).output.as_import()
-
-        for task_name in task_names:
-            output = self._resolve_name_relative(
-                value.pipeline, task_name
-            ).output.as_import()
-            if output != first_output:
-                raise RuntimeError(
-                    f"Two different outputs passed into the same input: {output} != {first_output}"
-                )
-
-        return first_output
 
     def _resolve_name_relative(
         self, pipeline: "Pipeline", name_relative: TaskName
