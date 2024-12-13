@@ -2,7 +2,7 @@ from typing import Any, Callable, Iterable, Optional
 from typing_extensions import TYPE_CHECKING
 import jinja2
 
-from ralsei.types import Sql
+from ralsei.types import Sql, Table, Identifier
 
 if TYPE_CHECKING:
     from .environment import SqlEnvironment
@@ -31,3 +31,18 @@ def create_join(env: "SqlEnvironment"):
         )
 
     return join
+
+
+def create_index_factory(env: "SqlEnvironment"):
+    def create_index(table: Table, *column_names: str):
+        index_name = Table(f"{table.name}_{'_'.join(column_names)}_index", table.schema)
+        return Sql(
+            env.render(
+                "CREATE INDEX {{index_name}} ON {{table}}({{columns | join(', ')}});",
+                index_name=index_name,
+                table=table,
+                columns=map(Identifier, column_names),
+            )
+        )
+
+    return create_index

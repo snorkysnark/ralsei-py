@@ -26,7 +26,7 @@ from ralsei.graph import (
 from ralsei.dialect import DialectInfo
 
 from .adapter import SqlAdapter, default_adapter
-from .globals import joiner, create_join
+from .globals import joiner, create_join, create_index_factory
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
 
@@ -152,6 +152,7 @@ class SqlEnvironment(jinja2.Environment):
             "dict": dict,
             "joiner": joiner,
             "Column": Column,
+            "utils": {"create_index": create_index_factory(self)},
         }
 
     @overload
