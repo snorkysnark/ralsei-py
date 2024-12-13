@@ -6,6 +6,7 @@ import typer
 
 from ralsei.graph import DependencyResolver, DummyDependencyResolver
 from ralsei.injector import DIContainer
+from ralsei.types import Sql
 
 from .base import Plugin
 from ralsei.dialect import DialectInfo, DialectMetadata
@@ -55,14 +56,19 @@ class SqlPlugin(Plugin):
         return engine
 
     def _register_dialects(self):
+        self._dialects["postgresql"] = DialectMetadata(
+            autoincrement_primary_key=Sql("SERIAL PRIMARY KEY"),
+        )
         self._dialects["sqlite"] = DialectMetadata(
-            supports_column_if_not_exists=False, supports_rowcount=False
+            autoincrement_primary_key=Sql("INTEGER PRIMARY KEY AUTOINCREMENT"),
+            supports_column_if_not_exists=False,
+            supports_rowcount=False,
         )
 
     def _get_dialect_metadata(
         self, sqlalchemy_dialect: sqlalchemy.Dialect
     ) -> DialectMetadata:
-        return self._dialects.get(sqlalchemy_dialect.name, None) or DialectMetadata()
+        return self._dialects[sqlalchemy_dialect.name]
 
     def _create_environment(self):
         env = SqlEnvironment()
