@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 import sqlalchemy
 
 from ralsei.jinja import SqlEnvironment
@@ -30,6 +30,9 @@ class TableOutput(TaskOutput):
 
     def as_import(self) -> Any:
         return self.table
+
+    def get_scripts(self) -> Iterable[tuple[str, str]]:
+        yield "drop", str(self._drop_sql)
 
 
 class TableOutputResumable(TableOutput):
@@ -65,3 +68,8 @@ class TableOutputResumable(TableOutput):
     def delete(self, conn: ConnectionEnvironment):
         self._drop_marker(conn)
         super().delete(conn)
+
+    def get_scripts(self) -> Iterable[tuple[str, str]]:
+        yield "add_marker", str(self._add_marker)
+        yield "drop", str(self._drop_sql)
+        yield "drop_marker", str(self._drop_marker)

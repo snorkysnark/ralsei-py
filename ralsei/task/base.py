@@ -1,4 +1,4 @@
-from typing import Callable, ClassVar, Any, dataclass_transform
+from typing import Callable, ClassVar, Any, Iterable, dataclass_transform
 from dataclasses import dataclass
 
 from ralsei.injector import DIContainer
@@ -18,6 +18,9 @@ class TaskOutput:
     def as_import(self) -> Any:
         pass
 
+    def get_scripts(self) -> Iterable[tuple[str, str]]:
+        return []
+
 
 class Task[OUTPUT: TaskOutput]:
     output: OUTPUT
@@ -25,6 +28,9 @@ class Task[OUTPUT: TaskOutput]:
 
     def visualize(self) -> GraphNode:
         return WindowNode(str(self.output.as_import()))
+
+    def get_scripts(self) -> Iterable[tuple[str, str]]:
+        return []
 
 
 class TaskDef(metaclass=TaskDefMeta):

@@ -2,7 +2,7 @@ import sqlalchemy
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
 from dataclasses import field
-from typing import Any
+from typing import Any, Iterable
 
 from ralsei.connection.utils import executescript
 from ralsei.viz import GraphNode, WindowNode
@@ -33,3 +33,6 @@ class CreateTableSql(TaskDef):
 
         def visualize(self) -> GraphNode:
             return WindowNode(str(self.__sql[0]) if len(self.__sql) > 0 else "")
+
+        def get_scripts(self) -> Iterable[tuple[str, str]]:
+            yield "main", "\n---\n".join(map(str, self.__sql))

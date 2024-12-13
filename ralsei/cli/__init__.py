@@ -2,13 +2,17 @@ import sys
 import subprocess
 from typing import Callable, NamedTuple, Sequence
 import click
+import itertools
 from rich.console import Console
+from rich.rule import Rule
+from rich.syntax import Syntax
 
 from ralsei.app import App
 from ralsei.graph import TaskSequence, TaskName, Pipeline
 from ralsei.injector import DIContainer
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 from ralsei.utils import expect
+from ralsei.console import console
 
 from .click_types import type_taskname
 from .reflection import constructor_to_click_command
@@ -109,6 +113,22 @@ def build_cli(pipeline_constructor: Callable[..., Pipeline]) -> click.Group:
 
         image = dag.graphviz().render(filename, format="png")
         open_in_default_app(image)
+
+    @click.argument("task_name", type=type_taskname)
+    @cli.command("describe")
+    @click.pass_context
+    def print_cmd(ctx: click.Context, task_name: TaskName):
+        app, pipeline = expect(
+            ctx.find_object(PipelineContext), RuntimeError("click context not set")
+        )
+        with app.init_context() as init:
+            task = pipeline.build_dag(init).tasks[task_name]
+
+        for name, script in itertools.chain(
+            task.get_scripts(), task.output.get_scripts()
+        ):
+            console.print(Rule(name, align="right"))
+            console.print(Syntax(script, "sql"))
 
     return cli
 

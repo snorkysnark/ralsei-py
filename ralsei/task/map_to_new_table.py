@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence
 from dataclasses import field
 import sqlalchemy
 
@@ -152,3 +152,7 @@ class MapToNewTable(TaskDef):
 
         def visualize(self) -> GraphNode:
             return WindowNode(str(self.__create_table))
+
+        def get_scripts(self) -> Iterable[tuple[str, str]]:
+            if self.__select is not None:
+                yield "select", str(self.__select)

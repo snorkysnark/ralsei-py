@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import Any, Sequence, Optional
+from typing import Any, Iterable, Sequence, Optional
 
 from ralsei.graph import Resolves
 from ralsei.types import (
@@ -95,3 +95,6 @@ class MapToNewColumns(TaskDef):
 
         def visualize(self) -> GraphNode:
             return WindowNode(str(self.output.add_columns))
+
+        def get_scripts(self) -> Iterable[tuple[str, str]]:
+            yield "select", str(self.__select)

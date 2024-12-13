@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Iterable
 from sqlalchemy import TextClause
 
 from ralsei.connection import ConnectionEnvironment
@@ -40,6 +40,10 @@ class ColumnOutput(TaskOutput):
 
     def as_import(self) -> Any:
         return self.table
+
+    def get_scripts(self) -> Iterable[tuple[str, str]]:
+        yield "add_columns", str(self.add_columns)
+        yield "drop_columns", str(self._drop_columns)
 
 
 class ColumnOutputResumable(ColumnOutput):

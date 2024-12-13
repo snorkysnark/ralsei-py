@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, Any
+from typing import Iterable, Sequence, Optional, Any
 from dataclasses import field
 
 import sqlalchemy
@@ -56,3 +56,6 @@ class AddColumnsSql(TaskDef):
 
         def visualize(self) -> GraphNode:
             return WindowNode(str(self.output.add_columns))
+
+        def get_scripts(self) -> Iterable[tuple[str, str]]:
+            yield "main", "\n---\n".join(map(str, self.__sql))
