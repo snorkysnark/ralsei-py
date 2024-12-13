@@ -7,6 +7,7 @@ from ralsei import (
     OutputOf,
     ValueColumn,
     MapToNewColumns,
+    PseudoTask,
     compose_one,
     pop_id_fields,
     add_to_input,
@@ -54,6 +55,12 @@ def test_graph(app: App):
                     UPDATE {{table}}
                     SET sum = aa + LENGTH(bb)""",
                 ),
+                "aa_final": PseudoTask(
+                    [
+                        root.outputof("description"),
+                        root.outputof("sum"),
+                    ]
+                ),
                 "extras": CreateTableSql(
                     table=Table("extras"), sql="CREATE TABLE {{table}}()"
                 ),
@@ -76,18 +83,26 @@ def test_graph(app: App):
                     INSERT INTO {{table}}(description)
                     VALUES ({{ extras.name }});""",
                     params={
-                        "source": root.outputof("description", "sum"),
+                        "source": root.outputof("aa_final"),
                         "extras": root.outputof("extras"),
                     },
                 ),
             }
         ).build_dag(init)
 
-    assert set(dag.tasks_str()) == {"aa", "description", "sum", "grouped", "extras"}
+    assert set(dag.tasks_str()) == {
+        "aa",
+        "description",
+        "sum",
+        "aa_final",
+        "grouped",
+        "extras",
+    }
     assert dag.relations_str() == {
         "aa": {"description", "sum"},
-        "description": {"grouped"},
-        "sum": {"grouped"},
+        "description": {"aa_final"},
+        "sum": {"aa_final"},
+        "aa_final": {"grouped"},
         "extras": {"grouped"},
     }
 
