@@ -15,6 +15,7 @@ from jinja2 import StrictUndefined
 from jinja2.environment import TemplateModule
 from jinja2.nodes import Template as TemplateNode
 import itertools
+from functools import partial
 from sqlalchemy import TextClause
 
 from ralsei.types import Sql, Column, Identifier
@@ -26,7 +27,7 @@ from ralsei.graph import (
 from ralsei.dialect import DialectInfo
 
 from .adapter import SqlAdapter, default_adapter
-from .globals import joiner, create_join, create_index_factory
+from .globals import joiner, join, create_index, autoincrement_primary_key
 from ._extensions import SplitTag, SplitMarker
 from ._compiler import SqlCodeGenerator
 
@@ -145,15 +146,18 @@ class SqlEnvironment(jinja2.Environment):
             "sql": Sql,
             "identifier": Identifier,
         }
-        self.filters["join"] = create_join(self)
+        self.filters["join"] = partial(join, self)
 
         self.globals = globals or {
             "range": range,
             "dict": dict,
             "joiner": joiner,
             "Column": Column,
-            "utils": {"create_index": create_index_factory(self)},
+            "utils": {},
         }
+        utils = self.globals["utils"]
+        utils["autoincrement_primary_key"] = partial(autoincrement_primary_key, self)
+        utils["create_index"] = partial(create_index, self)
 
     @overload
     def from_string(

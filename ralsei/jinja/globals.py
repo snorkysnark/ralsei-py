@@ -13,36 +13,38 @@ def joiner(sep: str = ", ") -> Callable[[], Sql]:
     return lambda: Sql(inner())
 
 
-def create_join(env: "SqlEnvironment"):
-    def join(
-        values: Iterable[Any],
-        delimiter: str,
-        attribute: Optional[str] = None,
-    ) -> Sql:
-        return Sql(
-            delimiter.join(
-                map(
-                    lambda value: env.adapter.to_sql(
-                        env, getattr(value, attribute) if attribute else value
-                    ),
-                    values,
-                )
+def join(
+    env: "SqlEnvironment",
+    values: Iterable[Any],
+    delimiter: str,
+    attribute: Optional[str] = None,
+) -> Sql:
+    return Sql(
+        delimiter.join(
+            map(
+                lambda value: env.adapter.to_sql(
+                    env, getattr(value, attribute) if attribute else value
+                ),
+                values,
             )
         )
+    )
 
-    return join
 
-
-def create_index_factory(env: "SqlEnvironment"):
-    def create_index(table: Table, *column_names: str):
-        index_name = Table(f"{table.name}_{'_'.join(column_names)}_index", table.schema)
-        return Sql(
-            env.render(
-                "CREATE INDEX {{index_name}} ON {{table}}({{columns | join(', ')}});",
-                index_name=index_name,
-                table=table,
-                columns=map(Identifier, column_names),
-            )
+def create_index(env: "SqlEnvironment", table: Table, *column_names: str):
+    index_name = Table(f"{table.name}_{'_'.join(column_names)}_index", table.schema)
+    return Sql(
+        env.render(
+            "CREATE INDEX {{index_name}} ON {{table}}({{columns | join(', ')}});",
+            index_name=index_name,
+            table=table,
+            columns=map(Identifier, column_names),
         )
+    )
 
-    return create_index
+
+def autoincrement_primary_key(env: "SqlEnvironment", postfix: str = "pkey"):
+    if env.dialect.name == "sqlite":
+        return Sql("INTEGER PRIMARY KEY AUTOINCREMENT")
+    else:
+        return Sql("SERIAL PRIMARY KEY")

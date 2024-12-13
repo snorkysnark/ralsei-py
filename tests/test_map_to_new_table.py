@@ -27,7 +27,7 @@ def test_map_new_table_noselect(app: App):
         task = MapToNewTable(
             table=table,
             columns=[
-                "id {{autoincrement_primary_key}}",
+                "id {{ utils.autoincrement_primary_key() }}",
                 ValueColumn("foo", "INT"),
                 ValueColumn("bar", "TEXT"),
             ],
@@ -107,7 +107,7 @@ def test_map_table_resumable(app: App):
             [
                 """\
                 CREATE TABLE {{table}}(
-                    id {{autoincrement_primary_key}},
+                    id {{ utils.autoincrement_primary_key() }},
                     val INT
                 );""",
                 "INSERT INTO {{table}}(val) VALUES (2),(5),(12);",
