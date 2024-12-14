@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING, Any, Optional, overload
 from ralsei.injector import DIContainer
 
 from ._flattened import FlattenedPipeline
-from .outputof import OutputOf, Resolves
+from .outputof import ResolveLater, Resolves
 from .name import TaskName
 from .error import CyclicGraphError
 from .dag import DAG
 
 if TYPE_CHECKING:
-    from ralsei.task import Task
+    from ralsei.task import Task, TaskDef
     from .pipeline import Pipeline
 
 
@@ -28,7 +28,7 @@ class DependencyResolver(ABC):
 
 class DummyDependencyResolver(DependencyResolver):
     def resolve(self, value: Any) -> Any:
-        if isinstance(value, OutputOf):
+        if isinstance(value, ResolveLater):
             raise NotImplementedError(
                 "Tried to resolve a dependency outside of dependency resolution context"
             )
@@ -71,30 +71,28 @@ class GraphBuildingDependencyResolver(DependencyResolver):
         self._stack = CallStack()
 
     def resolve(self, value: Any) -> Any:
-        if not isinstance(value, OutputOf):
+        if not isinstance(value, ResolveLater):
             return value
 
-        return self._resolve_name_relative(
-            value.pipeline, value.task_name
-        ).output.as_import()
+        return value.resolve_task(self).output.as_import()
 
-    def _resolve_name_relative(
-        self, pipeline: "Pipeline", name_relative: TaskName
-    ) -> "Task":
-        return self.resolve_name(
-            TaskName(*self._pipeline_flat.pipeline_paths[pipeline], *name_relative)
-        )
+    def get_pipeline_path(self, pipeline: "Pipeline") -> TaskName:
+        return self._pipeline_flat.pipeline_paths[pipeline]
 
-    def resolve_name(self, task_name: TaskName) -> "Task":
+    def resolve_task(self, task_name: TaskName) -> "Task":
         if last_caller := self._stack.last_caller:
             self._relations[task_name].add(last_caller)
 
         if cached_task := self._tasks.get(task_name, None):
             return cached_task
 
+        return self.create_task(
+            task_name, self._pipeline_flat.scoped_tasks[task_name].task
+        )
+
+    def create_task(self, task_name: TaskName, task_def: "TaskDef") -> "Task":
         self._stack.push(task_name)
         try:
-            task_def = self._pipeline_flat.scoped_tasks[task_name].task
             task = self._di.execute(task_def.Impl, task_def)
         finally:
             self._stack.pop()
@@ -102,9 +100,25 @@ class GraphBuildingDependencyResolver(DependencyResolver):
         self._tasks[task_name] = task
         return task
 
+    def add_dynamic_dependency(self, suffix: str, task_def: "TaskDef") -> "Task":
+        parent_task = self._stack.last_caller
+        if not parent_task:
+            raise RuntimeError(
+                "Dynamic dependencies can only be created inside of Task's __init__ method"
+            )
+
+        task_name = TaskName(*parent_task[:-1], f"{parent_task[-1]}_{suffix}")
+        if task_name in self._tasks:
+            raise RuntimeError(
+                f"Dependency {task_name} already exists, use a different suffix"
+            )
+        self._relations[task_name].add(parent_task)
+
+        return self.create_task(task_name, task_def)
+
     def build_dag(self) -> DAG:
         for task_name in self._pipeline_flat.scoped_tasks:
-            self.resolve_name(task_name)
+            self.resolve_task(task_name)
 
         return DAG(self._tasks, dict(self._relations))
 

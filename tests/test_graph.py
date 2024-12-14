@@ -4,7 +4,7 @@ from ralsei import (
     Pipeline,
     MapToNewTable,
     Table,
-    OutputOf,
+    Resolves,
     ValueColumn,
     MapToNewColumns,
     PseudoTask,
@@ -131,7 +131,7 @@ def test_recursion(app: App):
         ).build_dag(init)
 
 
-def create_child_pipeline(source_tables: list[Table | OutputOf]):
+def create_child_pipeline(source_tables: list[Resolves[Table]]):
     return Pipeline(
         lambda root: {
             "join": CreateTableSql(

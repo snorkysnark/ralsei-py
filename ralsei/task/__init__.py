@@ -7,6 +7,7 @@ from .rowcontext import ROW_CONTEXT_ATRRIBUTE, ROW_CONTEXT_VAR
 from .table_output import TableOutput, TableOutputResumable
 from .colum_output import ColumnOutput, ColumnOutputResumable
 from .pseudo_task import PseudoTask
+from .create_sequence import CreateSequence
 
 __all__ = [
     "Task",
@@ -16,6 +17,7 @@ __all__ = [
     "MapToNewTable",
     "MapToNewColumns",
     "PseudoTask",
+    "CreateSequence",
     "TableOutput",
     "TableOutputResumable",
     "ColumnOutput",

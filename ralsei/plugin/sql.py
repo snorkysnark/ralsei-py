@@ -59,6 +59,7 @@ class SqlPlugin(Plugin):
         self._dialects["sqlite"] = DialectMetadata(
             supports_column_if_not_exists=False, supports_rowcount=False
         )
+        self._dialects["duckdb"] = DialectMetadata(supports_rowcount=False)
 
     def _get_dialect_metadata(
         self, sqlalchemy_dialect: sqlalchemy.Dialect
