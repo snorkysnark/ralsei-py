@@ -1,5 +1,5 @@
 from typing import Any, Iterable, Optional, Sequence
-from dataclasses import field
+from dataclasses import dataclass, field
 import sqlalchemy
 
 from ralsei.jinja import SqlEnvironment
@@ -24,6 +24,7 @@ from .table_output import TableOutput, TableOutputResumable
 from .rowcontext import RowContext
 
 
+@dataclass
 class MapToNewTable(TaskDef):
     table: Table
     columns: Sequence[str | ValueColumnBase]

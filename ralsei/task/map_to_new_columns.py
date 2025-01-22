@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence, Optional
 
 from ralsei.graph import Resolves
@@ -20,6 +20,7 @@ from .colum_output import ColumnOutput, ColumnOutputResumable
 from .rowcontext import RowContext
 
 
+@dataclass
 class MapToNewColumns(TaskDef):
     select: str
     table: Resolves[Table]

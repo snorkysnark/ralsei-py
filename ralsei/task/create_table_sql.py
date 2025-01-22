@@ -1,7 +1,7 @@
 import sqlalchemy
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from ralsei.connection.utils import executescript
@@ -10,6 +10,7 @@ from .base import TaskDef, Task
 from .table_output import TableOutput
 
 
+@dataclass
 class CreateTableSql(TaskDef):
     sql: str | list[str]
     table: Table

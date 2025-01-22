@@ -1,5 +1,5 @@
 from typing import Iterable, Sequence, Optional, Any
-from dataclasses import field
+from dataclasses import dataclass, field
 
 import sqlalchemy
 
@@ -14,6 +14,7 @@ from .base import TaskDef, Task
 from .colum_output import ColumnOutput
 
 
+@dataclass
 class AddColumnsSql(TaskDef):
     sql: str | list[str]
     table: Resolves[Table]

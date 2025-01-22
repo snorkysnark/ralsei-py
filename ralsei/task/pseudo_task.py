@@ -1,4 +1,4 @@
-from typing import Any, Iterable
+from typing import Any
 
 from ralsei.graph import Resolves, DependencyResolver
 from ralsei.viz import GraphNode, CircleNode
@@ -20,7 +20,8 @@ class ValueOutput[T](TaskOutput):
 
 
 class PseudoTask[T](TaskDef):
-    inputs: Iterable[Resolves[T]]
+    def __init__(self, *inputs: Resolves[T]) -> None:
+        self.inputs = inputs
 
     class Impl(Task[ValueOutput[T]]):
         def __init__(self, this: "PseudoTask", resolver: DependencyResolver) -> None:
