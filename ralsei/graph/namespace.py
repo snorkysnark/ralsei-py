@@ -4,8 +4,10 @@ from typing import Iterable, Mapping
 
 
 class TypedNamespace[T](SimpleNamespace):
-    # As __orig_class__ is automatically set in generic classes, exclude it from __dict__
+    # As __orig_class__ is automatically added to generic classes, exclude it from __dict__
     __slots__ = ["__orig_class__"]
+
+    __dict__: dict[str, T]
 
     if sys.version_info >= (3, 13):
 

@@ -1,53 +1,63 @@
 from __future__ import annotations
 from attrs import define, field
-from graphviz import Digraph
 
-from bidict import bidict
+from ralsei.viz import VisualNode, Subgraph, GraphBuilder
+from .namespace import TypedNamespace
 
 
 @define(eq=False)
 class Task:
     requires: set[Task] = field(factory=set, kw_only=True)
 
-    def visualize(self, dot: Digraph, name: str):
-        dot.node(name, label=name)
+    def visualize_node(self, graph: GraphBuilder, path: tuple[str, ...]) -> VisualNode:
+        return VisualNode(path)
+
+    def visualize_edges(self, graph: GraphBuilder):
+        pass
 
 
 @define(eq=False)
 class TaskGroup(Task):
-    tasks: bidict[str, Task] = field(factory=bidict)
+    tasks: TypedNamespace[Task] = field(factory=TypedNamespace)
 
-    def visualize(self, dot: Digraph, name: str):
-        with dot.subgraph(
-            name=name, graph_attr={"label": name}
-        ) as subgraph:  # pyright: ignore[reportOptionalContextManager]
-            for subtask_name, subtask in self.tasks.items():
-                subtask.visualize(subgraph, subtask_name)
+    def visualize_node(self, graph: GraphBuilder, path: tuple[str, ...]):
+        return Subgraph(
+            path,
+            [
+                graph.add(subtask, path + (subtask_name,))
+                for subtask_name, subtask in self.tasks.__dict__.items()
+            ],
+        )
 
-                for required in subtask.requires:
-                    subgraph.edge(self.tasks.inverse[required], subtask_name)
+    def visualize_edges(self, graph: GraphBuilder):
+        for subtask in self.tasks.__dict__.values():
+            for dependency in subtask.requires:
+                graph.connect(dependency, subtask)
+
+
+def make_bar():
+    ns = TypedNamespace[Task]()
+    ns.foo = Task()
+    ns.ccc = Task(requires={ns.foo})
+
+    return TaskGroup(ns)
 
 
 def make_nested():
-    ns = bidict()
-    ns["foo"] = Task()
-    ns["bar"] = Task()
-    ns["baz"] = Task(requires={ns["foo"], ns["bar"]})
+    ns = TypedNamespace[Task]()
+    ns.foo = Task()
+    ns.bar = make_bar()
+    ns.baz = Task(requires={ns.foo, ns.bar})
 
     return TaskGroup(ns)
 
 
 def make_pipeline():
-    ns = bidict()
-    ns["cluster_group"] = make_nested()
-    ns["final"] = Task(requires={ns["cluster_group"]})
+    ns = TypedNamespace[Task]()
+    ns.group = make_nested()
+    ns.final = Task(requires={ns.group})
 
     return TaskGroup(ns)
 
 
-dot = Digraph()
-dot.attr("graph", layout="fdp")
-dot.attr("node", shape="box")
-dot.attr("edge", len="1.1")
-make_pipeline().visualize(dot, "cluster_main")
-dot.render(format="png")
+GraphBuilder().visualize(make_pipeline()).render(format="png")
