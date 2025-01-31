@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Protocol
 from attrs import define, field
 from graphviz import Digraph
+import html
 
 type NodePath = tuple[str, ...]
 
@@ -46,6 +47,19 @@ class Subgraph(VisualNode):
                 node.to_graphviz(dot)
 
 
+@define(eq=False)
+class WindowNode(VisualNode):
+    content: str
+
+    def to_graphviz(self, dot: Digraph):
+        lines = self.content.split("\n")
+        dot.node(
+            self.graphviz_key,
+            f"<{html.escape(self.label)} |\n{''.join(html.escape(line) + '<br align="left"/>' for line in lines)}>",
+            shape="record",
+        )
+
+
 class Visualizable(Protocol):
     def visualize(self, g: VisualGraph) -> VisualNode: ...
 
@@ -68,7 +82,7 @@ class VisualGraph:
 
     def build(self):
         dot = Digraph()
-        dot.attr("graph", layout="fdp")
+        dot.attr("graph", layout="fdp", rankdir="LR")
         dot.attr("node", shape="box")
 
         self.__root.to_graphviz(dot)

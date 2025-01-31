@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Mapping
-from attrs import define
+from attrs import define, field
 from bidict import bidict
 
 from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 
-from .base import Task, runtime_initialized
+from .base import Task
 
 
 @define(eq=False, init=False)
@@ -25,7 +25,7 @@ class TaskGroup(Task):
         super().__init__(requires=requires or set())
 
         self.tasks = bidict(tasks)
-        self.plugins = PluginGroup(*plugins)
+        self.plugins = PluginGroup(plugins)
 
     class RuntimeData:
         __slots__ = ["sorted_tasks"]
@@ -57,7 +57,7 @@ class TaskGroup(Task):
 
                 self.sorted_tasks = sorted
 
-    _rt: RuntimeData = runtime_initialized()
+    _rt: RuntimeData = field(init=False, repr=False)
 
     def run(self, context: DIContext):
         with context.overlay(self.plugins.runtime_context()) as runtime:

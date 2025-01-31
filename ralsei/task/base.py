@@ -6,10 +6,6 @@ from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode
 
 
-def runtime_initialized() -> Any:
-    return field(init=False, repr=False)
-
-
 @define(eq=False)
 class Task:
     requires: set[Task] = field(factory=set, kw_only=True, repr=False)
@@ -17,7 +13,7 @@ class Task:
     # Runtime initialized fields
     path: tuple[str, ...] = field(init=False, default=())
     dependants: set[Task] = field(init=False, repr=False, factory=set)
-    _rt: Any = runtime_initialized()
+    _rt: Any = field(init=False, repr=False)
 
     # Required methods (arguments are provided via dependency injection)
     run: ClassVar[Callable[..., None]]
