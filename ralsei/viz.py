@@ -1,16 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import Protocol
 from attrs import define, field
 from graphviz import Digraph
 
-if TYPE_CHECKING:
-    from ralsei.graph import Task
+type NodePath = tuple[str, ...]
 
 
 @define(eq=False)
 class VisualNode:
-    path: tuple[str, ...]
-    edges: set[tuple[str, ...]] = field(factory=set, init=False)
+    graph: VisualGraph = field(repr=False)
+    path: NodePath
+
+    def __attrs_post_init__(self):
+        self.graph.add(self)
 
     @property
     def graphviz_key(self):
@@ -33,46 +35,47 @@ class Subgraph(VisualNode):
         return "cluster_" + super().graphviz_key
 
     def to_graphviz(self, dot: Digraph):
-        def add_nodes(graph: Digraph):
-            for node in self.nodes:
-                node.to_graphviz(graph)
-
         if len(self.path) > 0:
             with dot.subgraph(
                 name=self.graphviz_key, graph_attr={"label": self.label}
             ) as subgraph:  # pyright: ignore[reportOptionalContextManager]
-                add_nodes(subgraph)
+                for node in self.nodes:
+                    node.to_graphviz(subgraph)
         else:
-            add_nodes(dot)
+            for node in self.nodes:
+                node.to_graphviz(dot)
 
 
-class GraphBuilder:
-    def __init__(self) -> None:
-        self._nodes: dict[tuple[str, ...], VisualNode] = {}
-        self._task_paths: dict["Task", tuple[str, ...]] = {}
+class Visualizable(Protocol):
+    def visualize(self, g: VisualGraph) -> VisualNode: ...
 
-    def add(self, task: "Task", path: tuple[str, ...]) -> VisualNode:
-        node = task.visualize_node(self, path)
-        self._nodes[path] = node
-        self._task_paths[task] = path
-        return node
 
-    def connect(self, task_from: "Task", task_to: "Task"):
-        self._nodes[self._task_paths[task_from]].edges.add(self._task_paths[task_to])
+class VisualGraph:
+    def __init__(self, root: Visualizable) -> None:
+        self.__nodes: dict[NodePath, VisualNode] = {}
+        self.__edges: list[tuple[NodePath, NodePath]] = []
 
-    def visualize(self, task: "Task"):
-        node = self.add(task, ())
+        self.__root = root.visualize(self)
 
-        for task in self._task_paths:
-            task.visualize_edges(self)
+    def add(self, node: VisualNode):
+        if node.path in self.__nodes:
+            RuntimeError(f"Tried to add node {node.path} to VisualGraph twice")
 
+        self.__nodes[node.path] = node
+
+    def connect(self, path_from: NodePath, path_to: NodePath):
+        self.__edges.append((path_from, path_to))
+
+    def build(self):
         dot = Digraph()
-        dot.attr("graph", compound="true", layout="fdp")
+        dot.attr("graph", layout="fdp")
         dot.attr("node", shape="box")
 
-        node.to_graphviz(dot)
-        for node_from in self._nodes.values():
-            for node_to in (self._nodes[path] for path in node_from.edges):
-                dot.edge(node_from.graphviz_key, node_to.graphviz_key)
+        self.__root.to_graphviz(dot)
+
+        for path_from, path_to in self.__edges:
+            dot.edge(
+                self.__nodes[path_from].graphviz_key, self.__nodes[path_to].graphviz_key
+            )
 
         return dot

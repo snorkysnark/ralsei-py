@@ -1,39 +1,41 @@
+from __future__ import annotations
+from typing import Any
+from attrs import define, field
 import sqlalchemy
-from ralsei.jinja import SqlEnvironment
-from ralsei.types import Table
-from dataclasses import dataclass, field
-from typing import Any, Iterable
 
-from ralsei.connection.utils import executescript
-from ralsei.viz import GraphNode, WindowNode
-from .base import TaskDef, Task
-from .table_output import TableOutput
+from .base import Task
 
 
-@dataclass
-class CreateTableSql(TaskDef):
+@define(eq=False)
+class CreateTableSql(Task):
     sql: str | list[str]
     table: Table
     view: bool = False
-    params: dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = field(factory=dict)
 
-    class Impl(Task):
-        def __init__(self, this: "CreateTableSql", env: SqlEnvironment) -> None:
-            params = {**this.params, "table": this.table, "view": this.view}
+    class Impl:
+        def __init__(self, cfg: CreateTableSql, env: SqlEnvironment) -> None:
+            params = {**cfg.params, "table": cfg.table, "view": cfg.view}
 
-            self.__sql = (
-                env.render_sql_split(this.sql, **params)
-                if isinstance(this.sql, str)
-                else [env.render_sql(sql, **params) for sql in this.sql]
+            self.table = cfg.table
+            self._sql = (
+                env.render_sql_split(cfg.sql, **params)
+                if isinstance(cfg.sql, str)
+                else [env.render_sql(sql, **params) for sql in cfg.sql]
             )
-            self.output = TableOutput(env, this.table, view=this.view)
+            self._drop_sql = env.render_sql(
+                "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
+                table=cfg.table,
+                view=cfg.view,
+            )
 
         def run(self, conn: sqlalchemy.Connection):
-            executescript(conn, self.__sql)
+            executescript(conn, self._sql)
             conn.commit()
 
-        def visualize(self) -> GraphNode:
-            return WindowNode(str(self.__sql[0]) if len(self.__sql) > 0 else "")
+        def delete(self, conn: sqlalchemy.Connection):
+            conn.execute(self._drop_sql)
+            conn.commit()
 
-        def get_scripts(self) -> Iterable[tuple[str, str]]:
-            yield "main", "\n---\n".join(map(str, self.__sql))
+        def exists(self, conn: ConnectionEnvironment) -> bool:
+            return db_actions.table_exists(conn.sqlalchemy, self.table)

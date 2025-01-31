@@ -1,43 +1,56 @@
-from typing import Any, Callable
-import itertools
+from __future__ import annotations
+from contextlib import contextmanager
 import inspect
+from typing import TYPE_CHECKING, Any, Callable, get_type_hints
+
+from ralsei.contextmanagers import ContextManager
+
+if TYPE_CHECKING:
+    from ralsei.task import Task
 
 
-class DIContainer:
-    def __init__(
-        self, factories: dict[type, Callable[["DIContainer"], Any]] | None = None
-    ) -> None:
-        self._factories = factories or {}
+class DIContext:
+    __slots__ = ["_services"]
+
+    def __init__(self, services: dict[type, Any] | None = None) -> None:
+        self._services = services or {}
+        self._services[DIContext] = self
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self._services})"
 
     def get[T](self, type_: type[T]) -> T:
-        if factory := self._factories.get(type_, None):
-            return factory(self)
+        if service := self._services.get(type_, None):
+            return service
+        else:
+            raise RuntimeError(f"Service {type_} not found")
 
-        raise RuntimeError(f"Service of type {type_} not found")
-
-    def bind_factory[T](self, type_: type[T], func: Callable[..., T]):
+    def execute[T](self, func: Callable[..., T], locals: dict[type, Any] = {}) -> T:
         signature = inspect.signature(func, eval_str=True)
 
-        self._factories[type_] = lambda di: func(
+        return func(
             **{
-                key: di.get(param.annotation)
-                for key, param in signature.parameters.items()
+                param.name: locals.get(param.annotation, None)
+                or self.get(param.annotation)
+                for param in signature.parameters.values()
             }
         )
 
-    def bind_value[T](self, type_: type[T], value: T):
-        self._factories[type_] = lambda di: value
+    def __add__(self, other: DIContext) -> DIContext:
+        return DIContext({**self._services, **other._services})
 
-    def execute[T](self, func: Callable[..., T], *args) -> T:
-        signature = inspect.signature(func, eval_str=True)
-        # Annotations for remaining parameters (that aren't provided by args)
-        parameters_rest = itertools.islice(
-            signature.parameters.items(), len(args), None
-        )
+    @contextmanager
+    def overlay(self, context_manager: ContextManager[DIContext]):
+        with context_manager as layer:
+            yield self + layer
 
-        return func(
-            *args, **{key: self.get(param.annotation) for key, param in parameters_rest}
-        )
+    def update(self, other: DIContext):
+        self._services.update(other._services)
+        self._services[DIContext] = self
 
-    def clone(self) -> "DIContainer":
-        return DIContainer({**self._factories})
+    def initialize_task(self, task: "Task"):
+        annotations = get_type_hints(type(task))
+
+        if rt_type := annotations.get("_rt", None):
+            if rt_type is not Any:
+                setattr(task, "_rt", self.execute(rt_type, {type(task): task}))
