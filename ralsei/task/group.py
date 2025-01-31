@@ -7,7 +7,7 @@ from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 
-from ..base import Task, runtime_initialized
+from .base import Task, runtime_initialized
 
 
 @define(eq=False, init=False)
