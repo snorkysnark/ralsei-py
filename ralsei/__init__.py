@@ -12,6 +12,8 @@ from .types import (
 )
 from .wrappers import *
 from .task import (
+    Task,
+    TaskGroup,
     CreateTableSql,
     AddColumnsSql,
     MapToNewTable,
@@ -41,6 +43,8 @@ __all__ = [
     "add_to_output",
     "compose",
     "compose_one",
+    "Task",
+    "TaskGroup",
     "CreateTableSql",
     "AddColumnsSql",
     "MapToNewTable",
