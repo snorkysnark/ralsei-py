@@ -19,7 +19,7 @@ class RalseiConsole(Console):
         log_locals: bool = False,
         _stack_offset: int = 1,
     ) -> None:
-        from ralsei.task import ROW_CONTEXT_VAR
+        from ralsei.task.rowcontext import ROW_CONTEXT_VAR
 
         if row_ctx := ROW_CONTEXT_VAR.get(None):
             objects = (row_ctx, *objects)
