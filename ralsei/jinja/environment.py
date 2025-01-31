@@ -19,11 +19,6 @@ from functools import partial
 from sqlalchemy import TextClause
 
 from ralsei.types import Sql, Column, Identifier
-from ralsei.graph import (
-    DependencyResolver,
-    Resolves,
-    DummyDependencyResolver,
-)
 from ralsei.dialect import DialectInfo
 
 from .adapter import SqlAdapter, default_adapter
@@ -123,18 +118,16 @@ class SqlEnvironment(jinja2.Environment):
     def __init__(
         self,
         adapter: Optional[SqlAdapter] = None,
-        resolver: Optional[DependencyResolver] = None,
         filters: Optional[dict[str, Callable]] = None,
         globals: Optional[dict[str, Any]] = None,
     ):
         self.adapter = adapter or default_adapter.copy()
-        self.resolver = resolver or DummyDependencyResolver()
 
         def finalize(value: Any) -> str | jinja2.Undefined:
             if isinstance(value, jinja2.Undefined):
                 return value
             else:
-                return self.adapter.to_sql(self, self.resolve(value))
+                return self.adapter.to_sql(self, value)
 
         super().__init__(undefined=StrictUndefined, finalize=finalize)
 
@@ -216,15 +209,6 @@ class SqlEnvironment(jinja2.Environment):
 
         return self.from_string(source).render_sql_split(*args, **kwargs)
 
-    @overload
-    def resolve[T](self, value: Resolves[T]) -> T: ...
-
-    @overload
-    def resolve(self, value: Any) -> Any: ...
-
-    def resolve(self, value: Any):
-        return self.resolver.resolve(value)
-
     def format(self, source: str, /, *args, **kwargs) -> str:
         """Similar to :py:meth:`str.format`, but applies :py:meth:`~SqlAdapter.to_sql` to each parameter"""
 
@@ -233,13 +217,9 @@ class SqlEnvironment(jinja2.Environment):
             **{key: self.adapter.to_sql(self, value) for key, value in kwargs.items()},
         )
 
-    def getattr(self, obj: Any, attribute: str) -> Any:
-        return super().getattr(self.resolve(obj), attribute)
-
     def copy(self) -> "SqlEnvironment":
         return SqlEnvironment(
             adapter=self.adapter,
-            resolver=self.resolver,
             filters={**self.filters},
             globals={**self.globals},
         )
