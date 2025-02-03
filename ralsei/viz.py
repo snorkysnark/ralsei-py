@@ -29,6 +29,12 @@ class VisualNode:
     def to_graphviz(self, dot: Digraph):
         dot.node(self.graphviz_key, label=self.label)
 
+    def tail_attr(self) -> dict[str, str]:
+        return {}
+
+    def heade_attr(self) -> dict[str, str]:
+        return {}
+
 
 @define(eq=False)
 class Subgraph(VisualNode):
@@ -45,9 +51,19 @@ class Subgraph(VisualNode):
             ) as subgraph:  # pyright: ignore[reportOptionalContextManager]
                 for node in self.nodes:
                     node.to_graphviz(subgraph)
+
+                # virtual node for connecting subgraph
+                # see https://graphviz.org/faq/#FaqClusterEdge
+                subgraph.node(self.graphviz_key, label="", shape="none")
         else:
             for node in self.nodes:
                 node.to_graphviz(dot)
+
+    def tail_attr(self) -> dict[str, str]:
+        return {"ltail": self.graphviz_key}
+
+    def heade_attr(self) -> dict[str, str]:
+        return {"lhead": self.graphviz_key}
 
 
 @define(eq=False)
@@ -81,14 +97,20 @@ class VisualGraph:
 
     def build(self):
         dot = Digraph()
-        dot.attr("graph", rankdir="LR")
+        dot.attr("graph", rankdir="LR", compound="true")
         dot.attr("node", shape="box")
 
         self.__root.to_graphviz(dot)
 
         for path_from, path_to in self.__edges:
+            node_from = self.__nodes[path_from]
+            node_to = self.__nodes[path_to]
+
             dot.edge(
-                self.__nodes[path_from].graphviz_key, self.__nodes[path_to].graphviz_key
+                node_from.graphviz_key,
+                node_to.graphviz_key,
+                **node_from.tail_attr(),
+                **node_to.heade_attr(),
             )
 
         return dot
