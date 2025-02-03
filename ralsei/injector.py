@@ -1,12 +1,22 @@
 from __future__ import annotations
 from contextlib import contextmanager
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, Iterable, get_type_hints, TypeVar
 
 from ralsei.contextmanagers import ContextManager
 
 if TYPE_CHECKING:
     from ralsei.task import Task
+
+
+def task_get_mro(task_type: type) -> Iterable[type]:
+    from ralsei.task import Task
+
+    for clazz in inspect.getmro(task_type):
+        yield clazz
+
+        if clazz is Task:
+            break
 
 
 class DIContext:
@@ -49,8 +59,18 @@ class DIContext:
         self._services[DIContext] = self
 
     def initialize_task(self, task: "Task"):
+        from ralsei.task import Impl
+
         annotations = get_type_hints(type(task))
 
-        if rt_type := annotations.get("_rt", None):
-            if rt_type is not Any:
-                setattr(task, "_rt", self.execute(rt_type, {type(task): task}))
+        if impl_type := annotations.get("impl", None):
+            if isinstance(impl_type, TypeVar):
+                impl_type = Impl
+
+            setattr(
+                task,
+                "impl",
+                self.execute(
+                    impl_type, {clazz: task for clazz in task_get_mro(type(task))}
+                ),
+            )

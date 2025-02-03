@@ -5,6 +5,7 @@ import sqlalchemy
 
 from ralsei import db_actions
 from ralsei.connection import ConnectionEnvironment
+from ralsei.injector import DIContext
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import (
     Table,
@@ -20,7 +21,7 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.console import track
 
-from .base import Task
+from .base import Impl, Task
 from .rowcontext import RowContext
 
 
@@ -32,7 +33,7 @@ class MarkerScripts:
 
 
 @define(eq=False)
-class MapToNewTable(Task):
+class MapToNewTable(Task["ImplMapToNewTable"]):
     table: Table
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
@@ -42,97 +43,94 @@ class MapToNewTable(Task):
     id_fields: Optional[list[IdColumn]] = None
     params: dict[str, Any] = field(factory=dict)
 
-    class RuntimeData:
-        def __init__(self, cfg: MapToNewTable, env: SqlEnvironment) -> None:
-            if popped_fields := get_popped_fields(cfg.fn):
-                self.popped_fields = set(popped_fields)
+    impl: ImplMapToNewTable = field(init=False, repr=False)
+
+
+class ImplMapToNewTable(Impl[MapToNewTable]):
+    def __init__(self, decl: MapToNewTable, env: SqlEnvironment) -> None:
+        if popped_fields := get_popped_fields(decl.fn):
+            self.popped_fields = set(popped_fields)
+        else:
+            self.popped_fields = set()
+
+        params = {**decl.params, "table": decl.table, "source": decl.source_table}
+        if decl.is_done_column:
+            params["is_done"] = Identifier(decl.is_done_column)
+
+        definitions: list[ToSql] = []
+        insert_columns: list[ValueColumnRendered] = []
+        for column in decl.columns:
+            if isinstance(column, str):
+                rendered = Sql(env.render(column, **params))
+                definitions.append(rendered)
             else:
-                self.popped_fields = set()
+                rendered = column.render(env, **params)
+                insert_columns.append(rendered)
+                definitions.append(rendered.definition)
 
-            params = {**cfg.params, "table": cfg.table, "source": cfg.source_table}
-            if cfg.is_done_column:
-                params["is_done"] = Identifier(cfg.is_done_column)
-
-            definitions: list[ToSql] = []
-            insert_columns: list[ValueColumnRendered] = []
-            for column in cfg.columns:
-                if isinstance(column, str):
-                    rendered = Sql(env.render(column, **params))
-                    definitions.append(rendered)
-                else:
-                    rendered = column.render(env, **params)
-                    insert_columns.append(rendered)
-                    definitions.append(rendered.definition)
-
-            self.select = env.render_sql(cfg.select, **params) if cfg.select else None
-            self.create_table = env.render_sql(
-                """\
-                CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
-                    {{ definitions | join(',\\n    ') }}
-                );""",
-                table=cfg.table,
-                definitions=definitions,
-                if_not_exists=cfg.is_done_column is not None,
+        self.select = env.render_sql(decl.select, **params) if decl.select else None
+        self.create_table = env.render_sql(
+            """\
+            CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
+                {{ definitions | join(',\\n    ') }}
+            );""",
+            table=decl.table,
+            definitions=definitions,
+            if_not_exists=decl.is_done_column is not None,
+        )
+        self.drop_table = env.render_sql("DROP {{table}} IF EXISTS", table=decl.table)
+        self.insert = env.render_sql(
+            """\
+            INSERT INTO {{table}}(
+                {{ columns | join(',\\n    ', attribute='identifier') }}
             )
-            self.drop_table = env.render_sql(
-                "DROP {{table}} IF EXISTS", table=cfg.table
+            VALUES (
+                {{ columns | join(',\\n    ', attribute='value') }}
+            );""",
+            table=decl.table,
+            columns=insert_columns,
+        )
+
+        self.marker_scripts: Optional[MarkerScripts] = None
+        if decl.is_done_column:
+            if not decl.source_table:
+                raise ValueError(
+                    "Cannot create is_done_column when source_table is None"
+                )
+            if self.select is None:
+                raise ValueError("'select' cannot be empty if using is_done_column")
+
+            id_fields = decl.id_fields or (
+                [IdColumn(name) for name in popped_fields] if popped_fields else None
             )
-            self.insert = env.render_sql(
-                """\
-                INSERT INTO {{table}}(
-                    {{ columns | join(',\\n    ', attribute='identifier') }}
-                )
-                VALUES (
-                    {{ columns | join(',\\n    ', attribute='value') }}
-                );""",
-                table=cfg.table,
-                columns=insert_columns,
+            if not id_fields:
+                ValueError("Must provide id_fields if using is_done_column")
+
+            is_done_column = ColumnRendered(decl.is_done_column, "BOOL DEFAULT FALSE")
+
+            self.marker_scripts = MarkerScripts(
+                add=db_actions.AddColumns(
+                    env, decl.source_table, [is_done_column], if_not_exists=True
+                ),
+                set_marker=env.render_sql(
+                    """\
+                    UPDATE {{source}}
+                    SET {{is_done}} = TRUE
+                    WHERE {{id_fields | join(' AND ')}};""",
+                    source=decl.source_table,
+                    is_done=is_done_column.identifier,
+                    id_fields=id_fields,
+                ),
+                drop=db_actions.DropColumns(
+                    env, decl.source_table, [is_done_column], if_exists=True
+                ),
             )
 
-            self.marker_scripts: Optional[MarkerScripts] = None
-            if cfg.is_done_column:
-                if not cfg.source_table:
-                    raise ValueError(
-                        "Cannot create is_done_column when source_table is None"
-                    )
-                if self.select is None:
-                    raise ValueError("'select' cannot be empty if using is_done_column")
+    def run(self, decl: MapToNewTable, context: DIContext):
+        conn = context.get(ConnectionEnvironment)
 
-                id_fields = cfg.id_fields or (
-                    [IdColumn(name) for name in popped_fields]
-                    if popped_fields
-                    else None
-                )
-                if not id_fields:
-                    ValueError("Must provide id_fields if using is_done_column")
-
-                is_done_column = ColumnRendered(
-                    cfg.is_done_column, "BOOL DEFAULT FALSE"
-                )
-
-                self.marker_scripts = MarkerScripts(
-                    add=db_actions.AddColumns(
-                        env, cfg.source_table, [is_done_column], if_not_exists=True
-                    ),
-                    set_marker=env.render_sql(
-                        """\
-                        UPDATE {{source}}
-                        SET {{is_done}} = TRUE
-                        WHERE {{id_fields | join(' AND ')}};""",
-                        source=cfg.source_table,
-                        is_done=is_done_column.identifier,
-                        id_fields=id_fields,
-                    ),
-                    drop=db_actions.DropColumns(
-                        env, cfg.source_table, [is_done_column], if_exists=True
-                    ),
-                )
-
-    _rt: RuntimeData = field(init=False, repr=False)
-
-    def run(self, conn: ConnectionEnvironment):
-        conn.execute(self._rt.create_table)
-        if marker := self._rt.marker_scripts:
+        conn.execute(self.create_table)
+        if marker := self.marker_scripts:
             marker.add(conn)
 
         def iter_input_rows(select: sqlalchemy.TextClause):
@@ -145,35 +143,36 @@ class MapToNewTable(Task):
             ):
                 yield input_row
 
-                if marker := self._rt.marker_scripts:
+                if marker := self.marker_scripts:
                     conn.execute(marker.set_marker, input_row)
                     conn.commit()
 
         for input_row in (
-            iter_input_rows(self._rt.select) if self._rt.select is not None else [{}]
+            iter_input_rows(self.select) if self.select is not None else [{}]
         ):
-            with RowContext.from_input_row(input_row, self._rt.popped_fields):
-                for output_row in self.fn(**input_row):
-                    conn.sqlalchemy.execute(self._rt.insert, output_row)
+            with RowContext.from_input_row(input_row, self.popped_fields):
+                for output_row in decl.fn(**input_row):
+                    conn.sqlalchemy.execute(self.insert, output_row)
 
         conn.sqlalchemy.commit()
 
-    def delete(self, conn: ConnectionEnvironment):
-        if marker := self._rt.marker_scripts:
+    def delete(self, decl: MapToNewTable, context: DIContext):
+        conn = context.get(ConnectionEnvironment)
+
+        if marker := self.marker_scripts:
             marker.drop(conn)
 
-        conn.execute(self._rt.drop_table)
+        conn.execute(self.drop_table)
         conn.commit()
 
-    def skip(self, conn: ConnectionEnvironment) -> bool:
-        if not db_actions.table_exists(conn.sqlalchemy, self.table):
+    def skip(self, decl: MapToNewTable, context: DIContext) -> bool:
+        conn = context.get(ConnectionEnvironment)
+
+        if not db_actions.table_exists(conn.sqlalchemy, decl.table):
             return False
         else:
             # Check that task has no more inputs
-            return (
-                self._rt.select is not None
-                and conn.execute(self._rt.select).first() is None
-            )
+            return self.select is not None and conn.execute(self.select).first() is None
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, self.path, str(self._rt.create_table))
+    def visualize(self, decl: MapToNewTable, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, decl.path, str(self.create_table))

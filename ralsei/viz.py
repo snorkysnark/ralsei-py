@@ -1,8 +1,11 @@
 from __future__ import annotations
-from typing import Protocol
+from typing import TYPE_CHECKING
 from attrs import define, field
 from graphviz import Digraph
 import html
+
+if TYPE_CHECKING:
+    from ralsei.task import Task
 
 type NodePath = tuple[str, ...]
 
@@ -60,16 +63,12 @@ class WindowNode(VisualNode):
         )
 
 
-class Visualizable(Protocol):
-    def visualize(self, g: VisualGraph) -> VisualNode: ...
-
-
 class VisualGraph:
-    def __init__(self, root: Visualizable) -> None:
+    def __init__(self, root: "Task") -> None:
         self.__nodes: dict[NodePath, VisualNode] = {}
         self.__edges: list[tuple[NodePath, NodePath]] = []
 
-        self.__root = root.visualize(self)
+        self.__root = root.impl.visualize(root, self)
 
     def add(self, node: VisualNode):
         if node.path in self.__nodes:
@@ -82,7 +81,7 @@ class VisualGraph:
 
     def build(self):
         dot = Digraph()
-        dot.attr("graph", layout="fdp", rankdir="LR")
+        dot.attr("graph", rankdir="LR")
         dot.attr("node", shape="box")
 
         self.__root.to_graphviz(dot)

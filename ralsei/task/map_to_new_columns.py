@@ -4,6 +4,7 @@ from attrs import define, field
 
 from ralsei import db_actions
 from ralsei.connection import ConnectionEnvironment
+from ralsei.injector import DIContext
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import (
     Table,
@@ -16,12 +17,12 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.console import track
 
-from .base import Task
+from .base import Impl, Task
 from .rowcontext import RowContext
 
 
 @define(eq=False)
-class MapToNewColumns(Task):
+class MapToNewColumns(Task["ImplMapToNewColumns"]):
     select: str
     table: Table
     columns: Sequence[ValueColumnBase]
@@ -30,81 +31,85 @@ class MapToNewColumns(Task):
     id_fields: Optional[list[IdColumn]] = None
     params: dict[str, Any] = field(factory=dict)
 
-    class RuntimeData:
-        def __init__(self, cfg: MapToNewColumns, env: SqlEnvironment) -> None:
-            if popped_fields := get_popped_fields(cfg.fn):
-                self.popped_fields = set(popped_fields)
-            else:
-                self.popped_fields = set()
+    impl: ImplMapToNewColumns = field(init=False, repr=False)
 
-            params = {**cfg.params, "table": cfg.table}
-            if cfg.is_done_column:
-                params["is_done"] = Identifier(cfg.is_done_column)
 
-            columns = [column.render(env, **params) for column in cfg.columns]
-            if cfg.is_done_column:
-                columns.append(
-                    ValueColumnRendered(cfg.is_done_column, "BOOL DEFAULT FALSE", True)
-                )
+class ImplMapToNewColumns(Impl[MapToNewColumns]):
+    def __init__(self, decl: MapToNewColumns, env: SqlEnvironment) -> None:
+        if popped_fields := get_popped_fields(decl.fn):
+            self.popped_fields = set(popped_fields)
+        else:
+            self.popped_fields = set()
 
-            self.select = env.render_sql(cfg.select, **params)
+        params = {**decl.params, "table": decl.table}
+        if decl.is_done_column:
+            params["is_done"] = Identifier(decl.is_done_column)
 
-            id_fields = cfg.id_fields or (
-                [IdColumn(name) for name in popped_fields] if popped_fields else None
-            )
-            if not id_fields:
-                raise ValueError(
-                    "id_fields not found, must be explicitly provided or inferred from function"
-                )
-
-            resumable = bool(cfg.is_done_column)
-            self.add_columns = db_actions.AddColumns(
-                env, cfg.table, columns, if_not_exists=resumable
-            )
-            self.update = env.render_sql(
-                """\
-                UPDATE {{table}} SET
-                {{columns | join(',\\n', attribute='set_statement')}}
-                WHERE
-                {{id_fields | join(' AND ')}};""",
-                table=cfg.table,
-                columns=columns,
-                id_fields=id_fields,
-            )
-            self.drop_columns = db_actions.DropColumns(
-                env, cfg.table, columns, if_exists=True
+        columns = [column.render(env, **params) for column in decl.columns]
+        if decl.is_done_column:
+            columns.append(
+                ValueColumnRendered(decl.is_done_column, "BOOL DEFAULT FALSE", True)
             )
 
-    _rt: RuntimeData = field(init=False, repr=False)
+        self.select = env.render_sql(decl.select, **params)
 
-    def run(self, conn: ConnectionEnvironment):
-        self._rt.add_columns(conn)
+        id_fields = decl.id_fields or (
+            [IdColumn(name) for name in popped_fields] if popped_fields else None
+        )
+        if not id_fields:
+            raise ValueError(
+                "id_fields not found, must be explicitly provided or inferred from function"
+            )
+
+        resumable = bool(decl.is_done_column)
+        self.add_columns = db_actions.AddColumns(
+            env, decl.table, columns, if_not_exists=resumable
+        )
+        self.update = env.render_sql(
+            """\
+            UPDATE {{table}} SET
+            {{columns | join(',\\n', attribute='set_statement')}}
+            WHERE
+            {{id_fields | join(' AND ')}};""",
+            table=decl.table,
+            columns=columns,
+            id_fields=id_fields,
+        )
+        self.drop_columns = db_actions.DropColumns(
+            env, decl.table, columns, if_exists=True
+        )
+
+    def run(self, decl: MapToNewColumns, context: DIContext):
+        conn = context.get(ConnectionEnvironment)
+        self.add_columns(conn)
 
         for input_row in map(
             lambda row: row._asdict(),
             track(
-                conn.execute_with_length_hint(self._rt.select),
+                conn.execute_with_length_hint(self.select),
                 description="Task progress...",
             ),
         ):
-            with RowContext.from_input_row(input_row, self._rt.popped_fields):
-                conn.execute(self._rt.update, self.fn(**input_row))
-                if self.is_done_column:
+            with RowContext.from_input_row(input_row, self.popped_fields):
+                conn.execute(self.update, decl.fn(**input_row))
+                if decl.is_done_column:
                     conn.sqlalchemy.commit()
 
         conn.sqlalchemy.commit()
 
-    def delete(self, conn: ConnectionEnvironment):
-        self._rt.drop_columns(conn)
+    def delete(self, decl: MapToNewColumns, context: DIContext):
+        conn = context.get(ConnectionEnvironment)
+        self.drop_columns(conn)
         conn.commit()
 
-    def skip(self, conn: ConnectionEnvironment) -> bool:
+    def skip(self, decl: MapToNewColumns, context: DIContext) -> bool:
+        conn = context.get(ConnectionEnvironment)
         if not db_actions.columns_exist(
-            conn.sqlalchemy, self.table, (col.name for col in self.columns)
+            conn.sqlalchemy, decl.table, (col.name for col in decl.columns)
         ):
             return False
         else:
-            return conn.execute(self._rt.select).first() is None
+            return conn.execute(self.select).first() is None
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, self.path, str(self._rt.add_columns))
+    def visualize(self, decl: MapToNewColumns, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, decl.path, str(self.add_columns))

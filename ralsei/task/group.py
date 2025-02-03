@@ -7,11 +7,11 @@ from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 
-from .base import Task
+from .base import Task, Impl
 
 
 @define(eq=False, init=False)
-class TaskGroup(Task):
+class TaskGroup(Task["TaskGroupImpl"]):
     tasks: bidict[str, Task]
     plugins: PluginGroup
 
@@ -27,22 +27,25 @@ class TaskGroup(Task):
         self.tasks = bidict(tasks)
         self.plugins = PluginGroup(plugins)
 
-    class RuntimeData:
-        __slots__ = ["sorted_tasks"]
+    impl: TaskGroupImpl = field(init=False, repr=False)
 
-        def __init__(self, cfg: TaskGroup, context: DIContext) -> None:
-            with context.overlay(cfg.plugins.init_context()) as init:
 
-                # Perform task initialization
-                for name, task in cfg.tasks.items():
-                    task.path = cfg.path + (name,)
-                    for dependency in task.requires:
-                        if dependency not in cfg.tasks.inverse:
-                            raise RuntimeError(
-                                f"Task {task.path} can't depend on tasks outside its group!"
-                            )
-                        dependency.dependants.add(task)
-                    init.initialize_task(task)
+class TaskGroupImpl(Impl[TaskGroup]):
+    __slots__ = ["sorted_tasks"]
+
+    def __init__(self, decl: TaskGroup, context: DIContext) -> None:
+        with context.overlay(decl.plugins.init_context()) as init:
+
+            # Perform task initialization
+            for name, task in decl.tasks.items():
+                task.path = decl.path + (name,)
+                for dependency in task.requires:
+                    if dependency not in decl.tasks.inverse:
+                        raise RuntimeError(
+                            f"Task {task.path} can't depend on tasks outside its group!"
+                        )
+                    dependency.dependants.add(task)
+                init.initialize_task(task)
 
                 # Sort the DAG
                 sorted: list[Task] = []
@@ -57,27 +60,22 @@ class TaskGroup(Task):
 
                 self.sorted_tasks = sorted
 
-    _rt: RuntimeData = field(init=False, repr=False)
+    def run(self, decl: TaskGroup, context: DIContext):
+        with context.overlay(decl.plugins.runtime_context()) as runtime:
+            for task in self.sorted_tasks:
+                task.impl.run(decl, runtime)
 
-    def run(self, context: DIContext):
-        with context.overlay(self.plugins.runtime_context()) as runtime:
-            for task in self._rt.sorted_tasks:
-                runtime.execute(task.run)
+    def delete(self, decl: TaskGroup, context: DIContext):
+        with context.overlay(decl.plugins.runtime_context()) as runtime:
+            for task in self.sorted_tasks:
+                task.impl.delete(decl, runtime)
 
-    def delete(self, context: DIContext):
-        with context.overlay(self.plugins.runtime_context()) as runtime:
-            for task in reversed(self._rt.sorted_tasks):
-                runtime.execute(task.delete)
-
-    def skip(self) -> bool:
-        return False
-
-    def visualize(self, g: VisualGraph) -> VisualNode:
+    def visualize(self, decl: TaskGroup, g: VisualGraph) -> VisualNode:
         subgraph = Subgraph(
-            g, self.path, [task.visualize(g) for task in self.tasks.values()]
+            g, decl.path, [task.impl.visualize(task, g) for task in decl.tasks.values()]
         )
 
-        for task in self.tasks.values():
+        for task in decl.tasks.values():
             for dependency in task.requires:
                 g.connect(dependency.path, task.path)
 
