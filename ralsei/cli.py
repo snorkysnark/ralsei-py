@@ -6,19 +6,19 @@ from rich.console import Console
 import typer
 
 from ralsei.injector import DIContext
-from ralsei.task import Task
+from ralsei.task import Task, Impl
 from ralsei.viz import VisualGraph
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 
 
-def constructor_to_click_command(root_constructor: Callable[..., Task]):
+def _constructor_to_click_command(root_constructor: Callable[..., Task]):
     typer_app = typer.Typer(add_help_option=False, add_completion=False)
     typer_app.command()(root_constructor)
 
     return typer.main.get_command(typer_app)
 
 
-def open_in_default_app(filename: str):
+def _open_in_default_app(filename: str):
     if sys.platform == "win32":
         os.startfile(filename)
     elif sys.platform == "darwin":
@@ -27,8 +27,22 @@ def open_in_default_app(filename: str):
         subprocess.Popen(["xdg-open", filename])
 
 
+def _ctx_find_task(ctx: click.Context):
+    if root := ctx.find_object(Task):
+        return root
+    raise RuntimeError("click context not set")
+
+
+def _build_subcommand(group: click.Group, name: str):
+    @group.command(name)
+    @click.pass_context
+    def cmd(ctx: click.Context):
+        root = _ctx_find_task(ctx)
+        getattr(root.impl, name)(root, DIContext())
+
+
 def build_cli(root_constructor: Callable[..., Task]):
-    constructor_cmd = constructor_to_click_command(root_constructor)
+    constructor_cmd = _constructor_to_click_command(root_constructor)
 
     @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.pass_context
@@ -46,14 +60,15 @@ def build_cli(root_constructor: Callable[..., Task]):
 
         cli.params.append(param)
 
+    _build_subcommand(cli, "run")
+    _build_subcommand(cli, "delete")
+    _build_subcommand(cli, "redo")
+
     @cli.command("graph")
     @click.pass_context
     def graph_cmd(ctx: click.Context):
-        root = ctx.find_object(Task)
-        if not root:
-            raise RuntimeError("click context not set")
-
-        open_in_default_app(VisualGraph(root).build().render(format="png"))
+        root = _ctx_find_task(ctx)
+        _open_in_default_app(VisualGraph(root).build().render(format="png"))
 
     return cli
 
