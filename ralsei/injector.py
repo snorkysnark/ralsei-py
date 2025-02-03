@@ -57,20 +57,3 @@ class DIContext:
     def update(self, other: DIContext):
         self._services.update(other._services)
         self._services[DIContext] = self
-
-    def initialize_task(self, task: "Task"):
-        from ralsei.task import Impl
-
-        annotations = get_type_hints(type(task))
-
-        if impl_type := annotations.get("impl", None):
-            if isinstance(impl_type, TypeVar):
-                impl_type = Impl
-
-            setattr(
-                task,
-                "impl",
-                self.execute(
-                    impl_type, {clazz: task for clazz in task_get_mro(type(task))}
-                ),
-            )

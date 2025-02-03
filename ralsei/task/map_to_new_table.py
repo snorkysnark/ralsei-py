@@ -21,7 +21,8 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.console import track
 
-from .base import Impl, Task
+from .base import Settled, Task
+from .create_table import CreateTableBase
 from .rowcontext import RowContext
 
 
@@ -33,7 +34,7 @@ class MarkerScripts:
 
 
 @define(eq=False)
-class MapToNewTable(Task["ImplMapToNewTable"]):
+class MapToNewTable(Task):
     table: Table
     columns: Sequence[str | ValueColumnBase]
     fn: OneToMany
@@ -43,23 +44,29 @@ class MapToNewTable(Task["ImplMapToNewTable"]):
     id_fields: Optional[list[IdColumn]] = None
     params: dict[str, Any] = field(factory=dict)
 
-    impl: ImplMapToNewTable = field(init=False, repr=False)
 
+@MapToNewTable.impl
+class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
+    def __init__(self, task: Settled[MapToNewTable], context: DIContext) -> None:
+        env = context.get(SqlEnvironment)
+        super().__init__(task, env, task.decl.table)
 
-class ImplMapToNewTable(Impl[MapToNewTable]):
-    def __init__(self, decl: MapToNewTable, env: SqlEnvironment) -> None:
-        if popped_fields := get_popped_fields(decl.fn):
+        if popped_fields := get_popped_fields(task.decl.fn):
             self.popped_fields = set(popped_fields)
         else:
             self.popped_fields = set()
 
-        params = {**decl.params, "table": decl.table, "source": decl.source_table}
-        if decl.is_done_column:
-            params["is_done"] = Identifier(decl.is_done_column)
+        params = {
+            **task.decl.params,
+            "table": task.decl.table,
+            "source": task.decl.source_table,
+        }
+        if task.decl.is_done_column:
+            params["is_done"] = Identifier(task.decl.is_done_column)
 
         definitions: list[ToSql] = []
         insert_columns: list[ValueColumnRendered] = []
-        for column in decl.columns:
+        for column in task.decl.columns:
             if isinstance(column, str):
                 rendered = Sql(env.render(column, **params))
                 definitions.append(rendered)
@@ -68,17 +75,18 @@ class ImplMapToNewTable(Impl[MapToNewTable]):
                 insert_columns.append(rendered)
                 definitions.append(rendered.definition)
 
-        self.select = env.render_sql(decl.select, **params) if decl.select else None
+        self.select = (
+            env.render_sql(task.decl.select, **params) if task.decl.select else None
+        )
         self.create_table = env.render_sql(
             """\
             CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                 {{ definitions | join(',\\n    ') }}
             );""",
-            table=decl.table,
+            table=task.decl.table,
             definitions=definitions,
-            if_not_exists=decl.is_done_column is not None,
+            if_not_exists=task.decl.is_done_column is not None,
         )
-        self.drop_table = env.render_sql("DROP {{table}} IF EXISTS", table=decl.table)
         self.insert = env.render_sql(
             """\
             INSERT INTO {{table}}(
@@ -87,46 +95,48 @@ class ImplMapToNewTable(Impl[MapToNewTable]):
             VALUES (
                 {{ columns | join(',\\n    ', attribute='value') }}
             );""",
-            table=decl.table,
+            table=task.decl.table,
             columns=insert_columns,
         )
 
         self.marker_scripts: Optional[MarkerScripts] = None
-        if decl.is_done_column:
-            if not decl.source_table:
+        if task.decl.is_done_column:
+            if not task.decl.source_table:
                 raise ValueError(
                     "Cannot create is_done_column when source_table is None"
                 )
             if self.select is None:
                 raise ValueError("'select' cannot be empty if using is_done_column")
 
-            id_fields = decl.id_fields or (
+            id_fields = task.decl.id_fields or (
                 [IdColumn(name) for name in popped_fields] if popped_fields else None
             )
             if not id_fields:
                 ValueError("Must provide id_fields if using is_done_column")
 
-            is_done_column = ColumnRendered(decl.is_done_column, "BOOL DEFAULT FALSE")
+            is_done_column = ColumnRendered(
+                task.decl.is_done_column, "BOOL DEFAULT FALSE"
+            )
 
             self.marker_scripts = MarkerScripts(
                 add=db_actions.AddColumns(
-                    env, decl.source_table, [is_done_column], if_not_exists=True
+                    env, task.decl.source_table, [is_done_column], if_not_exists=True
                 ),
                 set_marker=env.render_sql(
                     """\
                     UPDATE {{source}}
                     SET {{is_done}} = TRUE
                     WHERE {{id_fields | join(' AND ')}};""",
-                    source=decl.source_table,
+                    source=task.decl.source_table,
                     is_done=is_done_column.identifier,
                     id_fields=id_fields,
                 ),
                 drop=db_actions.DropColumns(
-                    env, decl.source_table, [is_done_column], if_exists=True
+                    env, task.decl.source_table, [is_done_column], if_exists=True
                 ),
             )
 
-    def run(self, decl: MapToNewTable, context: DIContext):
+    def run(self, context: DIContext):
         conn = context.get(ConnectionEnvironment)
 
         conn.execute(self.create_table)
@@ -151,28 +161,24 @@ class ImplMapToNewTable(Impl[MapToNewTable]):
             iter_input_rows(self.select) if self.select is not None else [{}]
         ):
             with RowContext.from_input_row(input_row, self.popped_fields):
-                for output_row in decl.fn(**input_row):
+                for output_row in self.decl.fn(**input_row):
                     conn.sqlalchemy.execute(self.insert, output_row)
 
         conn.sqlalchemy.commit()
 
-    def delete(self, decl: MapToNewTable, context: DIContext):
-        conn = context.get(ConnectionEnvironment)
-
+    def delete(self, context: DIContext):
         if marker := self.marker_scripts:
-            marker.drop(conn)
+            marker.drop(context.get(ConnectionEnvironment))
 
-        conn.execute(self.drop_table)
-        conn.commit()
+        super().delete(context)
 
-    def skip(self, decl: MapToNewTable, context: DIContext) -> bool:
-        conn = context.get(ConnectionEnvironment)
-
-        if not db_actions.table_exists(conn.sqlalchemy, decl.table):
+    def skip(self, context: DIContext) -> bool:
+        if not super().skip(context):
             return False
         else:
             # Check that task has no more inputs
+            conn = context.get(ConnectionEnvironment)
             return self.select is not None and conn.execute(self.select).first() is None
 
-    def visualize(self, decl: MapToNewTable, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, decl.path, str(self.create_table))
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, self.task.path, str(self.create_table))

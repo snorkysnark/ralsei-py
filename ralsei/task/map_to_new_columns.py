@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Any, Optional, Sequence
 from attrs import define, field
 
-from ralsei import db_actions
 from ralsei.connection import ConnectionEnvironment
 from ralsei.injector import DIContext
 from ralsei.jinja import SqlEnvironment
@@ -17,12 +16,13 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.console import track
 
-from .base import Impl, Task
+from .base import Settled, Task
+from .add_columns import AddColumnsBase
 from .rowcontext import RowContext
 
 
 @define(eq=False)
-class MapToNewColumns(Task["ImplMapToNewColumns"]):
+class MapToNewColumns(Task):
     select: str
     table: Table
     columns: Sequence[ValueColumnBase]
@@ -31,29 +31,34 @@ class MapToNewColumns(Task["ImplMapToNewColumns"]):
     id_fields: Optional[list[IdColumn]] = None
     params: dict[str, Any] = field(factory=dict)
 
-    impl: ImplMapToNewColumns = field(init=False, repr=False)
 
+@MapToNewColumns.impl
+class ImplMapToNewColumns(AddColumnsBase[MapToNewColumns]):
+    def __init__(self, task: Settled[MapToNewColumns], context: DIContext) -> None:
+        env = context.get(SqlEnvironment)
 
-class ImplMapToNewColumns(Impl[MapToNewColumns]):
-    def __init__(self, decl: MapToNewColumns, env: SqlEnvironment) -> None:
-        if popped_fields := get_popped_fields(decl.fn):
-            self.popped_fields = set(popped_fields)
-        else:
-            self.popped_fields = set()
+        popped_fields = get_popped_fields(task.decl.fn)
+        self.__popped_fields: set[str] = set(popped_fields) if popped_fields else set()
 
-        params = {**decl.params, "table": decl.table}
-        if decl.is_done_column:
-            params["is_done"] = Identifier(decl.is_done_column)
+        params = {**task.decl.params, "table": task.decl.table}
+        if task.decl.is_done_column:
+            params["is_done"] = Identifier(task.decl.is_done_column)
 
-        columns = [column.render(env, **params) for column in decl.columns]
-        if decl.is_done_column:
+        columns = [column.render(env, **params) for column in task.decl.columns]
+        if task.decl.is_done_column:
             columns.append(
-                ValueColumnRendered(decl.is_done_column, "BOOL DEFAULT FALSE", True)
+                ValueColumnRendered(
+                    task.decl.is_done_column, "BOOL DEFAULT FALSE", True
+                )
             )
 
-        self.select = env.render_sql(decl.select, **params)
+        self.__resumable = bool(task.decl.is_done_column)
+        self.__select = env.render_sql(task.decl.select, **params)
+        super().__init__(
+            task, env, task.decl.table, columns, if_not_exists=self.__resumable
+        )
 
-        id_fields = decl.id_fields or (
+        id_fields = task.decl.id_fields or (
             [IdColumn(name) for name in popped_fields] if popped_fields else None
         )
         if not id_fields:
@@ -61,55 +66,41 @@ class ImplMapToNewColumns(Impl[MapToNewColumns]):
                 "id_fields not found, must be explicitly provided or inferred from function"
             )
 
-        resumable = bool(decl.is_done_column)
-        self.add_columns = db_actions.AddColumns(
-            env, decl.table, columns, if_not_exists=resumable
-        )
-        self.update = env.render_sql(
+        self.__update = env.render_sql(
             """\
             UPDATE {{table}} SET
             {{columns | join(',\\n', attribute='set_statement')}}
             WHERE
             {{id_fields | join(' AND ')}};""",
-            table=decl.table,
+            table=task.decl.table,
             columns=columns,
             id_fields=id_fields,
         )
-        self.drop_columns = db_actions.DropColumns(
-            env, decl.table, columns, if_exists=True
-        )
 
-    def run(self, decl: MapToNewColumns, context: DIContext):
+    def run(self, context: DIContext):
         conn = context.get(ConnectionEnvironment)
-        self.add_columns(conn)
+        self._add_columns(conn)
 
         for input_row in map(
             lambda row: row._asdict(),
             track(
-                conn.execute_with_length_hint(self.select),
+                conn.execute_with_length_hint(self.__select),
                 description="Task progress...",
             ),
         ):
-            with RowContext.from_input_row(input_row, self.popped_fields):
-                conn.execute(self.update, decl.fn(**input_row))
-                if decl.is_done_column:
-                    conn.sqlalchemy.commit()
+            with RowContext.from_input_row(input_row, self.__popped_fields):
+                conn.execute(self.__update, self.decl.fn(**input_row))
+                if self.__resumable:
+                    conn.commit()
 
-        conn.sqlalchemy.commit()
-
-    def delete(self, decl: MapToNewColumns, context: DIContext):
-        conn = context.get(ConnectionEnvironment)
-        self.drop_columns(conn)
         conn.commit()
 
-    def skip(self, decl: MapToNewColumns, context: DIContext) -> bool:
-        conn = context.get(ConnectionEnvironment)
-        if not db_actions.columns_exist(
-            conn.sqlalchemy, decl.table, (col.name for col in decl.columns)
-        ):
+    def skip(self, context: DIContext) -> bool:
+        if not super().skip(context):
             return False
         else:
-            return conn.execute(self.select).first() is None
+            conn = context.get(ConnectionEnvironment)
+            return conn.execute(self.__select).first() is None
 
-    def visualize(self, decl: MapToNewColumns, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, decl.path, str(self.add_columns))
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, self.task.path, str(self._add_columns))

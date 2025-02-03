@@ -6,7 +6,7 @@ from rich.console import Console
 import typer
 
 from ralsei.injector import DIContext
-from ralsei.task import Task, Impl
+from ralsei.task import Task, ImplTask
 from ralsei.viz import VisualGraph
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 
@@ -28,7 +28,7 @@ def _open_in_default_app(filename: str):
 
 
 def _ctx_find_task(ctx: click.Context):
-    if root := ctx.find_object(Task):
+    if root := ctx.find_object(ImplTask):
         return root
     raise RuntimeError("click context not set")
 
@@ -38,7 +38,7 @@ def _build_subcommand(group: click.Group, name: str):
     @click.pass_context
     def cmd(ctx: click.Context):
         root = _ctx_find_task(ctx)
-        getattr(root.impl, name)(root, DIContext())
+        getattr(root, name)(DIContext())
 
 
 def build_cli(root_constructor: Callable[..., Task]):
@@ -48,9 +48,9 @@ def build_cli(root_constructor: Callable[..., Task]):
     @click.pass_context
     def cli(ctx: click.Context, **kwargs):
         root = constructor_cmd.callback(**kwargs)  # pyright: ignore[reportOptionalCall]
-        DIContext().initialize_task(root)
+        root_impl = root.create((), DIContext())
 
-        ctx.obj = root
+        ctx.obj = root_impl
 
     for param in constructor_cmd.params:
         if not isinstance(param, click.Option):

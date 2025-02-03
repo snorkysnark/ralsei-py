@@ -5,7 +5,7 @@ from graphviz import Digraph
 import html
 
 if TYPE_CHECKING:
-    from ralsei.task import Task
+    from ralsei.task import ImplTask
 
 type NodePath = tuple[str, ...]
 
@@ -80,11 +80,11 @@ class WindowNode(VisualNode):
 
 
 class VisualGraph:
-    def __init__(self, root: "Task") -> None:
+    def __init__(self, root: "ImplTask") -> None:
         self.__nodes: dict[NodePath, VisualNode] = {}
         self.__edges: list[tuple[NodePath, NodePath]] = []
 
-        self.__root = root.impl.visualize(root, self)
+        self.__root = root.visualize(self)
 
     def add(self, node: VisualNode):
         if node.path in self.__nodes:

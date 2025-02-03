@@ -1,86 +1,83 @@
 from __future__ import annotations
-from typing import Mapping
-from attrs import define, field
-from bidict import bidict
+from attrs import define
 
 from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
+from ralsei.console import console
 
-from .base import Task, Impl
+from .base import Settled, Task, ImplTask
 
 
 @define(eq=False, init=False)
-class TaskGroup(Task["TaskGroupImpl"]):
-    tasks: bidict[str, Task]
+class TaskGroup(Task):
+    tasks: dict[str, Task]
     plugins: PluginGroup
 
     def __init__(
         self,
-        tasks: Mapping[str, Task],
+        tasks: dict[str, Task],
         *,
         plugins: list[Plugin] = [],
         requires: set[Task] | None = None,
     ):
         super().__init__(requires=requires or set())
 
-        self.tasks = bidict(tasks)
+        self.tasks = tasks
         self.plugins = PluginGroup(plugins)
 
-    impl: TaskGroupImpl = field(init=False, repr=False)
 
+@TaskGroup.impl
+class ImplTaskGroup(ImplTask[TaskGroup]):
+    def __init__(self, task: Settled[TaskGroup], context: DIContext) -> None:
+        super().__init__(task)
 
-class TaskGroupImpl(Impl[TaskGroup]):
-    __slots__ = ["sorted_tasks"]
+        # Perform task initialization
+        self.subtasks: dict[Task, ImplTask] = {}
+        with context.overlay(task.decl.plugins.init_context()) as init:
+            for name, subtask in task.decl.tasks.items():
+                path = task.path + (name,)
+                self.subtasks[subtask] = subtask.create(path, init)
 
-    def __init__(self, decl: TaskGroup, context: DIContext) -> None:
-        with context.overlay(decl.plugins.init_context()) as init:
+        self.subtasks_sorted: list[ImplTask] = []
+        visited: set[ImplTask] = set()
 
-            # Perform task initialization
-            for name, task in decl.tasks.items():
-                task.path = decl.path + (name,)
-                for dependency in task.requires:
-                    if dependency not in decl.tasks.inverse:
+        def visit(subtask: ImplTask):
+            if subtask not in visited:
+                visited.add(subtask)
+
+                for dependency in subtask.decl.requires:
+                    if dependency not in self.subtasks:
                         raise RuntimeError(
-                            f"Task {task.path} can't depend on tasks outside its group!"
+                            f"{subtask.task.path} can't depend on a task from another TaskGroup!"
                         )
-                    dependency.dependants.add(task)
-                init.initialize_task(task)
+                    visit(self.subtasks[dependency])
+                self.subtasks_sorted.append(subtask)
 
-                # Sort the DAG
-                sorted: list[Task] = []
-                visited: set[Task] = set()
+        for subtask in self.subtasks.values():
+            visit(subtask)
 
-                def visit(task: Task):
-                    if task not in visited:
-                        visited.add(task)
-                        for dependency in task.requires:
-                            visit(dependency)
-                        sorted.append(task)
+    def run(self, context: DIContext):
+        with context.overlay(self.decl.plugins.runtime_context()) as runtime:
+            for subtask in self.subtasks_sorted:
+                console.print(f"Running [bold green]{'.'.join(subtask.path)}")
+                subtask.run(runtime)
 
-                for task in decl.tasks.values():
-                    visit(task)
+    def delete(self, context: DIContext):
+        with context.overlay(self.decl.plugins.runtime_context()) as runtime:
+            for subtask in self.subtasks_sorted:
+                console.print(f"Deleting [bold green]{'.'.join(subtask.path)}")
+                subtask.delete(runtime)
 
-                self.sorted_tasks = sorted
-
-    def run(self, decl: TaskGroup, context: DIContext):
-        with context.overlay(decl.plugins.runtime_context()) as runtime:
-            for task in self.sorted_tasks:
-                print("Running", ".".join(task.path))
-                task.impl.run(task, runtime)
-
-    def delete(self, decl: TaskGroup, context: DIContext):
-        with context.overlay(decl.plugins.runtime_context()) as runtime:
-            for task in self.sorted_tasks:
-                task.impl.delete(task, runtime)
-
-    def visualize(self, decl: TaskGroup, g: VisualGraph) -> VisualNode:
+    def visualize(self, g: VisualGraph) -> VisualNode:
         subgraph = Subgraph(
-            g, decl.path, [task.impl.visualize(task, g) for task in decl.tasks.values()]
+            g,
+            self.task.path,
+            [task.visualize(g) for task in self.subtasks.values()],
         )
 
-        for task in decl.tasks.values():
-            for dependency in task.requires:
-                g.connect(dependency.path, task.path)
+        for task in self.subtasks.values():
+            for dependency in task.decl.requires:
+                g.connect(self.subtasks[dependency].path, task.path)
 
         return subgraph
