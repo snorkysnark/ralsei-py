@@ -58,17 +58,21 @@ class TaskGroupImpl(Impl[TaskGroup]):
                             visit(dependency)
                         sorted.append(task)
 
+                for task in decl.tasks.values():
+                    visit(task)
+
                 self.sorted_tasks = sorted
 
     def run(self, decl: TaskGroup, context: DIContext):
         with context.overlay(decl.plugins.runtime_context()) as runtime:
             for task in self.sorted_tasks:
-                task.impl.run(decl, runtime)
+                print("Running", ".".join(task.path))
+                task.impl.run(task, runtime)
 
     def delete(self, decl: TaskGroup, context: DIContext):
         with context.overlay(decl.plugins.runtime_context()) as runtime:
             for task in self.sorted_tasks:
-                task.impl.delete(decl, runtime)
+                task.impl.delete(task, runtime)
 
     def visualize(self, decl: TaskGroup, g: VisualGraph) -> VisualNode:
         subgraph = Subgraph(
