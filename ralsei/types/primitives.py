@@ -48,6 +48,9 @@ class Table(ToSql):
             schema=self.schema,
         )
 
+    def with_schema(self, schema: str) -> "Table":
+        return Table(self.name, schema)
+
 
 @dataclass
 class Placeholder(ToSql):
