@@ -21,5 +21,6 @@ publish:
       paths:
         - $UV_CACHE_DIR
   script:
+    - uv build
     - uv publish
     - uv cache prune --ci
