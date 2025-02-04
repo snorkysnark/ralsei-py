@@ -60,8 +60,13 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
     def run(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
             for subtask in self.subtasks_sorted:
-                console.print(f"Running [bold green]{'.'.join(subtask.path)}")
-                subtask.run(runtime)
+                if subtask.skip(runtime):
+                    console.print(
+                        f"Skipping [bold green]{'.'.join(subtask.path)}[/bold green]: already done"
+                    )
+                else:
+                    console.print(f"Running [bold green]{'.'.join(subtask.path)}")
+                    subtask.run(runtime)
 
     def delete(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
