@@ -1,2 +1,0 @@
-class IntentionallyFailError(RuntimeError):
-    pass
