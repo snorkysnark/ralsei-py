@@ -70,7 +70,7 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
 
     def delete(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
-            for subtask in self.subtasks_sorted:
+            for subtask in reversed(self.subtasks_sorted):
                 console.print(f"Deleting [bold green]{'.'.join(subtask.path)}")
                 subtask.delete(runtime)
 
