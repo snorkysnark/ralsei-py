@@ -100,7 +100,7 @@ class ImplMapToNewColumns(AddColumnsBase[MapToNewColumns]):
             return False
         else:
             conn = context.get(ConnectionEnvironment)
-            return conn.execute(self.__select).first() is None
+            return not self.__resumable or conn.execute(self.__select).first() is None
 
     def visualize(self, g: VisualGraph) -> VisualNode:
         return WindowNode(g, self.task.path, str(self._add_columns))

@@ -178,7 +178,11 @@ class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
         else:
             # Check that task has no more inputs
             conn = context.get(ConnectionEnvironment)
-            return self.select is not None and conn.execute(self.select).first() is None
+            return (
+                self.select is None
+                or not self.marker_scripts
+                or conn.execute(self.select).first() is None
+            )
 
     def visualize(self, g: VisualGraph) -> VisualNode:
         return WindowNode(g, self.task.path, str(self.create_table))
