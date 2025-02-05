@@ -5,7 +5,7 @@ import sqlalchemy
 
 from ralsei import db_actions
 from ralsei.connection import ConnectionEnvironment
-from ralsei.injector import DIContext
+from ralsei.injector import DIContext, inject, service
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import (
     Table,
@@ -47,8 +47,10 @@ class MapToNewTable(Task):
 
 @MapToNewTable.impl
 class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
-    def __init__(self, task: Settled[MapToNewTable], context: DIContext) -> None:
-        env = context.get(SqlEnvironment)
+    @inject
+    def __init__(
+        self, task: Settled[MapToNewTable], env: SqlEnvironment = service()
+    ) -> None:
         super().__init__(task, env, task.decl.table)
 
         if popped_fields := get_popped_fields(task.decl.fn):
@@ -136,9 +138,8 @@ class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
                 ),
             )
 
-    def run(self, context: DIContext):
-        conn = context.get(ConnectionEnvironment)
-
+    @inject
+    def run(self, conn: ConnectionEnvironment = service()):
         conn.execute(self.create_table)
         if marker := self.marker_scripts:
             marker.add(conn)
@@ -166,18 +167,19 @@ class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
 
         conn.sqlalchemy.commit()
 
-    def delete(self, context: DIContext):
+    @inject
+    def delete(self, context: DIContext, conn: ConnectionEnvironment = service()):
         if marker := self.marker_scripts:
-            marker.drop(context.get(ConnectionEnvironment))
+            marker.drop(conn)
 
         super().delete(context)
 
-    def skip(self, context: DIContext) -> bool:
+    @inject
+    def skip(self, context: DIContext, conn: ConnectionEnvironment = service()) -> bool:
         if not super().skip(context):
             return False
         else:
             # Check that task has no more inputs
-            conn = context.get(ConnectionEnvironment)
             return (
                 self.select is None
                 or not self.marker_scripts

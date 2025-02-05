@@ -4,11 +4,10 @@ from attrs import define, field
 import sqlalchemy
 
 from ralsei.connection import ConnectionEnvironment
-from ralsei.injector import DIContext
+from ralsei.injector import inject, service
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table, ColumnBase
 from ralsei.utils import expect
-from ralsei import db_actions
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
 from .base import Settled, Task
@@ -25,8 +24,8 @@ class AddColumnsSql(Task):
 
 @AddColumnsSql.impl
 class ImplAddColumnsSql(AddColumnsBase[AddColumnsSql]):
-    def __init__(self, task: Settled[AddColumnsSql], context: DIContext):
-        env = context.get(SqlEnvironment)
+    @inject
+    def __init__(self, task: Settled[AddColumnsSql], env: SqlEnvironment = service()):
         params = {**task.decl.params, "table": task.decl.table}
 
         def render_script() -> (
@@ -53,9 +52,8 @@ class ImplAddColumnsSql(AddColumnsBase[AddColumnsSql]):
 
         super().__init__(task, env, task.decl.table, columns)
 
-    def run(self, context: DIContext):
-        conn = context.get(ConnectionEnvironment)
-
+    @inject
+    def run(self, conn: ConnectionEnvironment = service()):
         self._add_columns(conn)
         conn.executescript(self.__sql)
         conn.commit()
