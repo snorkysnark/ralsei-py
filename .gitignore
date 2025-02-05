@@ -1,12 +1,14 @@
-*.pyc
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
-.pdm-python
-__pypackages__/
+# Virtual environments
+.venv
 
+# Docs
 /docs/_build
 /docs/apidocs
-/dist/
-/site/
-/console/
-
-ralsei_test.sqlite
