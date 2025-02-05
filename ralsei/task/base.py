@@ -1,12 +1,14 @@
 from __future__ import annotations
-from typing import Callable, ClassVar, Self
+from typing import Callable, ClassVar, Generic, Self, TypeVar
 from attrs import define, field
 
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode
 
+T = TypeVar("T", bound="Task", default="Task", covariant=True)
 
-class ImplTask[T: Task = Task]:
+
+class ImplTask(Generic[T]):
     def __init__(self, task: Settled[T]) -> None:
         self.task = task
 
