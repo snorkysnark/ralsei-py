@@ -1,6 +1,7 @@
 from __future__ import annotations
 from attrs import define
 
+from ralsei.namespace import TypedNamespace
 from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
@@ -16,14 +17,14 @@ class TaskGroup(Task):
 
     def __init__(
         self,
-        tasks: dict[str, Task],
+        tasks: dict[str, Task] | TypedNamespace[Task],
         *,
         plugins: list[Plugin] = [],
         requires: set[Task] | None = None,
     ):
         super().__init__(requires=requires or set())
 
-        self.tasks = tasks
+        self.tasks = tasks.__dict__ if isinstance(tasks, TypedNamespace) else tasks
         self.plugins = PluginGroup(plugins)
 
 

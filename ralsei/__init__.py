@@ -20,6 +20,7 @@ from .task import (
     MapToNewColumns,
 )
 from .utils import folder
+from .namespace import TypedNamespace
 
 __all__ = [
     "ConnectionEnvironment",
@@ -50,4 +51,5 @@ __all__ = [
     "MapToNewTable",
     "MapToNewColumns",
     "folder",
+    "TypedNamespace",
 ]
