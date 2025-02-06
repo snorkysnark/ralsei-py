@@ -10,7 +10,7 @@ from ralsei.connection.utils import executescript
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
 from .base import Settled, Task
-from .create_table import CreateTableBase
+from .create_table_impl import ImplCreateTable
 
 
 @define(eq=False)
@@ -22,7 +22,7 @@ class CreateTableSql(Task):
 
 
 @CreateTableSql.impl
-class ImplCreateTableSql(CreateTableBase[CreateTableSql]):
+class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
     @inject
     def __init__(
         self, task: Settled[CreateTableSql], env: SqlEnvironment = service()

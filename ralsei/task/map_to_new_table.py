@@ -22,7 +22,7 @@ from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.console import track
 
 from .base import Settled, Task
-from .create_table import CreateTableBase
+from .create_table_impl import ImplCreateTable
 from .rowcontext import RowContext
 
 
@@ -46,7 +46,7 @@ class MapToNewTable(Task):
 
 
 @MapToNewTable.impl
-class ImplMapToNewTable(CreateTableBase[MapToNewTable]):
+class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
     @inject
     def __init__(
         self, task: Settled[MapToNewTable], env: SqlEnvironment = service()

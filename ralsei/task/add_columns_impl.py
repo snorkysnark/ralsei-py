@@ -10,7 +10,7 @@ from ralsei.types import Table, ColumnRendered
 from .base import Settled, Task, ImplTask
 
 
-class AddColumnsBase[T: Task](ImplTask[T]):
+class ImplAddColumns[T: Task](ImplTask[T]):
     def __init__(
         self,
         task: Settled[T],

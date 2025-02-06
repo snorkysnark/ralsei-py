@@ -17,7 +17,7 @@ from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.console import track
 
 from .base import Settled, Task
-from .add_columns import AddColumnsBase
+from .add_columns_impl import ImplAddColumns
 from .rowcontext import RowContext
 
 
@@ -33,7 +33,7 @@ class MapToNewColumns(Task):
 
 
 @MapToNewColumns.impl
-class ImplMapToNewColumns(AddColumnsBase[MapToNewColumns]):
+class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
     @inject
     def __init__(
         self, task: Settled[MapToNewColumns], env: SqlEnvironment = service()

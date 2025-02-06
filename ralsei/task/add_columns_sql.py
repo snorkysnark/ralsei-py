@@ -11,7 +11,7 @@ from ralsei.utils import expect
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
 from .base import Settled, Task
-from .add_columns import AddColumnsBase
+from .add_columns_impl import ImplAddColumns
 
 
 @define(eq=False)
@@ -23,7 +23,7 @@ class AddColumnsSql(Task):
 
 
 @AddColumnsSql.impl
-class ImplAddColumnsSql(AddColumnsBase[AddColumnsSql]):
+class ImplAddColumnsSql(ImplAddColumns[AddColumnsSql]):
     @inject
     def __init__(self, task: Settled[AddColumnsSql], env: SqlEnvironment = service()):
         params = {**task.decl.params, "table": task.decl.table}

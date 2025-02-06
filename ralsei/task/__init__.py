@@ -4,7 +4,8 @@ from .create_table_sql import CreateTableSql
 from .add_columns_sql import AddColumnsSql
 from .map_to_new_table import MapToNewTable
 from .map_to_new_columns import MapToNewColumns
-from .create_table import CreateTableBase
+from .create_table_impl import ImplCreateTable
+from .add_columns_impl import ImplAddColumns
 
 __all__ = [
     "Task",
@@ -15,5 +16,6 @@ __all__ = [
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
-    "CreateTableBase",
+    "ImplCreateTable",
+    "ImplAddColumns",
 ]

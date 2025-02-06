@@ -7,7 +7,7 @@ from ralsei.types import Table
 from .base import ImplTask, Settled, Task
 
 
-class CreateTableBase[T: Task](ImplTask[T]):
+class ImplCreateTable[T: Task](ImplTask[T]):
     def __init__(
         self, task: Settled[T], env: SqlEnvironment, table: Table, view: bool = False
     ) -> None:
