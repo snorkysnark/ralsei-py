@@ -47,8 +47,10 @@ def build_cli(root_constructor: Callable[..., Task]):
     @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.pass_context
     def cli(ctx: click.Context, **kwargs):
-        root = constructor_cmd.callback(**kwargs)  # pyright: ignore[reportOptionalCall]
-        root_impl = root.create((), DIContext())
+        root: Task = constructor_cmd.callback(
+            **kwargs
+        )  # pyright: ignore[reportOptionalCall]
+        root_impl = root.create(DIContext())
 
         ctx.obj = root_impl
 

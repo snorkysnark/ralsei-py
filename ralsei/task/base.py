@@ -53,7 +53,7 @@ class Task:
     def impl(cls, clazz: Callable[[Settled[Self], DIContext], ImplTask[Self]]):
         cls._impl_class = clazz
 
-    def create(self, path: tuple[str, ...], context: DIContext) -> ImplTask[Self]:
+    def create(self, context: DIContext, path: tuple[str, ...] = ()) -> ImplTask[Self]:
         return self._impl_class(Settled(self, path), context)
 
 

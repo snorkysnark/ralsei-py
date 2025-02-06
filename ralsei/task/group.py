@@ -38,7 +38,7 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
         with context.overlay(task.decl.plugins.init_context()) as init:
             for name, subtask in task.decl.tasks.items():
                 path = task.path + (name,)
-                self.subtasks[subtask] = subtask.create(path, init)
+                self.subtasks[subtask] = subtask.create(init, path)
 
         self.subtasks_sorted: list[ImplTask] = []
         visited: set[ImplTask] = set()
