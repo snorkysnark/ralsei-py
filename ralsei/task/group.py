@@ -1,5 +1,6 @@
 from __future__ import annotations
 from attrs import define
+from bidict import bidict
 
 from ralsei.namespace import TypedNamespace
 from ralsei.plugins import Plugin, PluginGroup
@@ -12,19 +13,19 @@ from .base import Settled, Task, ImplTask
 
 @define(eq=False, init=False)
 class TaskGroup(Task):
-    tasks: dict[str, Task]
+    tasks: bidict[str, Task]
     plugins: PluginGroup
 
     def __init__(
         self,
-        tasks: dict[str, Task] | TypedNamespace[Task],
+        tasks: TypedNamespace[Task],
         *,
         plugins: list[Plugin] = [],
         requires: set[Task] | None = None,
     ):
         super().__init__(requires=requires or set())
 
-        self.tasks = tasks.__dict__ if isinstance(tasks, TypedNamespace) else tasks
+        self.tasks = bidict(tasks.__dict__)
         self.plugins = PluginGroup(plugins)
 
 
@@ -34,56 +35,62 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
         super().__init__(task)
 
         # Perform task initialization
-        self.subtasks: dict[Task, ImplTask] = {}
         with context.overlay(task.decl.plugins.init_context()) as init:
-            for name, subtask in task.decl.tasks.items():
-                path = task.path + (name,)
-                self.subtasks[subtask] = subtask.create(init, path)
+            self.subtasks = {
+                name: decl.create(init, task.path + (name,))
+                for name, decl in task.decl.tasks.items()
+            }
 
+        # Populate requires/dependants with initialized tasks
+        for impl_to in self.subtasks.values():
+            for decl_from in impl_to.decl.requires:
+                impl_from = self.subtasks[task.decl.tasks.inverse[decl_from]]
+
+                impl_to.task.requires.add(impl_from)
+                impl_from.task.dependants.add(impl_to)
+
+        # Sort the DAG
         self.subtasks_sorted: list[ImplTask] = []
         visited: set[ImplTask] = set()
 
-        def visit(subtask: ImplTask):
-            if subtask not in visited:
-                visited.add(subtask)
+        def visit(impl: ImplTask):
+            if impl not in visited:
+                visited.add(impl)
 
-                for dependency in subtask.decl.requires:
-                    if dependency not in self.subtasks:
-                        raise RuntimeError(
-                            f"{subtask.task.path} can't depend on a task from another TaskGroup!"
-                        )
-                    visit(self.subtasks[dependency])
-                self.subtasks_sorted.append(subtask)
+                for dependency in impl.task.requires:
+                    visit(dependency)
 
-        for subtask in self.subtasks.values():
-            visit(subtask)
+                self.subtasks_sorted.append(impl)
+
+        for impl in self.subtasks.values():
+            visit(impl)
 
     def run(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
-            for subtask in self.subtasks_sorted:
-                if subtask.skip(runtime):
+            for impl in self.subtasks_sorted:
+                if impl.skip(runtime):
                     console.print(
-                        f"Skipping [bold green]{'.'.join(subtask.path)}[/bold green]: already done"
+                        f"Skipping [bold green]{'.'.join(impl.path)}[/bold green]: already done"
                     )
                 else:
-                    console.print(f"Running [bold green]{'.'.join(subtask.path)}")
-                    subtask.run(runtime)
+                    console.print(f"Running [bold green]{'.'.join(impl.path)}")
+                    impl.run(runtime)
 
     def delete(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
-            for subtask in reversed(self.subtasks_sorted):
-                console.print(f"Deleting [bold green]{'.'.join(subtask.path)}")
-                subtask.delete(runtime)
+            for impl in reversed(self.subtasks_sorted):
+                console.print(f"Deleting [bold green]{'.'.join(impl.path)}")
+                impl.delete(runtime)
 
     def visualize(self, g: VisualGraph) -> VisualNode:
         subgraph = Subgraph(
             g,
             self.task.path,
-            [task.visualize(g) for task in self.subtasks.values()],
+            [impl.visualize(g) for impl in self.subtasks.values()],
         )
 
-        for task in self.subtasks.values():
-            for dependency in task.decl.requires:
-                g.connect(self.subtasks[dependency].path, task.path)
+        for impl in self.subtasks.values():
+            for dependency in impl.task.requires:
+                g.connect(dependency.path, impl.path)
 
         return subgraph

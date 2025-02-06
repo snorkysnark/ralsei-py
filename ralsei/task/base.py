@@ -41,6 +41,8 @@ class ImplTask(Generic[T]):
 class Settled[T: Task]:
     decl: T
     path: tuple[str, ...] = ()
+    requires: set[ImplTask] = field(factory=set)
+    dependants: set[ImplTask] = field(factory=set)
 
 
 @define(eq=False)
