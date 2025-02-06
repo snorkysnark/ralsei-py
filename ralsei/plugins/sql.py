@@ -70,24 +70,34 @@ class SqlPlugin(Plugin):
         return env
 
     @contextmanager
+    def _attach_schemas(self, conn: sqlalchemy.Connection):
+        attached_schemas = []
+        if self._attach_urls:
+            for name, url in self._attach_urls.items():
+                url = sqlalchemy.make_url(url)
+                if not url.database:
+                    raise RuntimeError(f"Can't extract sqlite path from url: {url}")
+
+                conn.execute(
+                    sqlalchemy.text("ATTACH DATABASE :path AS :name"),
+                    {"path": url.database, "name": name},
+                )
+                attached_schemas.append(name)
+
+        yield
+
+        # sqlalchemy doesn't really 'close' the underlying connection, so we have to DETACH everything
+        # before giving control back to sqlalchemy
+        for schema in attached_schemas:
+            conn.execute(sqlalchemy.text("DETACH DATABASE :name"), {"name": schema})
+
+    @contextmanager
     def init_context(self) -> Iterator[DIContext]:
         yield DIContext({sqlalchemy.Engine: self.engine, SqlEnvironment: self.env})
 
     @contextmanager
     def runtime_context(self) -> Iterator[DIContext]:
-        with self.engine.connect() as conn:
-
-            if self._attach_urls:
-                for name, url in self._attach_urls.items():
-                    url = sqlalchemy.make_url(url)
-                    if not url.database:
-                        raise RuntimeError(f"Can't extract sqlite path from url: {url}")
-
-                    conn.execute(
-                        sqlalchemy.text("ATTACH DATABASE :path AS :name"),
-                        {"path": url.database, "name": name},
-                    )
-
+        with self.engine.connect() as conn, self._attach_schemas(conn):
             yield DIContext(
                 {
                     sqlalchemy.Engine: self.engine,
