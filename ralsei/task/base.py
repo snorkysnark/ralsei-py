@@ -20,6 +20,10 @@ class ImplTask(Generic[T]):
     def path(self) -> tuple[str, ...]:
         return self.task.path
 
+    @property
+    def path_str(self) -> str:
+        return ".".join(self.task.path)
+
     def visualize(self, g: VisualGraph) -> VisualNode:
         return VisualNode(g, self.task.path)
 

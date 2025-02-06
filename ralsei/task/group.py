@@ -6,7 +6,7 @@ from ralsei.namespace import TypedNamespace
 from ralsei.plugins import Plugin, PluginGroup
 from ralsei.injector import DIContext
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
-from ralsei.console import console
+from ralsei.console import console, track
 
 from .base import Settled, Task, ImplTask
 
@@ -67,19 +67,24 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
 
     def run(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
-            for impl in self.subtasks_sorted:
+            for impl in track(
+                self.subtasks_sorted, description=f"Running {self.path_str or '.'}"
+            ):
                 if impl.skip(runtime):
                     console.print(
-                        f"Skipping [bold green]{'.'.join(impl.path)}[/bold green]: already done"
+                        f"Skipping [bold green]{impl.path_str}[/bold green]: already done"
                     )
                 else:
-                    console.print(f"Running [bold green]{'.'.join(impl.path)}")
+                    console.print(f"Running [bold green]{impl.path_str}")
                     impl.run(runtime)
 
     def delete(self, context: DIContext):
         with context.overlay(self.decl.plugins.runtime_context()) as runtime:
-            for impl in reversed(self.subtasks_sorted):
-                console.print(f"Deleting [bold green]{'.'.join(impl.path)}")
+            for impl in track(
+                reversed(self.subtasks_sorted),
+                description=f"Deleting {self.path_str or '.'}",
+            ):
+                console.print(f"Deleting [bold green]{impl.path_str}")
                 impl.delete(runtime)
 
     def visualize(self, g: VisualGraph) -> VisualNode:
