@@ -1,6 +1,5 @@
 import sqlalchemy
 from ralsei import db_actions
-from ralsei.injector import service, inject
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
 
@@ -20,11 +19,13 @@ class ImplCreateTable[T: Task](ImplTask[T]):
             view=view,
         )
 
-    @inject
-    def delete(self, conn: sqlalchemy.Connection = service()):
+    def delete(self):
+        conn = self.context.get(sqlalchemy.Connection)
+
         conn.execute(self._drop_sql)
         conn.commit()
 
-    @inject
-    def skip(self, conn: sqlalchemy.Connection = service()) -> bool:
-        return db_actions.table_exists(conn, self._table)
+    def skip(self) -> bool:
+        return db_actions.table_exists(
+            self.context.get(sqlalchemy.Connection), self._table
+        )

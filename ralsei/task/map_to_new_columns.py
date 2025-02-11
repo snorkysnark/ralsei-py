@@ -3,7 +3,6 @@ from typing import Any, Optional, Sequence
 from attrs import define, field
 
 from ralsei.connection import ConnectionEnvironment
-from ralsei.injector import DIContext, inject, service
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import (
     Table,
@@ -34,10 +33,9 @@ class MapToNewColumns(Task):
 
 @MapToNewColumns.impl
 class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
-    @inject
-    def __init__(
-        self, task: Settled[MapToNewColumns], env: SqlEnvironment = service()
-    ) -> None:
+    def __init__(self, task: Settled[MapToNewColumns]) -> None:
+        env = task.context.get(SqlEnvironment)
+
         popped_fields = get_popped_fields(task.decl.fn)
         self.__popped_fields: set[str] = set(popped_fields) if popped_fields else set()
 
@@ -78,8 +76,8 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
             id_fields=id_fields,
         )
 
-    @inject
-    def run(self, conn: ConnectionEnvironment = service()):
+    def run(self):
+        conn = self.context.get(ConnectionEnvironment)
         self._add_columns(conn)
 
         for input_row in map(
@@ -96,11 +94,11 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
 
         conn.commit()
 
-    @inject
-    def skip(self, context: DIContext, conn: ConnectionEnvironment = service()) -> bool:
-        if not super().skip(context):
+    def skip(self) -> bool:
+        if not super().skip():
             return False
         else:
+            conn = self.context.get(ConnectionEnvironment)
             return not self.__resumable or conn.execute(self.__select).first() is None
 
     def visualize(self, g: VisualGraph) -> VisualNode:

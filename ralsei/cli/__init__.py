@@ -5,10 +5,12 @@ import click
 from rich.console import Console
 import typer
 
-from ralsei.injector import DIContext
+from ralsei.context import Context
 from ralsei.task import Task, ImplTask
 from ralsei.viz import VisualGraph
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
+
+from .click_types import TYPE_TASKPATH
 
 
 def _constructor_to_click_command(root_constructor: Callable[..., Task]):
@@ -33,12 +35,22 @@ def _ctx_find_task(ctx: click.Context):
     raise RuntimeError("click context not set")
 
 
-def _build_subcommand(group: click.Group, name: str):
+def _build_subcommand(
+    group: click.Group,
+    name: str,
+    get_method: Callable[[ImplTask], Callable[[], None]],
+):
+    @click.argument("path", type=TYPE_TASKPATH, required=False, default=[])
     @group.command(name)
     @click.pass_context
-    def cmd(ctx: click.Context):
-        root = _ctx_find_task(ctx)
-        getattr(root, name)(DIContext())
+    def cmd(ctx: click.Context, path: list[str]):
+        node = _ctx_find_task(ctx)
+
+        for step in path:
+            node = node.navigate(step)
+
+        with node.context.as_toplevel():
+            get_method(node)()
 
 
 def build_cli(root_constructor: Callable[..., Task]):
@@ -50,7 +62,7 @@ def build_cli(root_constructor: Callable[..., Task]):
         root: Task = constructor_cmd.callback(
             **kwargs
         )  # pyright: ignore[reportOptionalCall]
-        root_impl = root.create(DIContext())
+        root_impl = Context([]).create_subtask(root, ())
 
         ctx.obj = root_impl
 
@@ -62,9 +74,9 @@ def build_cli(root_constructor: Callable[..., Task]):
 
         cli.params.append(param)
 
-    _build_subcommand(cli, "run")
-    _build_subcommand(cli, "delete")
-    _build_subcommand(cli, "redo")
+    _build_subcommand(cli, "run", lambda task: task.run)
+    _build_subcommand(cli, "delete", lambda task: task.delete)
+    _build_subcommand(cli, "redo", lambda task: task.redo)
 
     @cli.command("graph")
     @click.pass_context

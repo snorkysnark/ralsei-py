@@ -3,7 +3,6 @@ from typing import Any
 from attrs import define, field
 import sqlalchemy
 
-from ralsei.injector import inject, service
 from ralsei.types import Table
 from ralsei.jinja import SqlEnvironment
 from ralsei.connection.utils import executescript
@@ -23,10 +22,8 @@ class CreateTableSql(Task):
 
 @CreateTableSql.impl
 class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
-    @inject
-    def __init__(
-        self, task: Settled[CreateTableSql], env: SqlEnvironment = service()
-    ) -> None:
+    def __init__(self, task: Settled[CreateTableSql]) -> None:
+        env = task.context.get(SqlEnvironment)
         super().__init__(task, env, task.decl.table, task.decl.view)
 
         params = {**task.decl.params, "table": task.decl.table, "view": task.decl.view}
@@ -36,8 +33,9 @@ class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
             else [env.render_sql(sql, **params) for sql in task.decl.sql]
         )
 
-    @inject
-    def run(self, conn: sqlalchemy.Connection = service()):
+    def run(self):
+        conn = self.context.get(sqlalchemy.Connection)
+
         executescript(conn, self.__sql)
         conn.commit()
 

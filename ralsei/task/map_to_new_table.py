@@ -5,7 +5,6 @@ import sqlalchemy
 
 from ralsei import db_actions
 from ralsei.connection import ConnectionEnvironment
-from ralsei.injector import DIContext, inject, service
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import (
     Table,
@@ -47,10 +46,8 @@ class MapToNewTable(Task):
 
 @MapToNewTable.impl
 class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
-    @inject
-    def __init__(
-        self, task: Settled[MapToNewTable], env: SqlEnvironment = service()
-    ) -> None:
+    def __init__(self, task: Settled[MapToNewTable]) -> None:
+        env = task.context.get(SqlEnvironment)
         super().__init__(task, env, task.decl.table)
 
         if popped_fields := get_popped_fields(task.decl.fn):
@@ -138,8 +135,9 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
                 ),
             )
 
-    @inject
-    def run(self, conn: ConnectionEnvironment = service()):
+    def run(self):
+        conn = self.context.get(ConnectionEnvironment)
+
         conn.execute(self.create_table)
         if marker := self.marker_scripts:
             marker.add(conn)
@@ -167,18 +165,17 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
 
         conn.sqlalchemy.commit()
 
-    @inject
-    def delete(self, context: DIContext, conn: ConnectionEnvironment = service()):
+    def delete(self):
         if marker := self.marker_scripts:
-            marker.drop(conn)
+            marker.drop(self.context.get(ConnectionEnvironment))
 
-        super().delete(context)
+        super().delete()
 
-    @inject
-    def skip(self, context: DIContext, conn: ConnectionEnvironment = service()) -> bool:
-        if not super().skip(context):
+    def skip(self) -> bool:
+        if not super().skip():
             return False
         else:
+            conn = self.context.get(ConnectionEnvironment)
             # Check that task has no more inputs
             return (
                 self.select is None
