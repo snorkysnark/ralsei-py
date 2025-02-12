@@ -9,7 +9,7 @@ from ralsei.types import Table, ColumnBase
 from ralsei.utils import expect
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
-from .base import Settled, Task
+from .base import Settled, Task, inject, service
 from .add_columns_impl import ImplAddColumns
 
 
@@ -23,9 +23,9 @@ class AddColumnsSql(Task):
 
 @AddColumnsSql.impl
 class ImplAddColumnsSql(ImplAddColumns[AddColumnsSql]):
-    def __init__(self, task: Settled[AddColumnsSql]):
+    @inject
+    def __init__(self, task: Settled[AddColumnsSql], env: SqlEnvironment = service()):
         params = {**task.decl.params, "table": task.decl.table}
-        env = task.context.get(SqlEnvironment)
 
         def render_script() -> (
             tuple[list[sqlalchemy.TextClause], Optional[Sequence[ColumnBase]]]
@@ -49,14 +49,13 @@ class ImplAddColumnsSql(ImplAddColumns[AddColumnsSql]):
             )
         ]
 
-        super().__init__(task, env, task.decl.table, columns)
+        super().__init__(env, task.decl.table, columns)
 
-    def run(self):
-        conn = self.context.get(ConnectionEnvironment)
-
+    @inject
+    def run(self, conn: ConnectionEnvironment = service()):
         self._add_columns(conn)
         conn.executescript(self.__sql)
         conn.commit()
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, self.task.path, str(self._add_columns))
+    def visualize(self, task: Settled[AddColumnsSql], g: VisualGraph) -> VisualNode:
+        return WindowNode(g, task.path, str(self._add_columns))

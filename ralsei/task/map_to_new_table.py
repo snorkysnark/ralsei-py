@@ -20,7 +20,7 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToMany, get_popped_fields
 from ralsei.console import track
 
-from .base import Settled, Task
+from .base import Settled, Task, inject, service
 from .create_table_impl import ImplCreateTable
 from .rowcontext import RowContext
 
@@ -46,9 +46,11 @@ class MapToNewTable(Task):
 
 @MapToNewTable.impl
 class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
-    def __init__(self, task: Settled[MapToNewTable]) -> None:
-        env = task.context.get(SqlEnvironment)
-        super().__init__(task, env, task.decl.table)
+    @inject
+    def __init__(
+        self, task: Settled[MapToNewTable], env: SqlEnvironment = service()
+    ) -> None:
+        super().__init__(env, task.decl.table)
 
         if popped_fields := get_popped_fields(task.decl.fn):
             self.popped_fields = set(popped_fields)
@@ -135,9 +137,10 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
                 ),
             )
 
-    def run(self):
-        conn = self.context.get(ConnectionEnvironment)
-
+    @inject
+    def run(
+        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
+    ):
         conn.execute(self.create_table)
         if marker := self.marker_scripts:
             marker.add(conn)
@@ -160,22 +163,27 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
             iter_input_rows(self.select) if self.select is not None else [{}]
         ):
             with RowContext.from_input_row(input_row, self.popped_fields):
-                for output_row in self.decl.fn(**input_row):
+                for output_row in task.decl.fn(**input_row):
                     conn.sqlalchemy.execute(self.insert, output_row)
 
         conn.sqlalchemy.commit()
 
-    def delete(self):
+    @inject
+    def delete(
+        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
+    ):
         if marker := self.marker_scripts:
-            marker.drop(self.context.get(ConnectionEnvironment))
+            marker.drop(conn)
 
-        super().delete()
+        super().delete(task)
 
-    def skip(self) -> bool:
-        if not super().skip():
+    @inject
+    def skip(
+        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
+    ) -> bool:
+        if not super().skip(task):
             return False
         else:
-            conn = self.context.get(ConnectionEnvironment)
             # Check that task has no more inputs
             return (
                 self.select is None
@@ -183,5 +191,5 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
                 or conn.execute(self.select).first() is None
             )
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, self.task.path, str(self.create_table))
+    def visualize(self, task: Settled[MapToNewTable], g: VisualGraph) -> VisualNode:
+        return WindowNode(g, task.path, str(self.create_table))

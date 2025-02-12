@@ -5,8 +5,7 @@ import click
 from rich.console import Console
 import typer
 
-from ralsei.context import Context
-from ralsei.task import Task, ImplTask
+from ralsei.task import Task, Settled
 from ralsei.viz import VisualGraph
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 
@@ -30,7 +29,7 @@ def _open_in_default_app(filename: str):
 
 
 def _ctx_find_task(ctx: click.Context):
-    if root := ctx.find_object(ImplTask):
+    if root := ctx.find_object(Settled):
         return root
     raise RuntimeError("click context not set")
 
@@ -38,7 +37,7 @@ def _ctx_find_task(ctx: click.Context):
 def _build_subcommand(
     group: click.Group,
     name: str,
-    get_method: Callable[[ImplTask], Callable[[], None]],
+    get_method: Callable[[Settled], Callable[[], None]],
 ):
     @click.argument("path", type=TYPE_TASKPATH, required=False, default=[])
     @group.command(name)
@@ -49,8 +48,7 @@ def _build_subcommand(
         for step in path:
             node = node.navigate(step)
 
-        with node.context.as_toplevel():
-            get_method(node)()
+        get_method(node)()
 
 
 def build_cli(root_constructor: Callable[..., Task]):
@@ -62,7 +60,7 @@ def build_cli(root_constructor: Callable[..., Task]):
         root: Task = constructor_cmd.callback(
             **kwargs
         )  # pyright: ignore[reportOptionalCall]
-        root_impl = Context([]).create_subtask(root, ())
+        root_impl = Settled(root)
 
         ctx.obj = root_impl
 

@@ -15,7 +15,7 @@ from ralsei.viz import VisualGraph, VisualNode, WindowNode
 from ralsei.wrappers import OneToOne, get_popped_fields
 from ralsei.console import track
 
-from .base import Settled, Task
+from .base import Settled, Task, service, inject
 from .add_columns_impl import ImplAddColumns
 from .rowcontext import RowContext
 
@@ -33,9 +33,10 @@ class MapToNewColumns(Task):
 
 @MapToNewColumns.impl
 class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
-    def __init__(self, task: Settled[MapToNewColumns]) -> None:
-        env = task.context.get(SqlEnvironment)
-
+    @inject
+    def __init__(
+        self, task: Settled[MapToNewColumns], env: SqlEnvironment = service()
+    ) -> None:
         popped_fields = get_popped_fields(task.decl.fn)
         self.__popped_fields: set[str] = set(popped_fields) if popped_fields else set()
 
@@ -53,9 +54,7 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
 
         self.__resumable = bool(task.decl.is_done_column)
         self.__select = env.render_sql(task.decl.select, **params)
-        super().__init__(
-            task, env, task.decl.table, columns, if_not_exists=self.__resumable
-        )
+        super().__init__(env, task.decl.table, columns, if_not_exists=self.__resumable)
 
         id_fields = task.decl.id_fields or (
             [IdColumn(name) for name in popped_fields] if popped_fields else None
@@ -76,8 +75,10 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
             id_fields=id_fields,
         )
 
-    def run(self):
-        conn = self.context.get(ConnectionEnvironment)
+    @inject
+    def run(
+        self, task: Settled[MapToNewColumns], conn: ConnectionEnvironment = service()
+    ):
         self._add_columns(conn)
 
         for input_row in map(
@@ -88,18 +89,20 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
             ),
         ):
             with RowContext.from_input_row(input_row, self.__popped_fields):
-                conn.execute(self.__update, self.decl.fn(**input_row))
+                conn.execute(self.__update, task.decl.fn(**input_row))
                 if self.__resumable:
                     conn.commit()
 
         conn.commit()
 
-    def skip(self) -> bool:
-        if not super().skip():
+    @inject
+    def skip(
+        self, task: Settled[MapToNewColumns], conn: ConnectionEnvironment = service()
+    ) -> bool:
+        if not super().skip(task):
             return False
         else:
-            conn = self.context.get(ConnectionEnvironment)
             return not self.__resumable or conn.execute(self.__select).first() is None
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
-        return WindowNode(g, self.task.path, str(self._add_columns))
+    def visualize(self, task: Settled[MapToNewColumns], g: VisualGraph) -> VisualNode:
+        return WindowNode(g, task.path, str(self._add_columns))

@@ -3,15 +3,11 @@ from ralsei import db_actions
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
 
-from .base import ImplTask, Settled, Task
+from .base import ImplTask, Task, inject, service
 
 
 class ImplCreateTable[T: Task](ImplTask[T]):
-    def __init__(
-        self, task: Settled[T], env: SqlEnvironment, table: Table, view: bool = False
-    ) -> None:
-        super().__init__(task)
-
+    def __init__(self, env: SqlEnvironment, table: Table, view: bool = False) -> None:
         self._table = table
         self._drop_sql = env.render_sql(
             "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
@@ -19,13 +15,11 @@ class ImplCreateTable[T: Task](ImplTask[T]):
             view=view,
         )
 
-    def delete(self):
-        conn = self.context.get(sqlalchemy.Connection)
-
+    @inject
+    def delete(self, conn: sqlalchemy.Connection = service()):
         conn.execute(self._drop_sql)
         conn.commit()
 
-    def skip(self) -> bool:
-        return db_actions.table_exists(
-            self.context.get(sqlalchemy.Connection), self._table
-        )
+    @inject
+    def skip(self, conn: sqlalchemy.Connection = service()) -> bool:
+        return db_actions.table_exists(conn, self._table)

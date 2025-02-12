@@ -8,7 +8,7 @@ from ralsei.jinja import SqlEnvironment
 from ralsei.connection.utils import executescript
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
-from .base import Settled, Task
+from .base import Settled, Task, service, inject
 from .create_table_impl import ImplCreateTable
 
 
@@ -22,9 +22,11 @@ class CreateTableSql(Task):
 
 @CreateTableSql.impl
 class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
-    def __init__(self, task: Settled[CreateTableSql]) -> None:
-        env = task.context.get(SqlEnvironment)
-        super().__init__(task, env, task.decl.table, task.decl.view)
+    @inject
+    def __init__(
+        self, task: Settled[CreateTableSql], env: SqlEnvironment = service()
+    ) -> None:
+        super().__init__(env, task.decl.table, task.decl.view)
 
         params = {**task.decl.params, "table": task.decl.table, "view": task.decl.view}
         self.__sql = (
@@ -33,13 +35,12 @@ class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
             else [env.render_sql(sql, **params) for sql in task.decl.sql]
         )
 
-    def run(self):
-        conn = self.context.get(sqlalchemy.Connection)
-
+    @inject
+    def run(self, conn: sqlalchemy.Connection = service()):
         executescript(conn, self.__sql)
         conn.commit()
 
-    def visualize(self, g: VisualGraph) -> VisualNode:
+    def visualize(self, task: Settled[CreateTableSql], g: VisualGraph) -> VisualNode:
         return WindowNode(
-            g, self.task.path, str(self.__sql[0]) if len(self.__sql) > 0 else ""
+            g, task.path, str(self.__sql[0]) if len(self.__sql) > 0 else ""
         )

@@ -1,4 +1,4 @@
-from .base import Task, ImplTask, Settled
+from .base import Task, ImplTask, Settled, inject, service
 from .group import TaskGroup
 from .create_table_sql import CreateTableSql
 from .add_columns_sql import AddColumnsSql
@@ -18,4 +18,6 @@ __all__ = [
     "MapToNewColumns",
     "ImplCreateTable",
     "ImplAddColumns",
+    "inject",
+    "service",
 ]

@@ -6,21 +6,18 @@ from ralsei.connection import ConnectionEnvironment
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table, ColumnRendered
 
-from .base import Settled, Task, ImplTask
+from .base import Task, ImplTask, service, inject
 
 
 class ImplAddColumns[T: Task](ImplTask[T]):
     def __init__(
         self,
-        task: Settled[T],
         env: SqlEnvironment,
         table: Table,
         columns: Sequence[ColumnRendered],
         *,
         if_not_exists: bool = False,
     ) -> None:
-        super().__init__(task)
-
         self._table = table
         self._columns = columns
 
@@ -29,15 +26,15 @@ class ImplAddColumns[T: Task](ImplTask[T]):
         )
         self._drop_columns = db_actions.DropColumns(env, table, columns, if_exists=True)
 
-    def delete(self):
-        conn = self.context.get(ConnectionEnvironment)
-
+    @inject
+    def delete(self, conn: ConnectionEnvironment = service()):
         self._drop_columns(conn)
         conn.commit()
 
-    def skip(self) -> bool:
+    @inject
+    def skip(self, conn: sqlalchemy.Connection = service()) -> bool:
         return db_actions.columns_exist(
-            self.context.get(sqlalchemy.Connection),
+            conn,
             self._table,
             (col.name for col in self._columns),
         )
