@@ -31,6 +31,8 @@ class Context:
 
             yield
 
+        self.__runtime_services = None
+
     @property
     def is_runtime_active(self) -> bool:
         return self.__runtime_services is not None
