@@ -18,11 +18,12 @@ class Task:
     impl_class: ClassVar[Callable[[Settled[Self]], ImplTask[Self]]]
 
     @classmethod
-    def impl(cls, clazz: Callable[[Settled[Self]], ImplTask[Self]]):
+    def impl[C: Callable[[Settled], ImplTask]](cls, clazz: C) -> C:
         cls.impl_class = clazz
+        return clazz
 
 
-T = TypeVar("T", bound=Task, default=Task, covariant=True)
+T = TypeVar("T", bound=Task, covariant=True)
 
 
 class Settled(Generic[T]):
