@@ -30,18 +30,21 @@ class Settled(Generic[T]):
     def __init__(
         self,
         decl: T,
+        impl: Optional[ImplTask[T]] = None,
         *,
         context: Optional[ContextStack] = None,
         path: tuple[str, ...] = (),
+        requires: Optional[set[Settled]] = set(),
+        dependants: Optional[set[Settled]] = set(),
     ) -> None:
         self.decl = decl
         self.context = context or ContextStack()
         self.path = path
 
-        self.impl = decl.impl_class(self)
+        self.impl = impl or decl.impl_class(self)
 
-        self.requires: set[Settled] = set()
-        self.dependants: set[Settled] = set()
+        self.requires = requires or set()
+        self.dependants = dependants or set()
 
     @property
     def path_str(self) -> str:
@@ -79,6 +82,9 @@ class Settled(Generic[T]):
     def navigate(self, name: str) -> Settled:
         return self.impl.navigate(self, name)
 
+    def mask(self, start_from: str) -> Settled:
+        return self.impl.mask(self, start_from)
+
 
 class ImplTask(Generic[T]):
     def visualize(self, task: Settled[T], g: VisualGraph) -> VisualNode:
@@ -95,6 +101,9 @@ class ImplTask(Generic[T]):
 
     def navigate(self, task: Settled[T], name: str) -> Settled:
         raise RuntimeError(f"Couldn't navigate from {task.path_str} to {name}")
+
+    def mask(self, task: Settled[T], start_from: str) -> Settled:
+        raise RuntimeError(f"Task {task.path_str} does not support masking")
 
 
 @Task.impl

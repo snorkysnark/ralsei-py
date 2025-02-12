@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-from typing import Callable
+from typing import Callable, Optional
 import click
 from rich.console import Console
 import typer
@@ -41,13 +41,17 @@ def _build_subcommand(
     get_method: Callable[[Settled], Callable[[], None]],
 ):
     @click.argument("path", type=TYPE_TASKPATH, required=False, default=[])
+    @click.option("--from", "start_from", help="Only this task and its descendants")
     @group.command(name)
     @click.pass_context
-    def cmd(ctx: click.Context, path: list[str]):
+    def cmd(ctx: click.Context, path: list[str], start_from: Optional[str] = None):
         node = _ctx_find_task(ctx)
 
         for step in path:
             node = node.navigate(step)
+
+        if start_from:
+            node = node.mask(start_from)
 
         get_method(node)()
 

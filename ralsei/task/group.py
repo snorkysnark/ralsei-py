@@ -26,46 +26,18 @@ class TaskGroup(Task):
         self.tasks = bidict(tasks.__dict__)
 
 
-@TaskGroup.impl
-class ImplTaskGroup(ImplTask[TaskGroup]):
-    def __init__(self, task: Settled[TaskGroup]) -> None:
-        # Perform task initialization
-        self.subtasks = {
-            name: task.create_subtask(decl, name)
-            for name, decl in task.decl.tasks.items()
-        }
-
-        # Populate requires/dependants with initialized tasks
-        for impl_to in self.subtasks.values():
-            for decl_from in impl_to.decl.requires:
-                impl_from = self.subtasks[task.decl.tasks.inverse[decl_from]]
-
-                impl_to.requires.add(impl_from)
-                impl_from.dependants.add(impl_to)
-
-        # Sort the DAG
-        self.subtasks_sorted: list[Settled] = []
-        visited: set[Settled] = set()
-
-        def visit(impl: Settled):
-            if impl not in visited:
-                visited.add(impl)
-
-                for dependency in impl.requires:
-                    visit(dependency)
-
-                self.subtasks_sorted.append(impl)
-
-        for impl in self.subtasks.values():
-            visit(impl)
+class TaskSequence(ImplTask[TaskGroup]):
+    def __init__(self, subtasks: dict[str, Settled], sequence: list[Settled]) -> None:
+        self.subtasks = subtasks
+        self.sequence = sequence
 
     def run(self, task: Settled[TaskGroup]):
-        for impl in track(self.subtasks_sorted, description=f"Running {task.path_str}"):
+        for impl in track(self.sequence, description=f"Running {task.path_str}"):
             impl.run()
 
     def delete(self, task: Settled[TaskGroup]):
         for impl in track(
-            reversed(self.subtasks_sorted), description=f"Deleting {task.path_str}"
+            reversed(self.sequence), description=f"Deleting {task.path_str}"
         ):
             impl.delete()
 
@@ -87,3 +59,64 @@ class ImplTaskGroup(ImplTask[TaskGroup]):
             return self.subtasks[name]
 
         return super().navigate(task, name)
+
+
+@TaskGroup.impl
+class ImplTaskGroup(TaskSequence):
+    def __init__(self, task: Settled[TaskGroup]) -> None:
+        # Perform task initialization
+        subtasks = {
+            name: task.create_subtask(decl, name)
+            for name, decl in task.decl.tasks.items()
+        }
+
+        # Populate requires/dependants with initialized tasks
+        for impl_to in subtasks.values():
+            for decl_from in impl_to.decl.requires:
+                impl_from = subtasks[task.decl.tasks.inverse[decl_from]]
+
+                impl_to.requires.add(impl_from)
+                impl_from.dependants.add(impl_to)
+
+        # Sort the DAG
+        sequence: list[Settled] = []
+        visited: set[Settled] = set()
+
+        def visit(impl: Settled):
+            if impl not in visited:
+                visited.add(impl)
+
+                for dependency in impl.requires:
+                    visit(dependency)
+
+                sequence.append(impl)
+
+        for impl in subtasks.values():
+            visit(impl)
+
+        super().__init__(subtasks, sequence)
+
+    def mask(self, task: Settled[TaskGroup], start_from: str) -> Settled:
+        stack: list[Settled] = []
+        visited: set[Settled] = set()
+
+        def visit(task: Settled):
+            if task not in visited:
+                visited.add(task)
+
+                for child in task.dependants:
+                    visit(child)
+
+                stack.append(task)
+
+        visit(self.subtasks[start_from])
+        stack.reverse()
+
+        return Settled(
+            task.decl,
+            TaskSequence(self.subtasks, stack),
+            context=task.context,
+            path=task.path,
+            requires=task.requires,
+            dependants=task.dependants,
+        )
