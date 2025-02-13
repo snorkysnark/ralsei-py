@@ -1,29 +1,16 @@
 from __future__ import annotations
-from attrs import define
-from bidict import bidict
+from attrs import define, field
 
 from ralsei.namespace import TypedNamespace
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 from ralsei.console import track
-from ralsei.plugins import Plugin
 
 from .base import Settled, Task, ImplTask
 
 
-@define(eq=False, init=False)
+@define(eq=False)
 class TaskGroup(Task):
-    tasks: bidict[str, Task]
-
-    def __init__(
-        self,
-        tasks: TypedNamespace[Task],
-        *,
-        requires: set[Task] | None = None,
-        plugins: list[Plugin] | None = None,
-    ):
-        super().__init__(requires=requires or set(), plugins=plugins or [])
-
-        self.tasks = bidict(tasks.__dict__)
+    tasks: TypedNamespace[Task]
 
 
 class TaskSequence(ImplTask[TaskGroup]):
@@ -64,16 +51,18 @@ class TaskSequence(ImplTask[TaskGroup]):
 @TaskGroup.impl
 class ImplTaskGroup(TaskSequence):
     def __init__(self, task: Settled[TaskGroup]) -> None:
+        task_to_name = {task: name for name, task in task.decl.tasks.__dict__.items()}
+
         # Perform task initialization
         subtasks = {
             name: task.create_subtask(decl, name)
-            for name, decl in task.decl.tasks.items()
+            for name, decl in task.decl.tasks.__dict__.items()
         }
 
         # Populate requires/dependants with initialized tasks
         for impl_to in subtasks.values():
             for decl_from in impl_to.decl.requires:
-                impl_from = subtasks[task.decl.tasks.inverse[decl_from]]
+                impl_from = subtasks[task_to_name[decl_from]]
 
                 impl_to.requires.add(impl_from)
                 impl_from.dependants.add(impl_to)
