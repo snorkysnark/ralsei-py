@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from attrs import define, field
 from graphviz import Digraph
 import html
@@ -79,11 +79,19 @@ class WindowNode(VisualNode):
         )
 
 
+@define(eq=False)
+class GraphSettings:
+    max_depth: Optional[int] = None
+
+
 class VisualGraph:
-    def __init__(self, root: "Settled") -> None:
+    def __init__(
+        self, root: "Settled", settings: Optional[GraphSettings] = None
+    ) -> None:
+        self.settings = settings or GraphSettings()
+
         self.__nodes: dict[NodePath, VisualNode] = {}
         self.__edges: list[tuple[NodePath, NodePath]] = []
-
         self.__root = root.visualize(self)
 
     def add(self, node: VisualNode):

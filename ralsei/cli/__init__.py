@@ -7,7 +7,7 @@ from rich.console import Console
 import typer
 
 from ralsei.task import Task, Settled
-from ralsei.viz import VisualGraph
+from ralsei.viz import VisualGraph, GraphSettings
 from ralsei.task.rowcontext import ROW_CONTEXT_ATRRIBUTE
 
 from .click_types import TYPE_TASKPATH
@@ -35,6 +35,15 @@ def _ctx_find_task(ctx: click.Context):
     raise RuntimeError("click context not set")
 
 
+def _transform_node(node: Settled, path: list[str], start_from: Optional[str] = None):
+    for step in path:
+        node = node.navigate(step)
+    if start_from:
+        node = node.mask(start_from)
+
+    return node
+
+
 def _build_subcommand(
     group: click.Group,
     name: str,
@@ -45,15 +54,8 @@ def _build_subcommand(
     @group.command(name)
     @click.pass_context
     def cmd(ctx: click.Context, path: list[str], start_from: Optional[str] = None):
-        node = _ctx_find_task(ctx)
-
-        for step in path:
-            node = node.navigate(step)
-
-        if start_from:
-            node = node.mask(start_from)
-
-        get_method(node)()
+        task = _transform_node(_ctx_find_task(ctx), path, start_from)
+        get_method(task)()
 
 
 def build_cli(root_constructor: Callable[..., Task]):
@@ -81,11 +83,24 @@ def build_cli(root_constructor: Callable[..., Task]):
     _build_subcommand(cli, "delete", lambda task: task.delete)
     _build_subcommand(cli, "redo", lambda task: task.redo)
 
+    @click.argument("path", type=TYPE_TASKPATH, required=False, default=[])
+    @click.option("--from", "start_from", help="Only this task and its descendants")
+    @click.option("--max-depth", type=int, help="Limit graph depth")
     @cli.command("graph")
     @click.pass_context
-    def graph_cmd(ctx: click.Context):
-        root = _ctx_find_task(ctx)
-        _open_in_default_app(VisualGraph(root).build().render(format="png"))
+    def graph_cmd(
+        ctx: click.Context,
+        path: list[str],
+        start_from: Optional[str] = None,
+        max_depth: Optional[int] = None,
+    ):
+        task = _transform_node(_ctx_find_task(ctx), path, start_from)
+
+        settings = GraphSettings()
+        if max_depth is not None:
+            settings.max_depth = len(path) + max_depth
+
+        _open_in_default_app(VisualGraph(task, settings).build().render(format="png"))
 
     return cli
 

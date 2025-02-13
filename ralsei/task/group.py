@@ -1,5 +1,5 @@
 from __future__ import annotations
-from attrs import define, field
+from attrs import define
 
 from ralsei.namespace import TypedNamespace
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
@@ -29,17 +29,20 @@ class TaskSequence(ImplTask[TaskGroup]):
             impl.delete()
 
     def visualize(self, task: Settled[TaskGroup], g: VisualGraph) -> VisualNode:
-        subgraph = Subgraph(
-            g,
-            task.path,
-            [impl.visualize(g) for impl in self.subtasks.values()],
-        )
+        if g.settings.max_depth is None or len(task.path) <= g.settings.max_depth:
+            subgraph = Subgraph(
+                g,
+                task.path,
+                [impl.visualize(g) for impl in self.subtasks.values()],
+            )
 
-        for impl in self.subtasks.values():
-            for dependency in impl.requires:
-                g.connect(dependency.path, impl.path)
+            for impl in self.subtasks.values():
+                for dependency in impl.requires:
+                    g.connect(dependency.path, impl.path)
 
-        return subgraph
+            return subgraph
+        else:
+            return super().visualize(task, g)
 
     def navigate(self, task: Settled[TaskGroup], name: str) -> Settled:
         if name in self.subtasks:
