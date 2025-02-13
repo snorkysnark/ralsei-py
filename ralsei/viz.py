@@ -97,7 +97,7 @@ class VisualGraph:
 
     def build(self):
         dot = Digraph()
-        dot.attr("graph", rankdir="LR", compound="true")
+        dot.attr("graph", rankdir="LR", compound="true", concentrate="true")
         dot.attr("node", shape="box")
 
         self.__root.to_graphviz(dot)
