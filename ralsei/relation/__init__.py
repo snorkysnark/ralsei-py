@@ -1,18 +1,47 @@
-from ralsei.task import Task
-from typing import Sequence
+from typing import TYPE_CHECKING, Callable
+from contextvars import ContextVar
 
-from .transformer import track_deps
+if TYPE_CHECKING:
+    from ralsei.task import Task
 
-
-def task[T: Task](task: T, requires: Sequence[Task] = []) -> T:
-    for dep in requires:
-        task.requires.add(dep)
-
-    return task
+_stack_ctx = ContextVar[list[list["Resource"]]]("resource_context")
 
 
-def require[T: Task](task: T) -> T:
-    return task
+class Resource[T]:
+    __slots__ = ["value"]
+
+    def __init__(self, value: T) -> None:
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"Resource({repr(self.value)})"
+
+    def __call__(self) -> T:
+        stack = _stack_ctx.get(None)
+        if not stack:
+            raise RuntimeError("Resource called outside of task() context")
+
+        resources = stack[-1]
+        resources.append(self)
+
+        return self.value
 
 
-__all__ = ["task", "require", "track_deps"]
+def task[T: "Task"](closure: Callable[[], T]) -> T:
+    stack = _stack_ctx.get(None)
+    if stack is None:
+        stack = []
+        _stack_ctx.set(stack)
+
+    resources = []
+    stack.append(resources)
+
+    try:
+        task = closure()
+        task.resources.update(resources)
+        return task
+    finally:
+        stack.pop()
+
+
+__all__ = ["task", "Resource"]

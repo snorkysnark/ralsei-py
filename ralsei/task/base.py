@@ -8,11 +8,12 @@ from ralsei.plugins import Plugin
 from ralsei.context import Context, ContextStack
 from ralsei.viz import VisualGraph, VisualNode
 from ralsei.console import console
+from ralsei.relation import Resource
 
 
 @define(eq=False)
 class Task:
-    requires: set[Task] = field(factory=set, kw_only=True, repr=False)
+    resources: set[Resource] = field(factory=set, kw_only=True, repr=False)
     plugins: list[Plugin] = field(factory=list, kw_only=True)
 
     impl_class: ClassVar[Callable[[Settled[Self]], ImplTask[Self]]]
@@ -34,17 +35,12 @@ class Settled(Generic[T]):
         *,
         context: Optional[ContextStack] = None,
         path: tuple[str, ...] = (),
-        requires: Optional[set[Settled]] = set(),
-        dependants: Optional[set[Settled]] = set(),
     ) -> None:
         self.decl = decl
         self.context = context or ContextStack()
         self.path = path
 
         self.impl = impl or decl.impl_class(self)
-
-        self.requires = requires or set()
-        self.dependants = dependants or set()
 
     @property
     def path_str(self) -> str:

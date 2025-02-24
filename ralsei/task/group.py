@@ -1,9 +1,11 @@
 from __future__ import annotations
-from attrs import define
+from attrs import define, field
+from collections import OrderedDict
 
 from ralsei.namespace import TypedNamespace
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 from ralsei.console import track
+from ralsei.relation import Resource
 
 from .base import Settled, Task, ImplTask
 
@@ -13,32 +15,42 @@ class TaskGroup(Task):
     tasks: TypedNamespace[Task]
 
 
+@define(eq=False)
+class ConnectedTask:
+    task: Settled[Task]
+    dependants: set[ConnectedTask] = field(factory=set)
+
+
 class TaskSequence(ImplTask[TaskGroup]):
-    def __init__(self, subtasks: dict[str, Settled], sequence: list[Settled]) -> None:
+    def __init__(
+        self,
+        subtasks: OrderedDict[str, ConnectedTask],
+        sequence: list[ConnectedTask],
+    ) -> None:
         self.subtasks = subtasks
         self.sequence = sequence
 
     def run(self, task: Settled[TaskGroup]):
-        for impl in track(self.sequence, description=f"Running {task.path_str}"):
-            impl.run()
+        for node in track(self.sequence, description=f"Running {task.path_str}"):
+            node.task.run()
 
     def delete(self, task: Settled[TaskGroup]):
-        for impl in track(
+        for node in track(
             reversed(self.sequence), description=f"Deleting {task.path_str}"
         ):
-            impl.delete()
+            node.task.delete()
 
     def visualize(self, task: Settled[TaskGroup], g: VisualGraph) -> VisualNode:
         if g.settings.max_depth is None or len(task.path) <= g.settings.max_depth:
             subgraph = Subgraph(
                 g,
                 task.path,
-                [impl.visualize(g) for impl in self.subtasks.values()],
+                [node.task.visualize(g) for node in self.subtasks.values()],
             )
 
-            for impl in self.subtasks.values():
-                for dependency in impl.requires:
-                    g.connect(dependency.path, impl.path)
+            for node in self.subtasks.values():
+                for dependant in node.dependants:
+                    g.connect(node.task.path, dependant.task.path)
 
             return subgraph
         else:
@@ -46,7 +58,7 @@ class TaskSequence(ImplTask[TaskGroup]):
 
     def navigate(self, task: Settled[TaskGroup], name: str) -> Settled:
         if name in self.subtasks:
-            return self.subtasks[name]
+            return self.subtasks[name].task
 
         return super().navigate(task, name)
 
@@ -54,52 +66,35 @@ class TaskSequence(ImplTask[TaskGroup]):
 @TaskGroup.impl
 class ImplTaskGroup(TaskSequence):
     def __init__(self, task: Settled[TaskGroup]) -> None:
-        task_to_name = {task: name for name, task in task.decl.tasks.__dict__.items()}
-
         # Perform task initialization
-        subtasks = {
-            name: task.create_subtask(decl, name)
-            for name, decl in task.decl.tasks.__dict__.items()
-        }
+        subtasks = OrderedDict[str, ConnectedTask]()
+        for name, decl in task.decl.tasks.__dict__.items():
+            subtasks[name] = ConnectedTask(task.create_subtask(decl, name))
 
-        # Populate requires/dependants with initialized tasks
-        for impl_to in subtasks.values():
-            for decl_from in impl_to.decl.requires:
-                impl_from = subtasks[task_to_name[decl_from]]
+        last_resource_user: dict[Resource, ConnectedTask] = {}
 
-                impl_to.requires.add(impl_from)
-                impl_from.dependants.add(impl_to)
+        # Find dependant tasks
+        for node in subtasks.values():
+            for resource in node.task.decl.resources:
+                if resource in last_resource_user:
+                    last_resource_user[resource].dependants.add(node)
 
-        # Sort the DAG
-        sequence: list[Settled] = []
-        visited: set[Settled] = set()
+                last_resource_user[resource] = node
 
-        def visit(impl: Settled):
-            if impl not in visited:
-                visited.add(impl)
-
-                for dependency in impl.requires:
-                    visit(dependency)
-
-                sequence.append(impl)
-
-        for impl in subtasks.values():
-            visit(impl)
-
-        super().__init__(subtasks, sequence)
+        super().__init__(subtasks, list(subtasks.values()))
 
     def mask(self, task: Settled[TaskGroup], start_from: str) -> Settled:
-        stack: list[Settled] = []
-        visited: set[Settled] = set()
+        stack: list[ConnectedTask] = []
+        visited: set[ConnectedTask] = set()
 
-        def visit(task: Settled):
-            if task not in visited:
-                visited.add(task)
+        def visit(node: ConnectedTask):
+            if node not in visited:
+                visited.add(node)
 
-                for child in task.dependants:
+                for child in node.dependants:
                     visit(child)
 
-                stack.append(task)
+                stack.append(node)
 
         visit(self.subtasks[start_from])
         stack.reverse()
@@ -109,6 +104,4 @@ class ImplTaskGroup(TaskSequence):
             TaskSequence(self.subtasks, stack),
             context=task.context,
             path=task.path,
-            requires=task.requires,
-            dependants=task.dependants,
         )
