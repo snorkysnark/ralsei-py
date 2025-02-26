@@ -27,27 +27,31 @@ class InitializedGraph:
 class TaskSequence(ImplTask[TaskGroup]):
     def __init__(
         self,
+        task: Settled[TaskGroup],
         graph: InitializedGraph,
         sequence: list[Settled[Task]],
     ) -> None:
+        super().__init__(task)
         self.graph = graph
         self.sequence = sequence
 
-    def run(self, task: Settled[TaskGroup]):
-        for subtask in track(self.sequence, description=f"Running {task.path_str}"):
+    def run(self):
+        for subtask in track(
+            self.sequence, description=f"Running {self.task.path_str}"
+        ):
             subtask.run()
 
-    def delete(self, task: Settled[TaskGroup]):
+    def delete(self):
         for subtask in track(
-            reversed(self.sequence), description=f"Deleting {task.path_str}"
+            reversed(self.sequence), description=f"Deleting {self.task.path_str}"
         ):
             subtask.delete()
 
-    def visualize(self, task: Settled[TaskGroup], g: VisualGraph) -> VisualNode:
-        if g.settings.max_depth is None or len(task.path) <= g.settings.max_depth:
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        if g.settings.max_depth is None or len(self.task.path) <= g.settings.max_depth:
             subgraph = Subgraph(
                 g,
-                task.path,
+                self.task.path,
                 [subtask.visualize(g) for subtask in self.graph.tasks.values()],
             )
 
@@ -57,13 +61,13 @@ class TaskSequence(ImplTask[TaskGroup]):
 
             return subgraph
         else:
-            return super().visualize(task, g)
+            return super().visualize(g)
 
-    def navigate(self, task: Settled[TaskGroup], name: str) -> Settled:
+    def navigate(self, name: str) -> Settled:
         if name in self.graph.tasks:
             return self.graph.tasks[name]
 
-        return super().navigate(task, name)
+        return super().navigate(name)
 
 
 @TaskGroup.impl
@@ -71,14 +75,16 @@ class ImplTaskGroup(TaskSequence):
     def __init__(self, task: Settled[TaskGroup]) -> None:
         # Perform task initialization
         subtasks = OrderedDict[str, Settled[Task]]()
-        for name, decl in task.decl.ns.tasks.items():
-            subtasks[name] = task.create_subtask(decl, name)
+        for name, cfg in task.cfg.ns.tasks.items():
+            subtasks[name] = task.create_subtask(cfg, name)
 
         super().__init__(
-            InitializedGraph(subtasks, task.decl.ns.relations), list(subtasks.values())
+            task,
+            InitializedGraph(subtasks, task.cfg.ns.relations),
+            list(subtasks.values()),
         )
 
-    def mask(self, task: Settled[TaskGroup], start_from: str) -> Settled:
+    def mask(self, start_from: str) -> Settled:
         stack: list[Settled] = []
         visited: set[Settled] = set()
 
@@ -94,9 +100,4 @@ class ImplTaskGroup(TaskSequence):
         visit(self.graph.tasks[start_from])
         stack.reverse()
 
-        return Settled(
-            task.decl,
-            TaskSequence(self.graph, stack),
-            context=task.context,
-            path=task.path,
-        )
+        return self.task.with_impl(TaskSequence(self.task, self.graph, stack))

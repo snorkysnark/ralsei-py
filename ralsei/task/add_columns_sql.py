@@ -25,31 +25,31 @@ class AddColumnsSql(Task):
 class ImplAddColumnsSql(ImplAddColumns[AddColumnsSql]):
     @inject
     def __init__(self, task: Settled[AddColumnsSql], env: SqlEnvironment = service()):
-        params = {**task.decl.params, "table": task.decl.table}
+        params = {**task.cfg.params, "table": task.cfg.table}
 
         def render_script() -> (
             tuple[list[sqlalchemy.TextClause], Optional[Sequence[ColumnBase]]]
         ):
-            if isinstance(task.decl.sql, str):
-                template_module = env.from_string(task.decl.sql).make_module(params)
+            if isinstance(task.cfg.sql, str):
+                template_module = env.from_string(task.cfg.sql).make_module(params)
                 columns: Optional[Sequence[ColumnBase]] = getattr(
                     template_module, "columns", None
                 )
 
                 return template_module.render_sql_split(), columns
             else:
-                return [env.render_sql(sql, **params) for sql in task.decl.sql], None
+                return [env.render_sql(sql, **params) for sql in task.cfg.sql], None
 
         self.__sql, template_columns = render_script()
         columns = [
             column.render(env, **params)
             for column in expect(
-                task.decl.columns or template_columns,
+                task.cfg.columns or template_columns,
                 ValueError("Columns not specified"),
             )
         ]
 
-        super().__init__(env, task.decl.table, columns)
+        super().__init__(task, task.cfg.table, columns)
 
     @inject
     def run(self, conn: ConnectionEnvironment = service()):
@@ -57,5 +57,5 @@ class ImplAddColumnsSql(ImplAddColumns[AddColumnsSql]):
         conn.executescript(self.__sql)
         conn.commit()
 
-    def visualize(self, task: Settled[AddColumnsSql], g: VisualGraph) -> VisualNode:
-        return WindowNode(g, task.path, str(self._add_columns))
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, self.task.path, str(self._add_columns))

@@ -1,6 +1,15 @@
 from __future__ import annotations
 from functools import wraps
-from typing import Any, Callable, ClassVar, Generic, Optional, Self, TypeVar, get_origin
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Generic,
+    Optional,
+    Self,
+    TypeVar,
+    get_origin,
+)
 from attrs import define, field
 import inspect
 
@@ -28,82 +37,83 @@ T = TypeVar("T", bound=Task, covariant=True)
 class Settled(Generic[T]):
     def __init__(
         self,
-        decl: T,
+        cfg: T,
         impl: Optional[ImplTask[T]] = None,
         *,
         context: Optional[ContextStack] = None,
         path: tuple[str, ...] = (),
     ) -> None:
-        self.decl = decl
+        self.cfg = cfg
         self.context = context or ContextStack()
         self.path = path
 
-        self.impl = impl or decl.impl_class(self)
+        self.impl = impl or cfg.impl_class(self)
 
     @property
     def path_str(self) -> str:
         return ".".join(self.path) or "."
 
-    def create_subtask[S: Task](self, decl: S, name: str) -> Settled[S]:
+    def create_subtask[S: Task](self, cfg: S, name: str) -> Settled[S]:
         return Settled(
-            decl,
-            context=ContextStack(*self.context, *Context.maybe(decl.plugins)),
+            cfg,
+            context=ContextStack(*self.context, *Context.maybe(cfg.plugins)),
             path=self.path + (name,),
         )
 
+    def with_impl(self, impl: ImplTask[T]) -> Settled[T]:
+        return Settled(self.cfg, impl, context=self.context, path=self.path)
+
     def visualize(self, g: VisualGraph) -> VisualNode:
-        return self.impl.visualize(self, g)
+        return self.impl.visualize(g)
 
     def run(self):
         with self.context.enter_runtime():
-            if self.impl.skip(self):
+            if self.impl.skip():
                 console.print(
                     f"Skipping [bold green]{self.path_str}[/bold green]: already done"
                 )
             else:
                 console.print(f"Running [bold green]{self.path_str}")
-                self.impl.run(self)
+                self.impl.run()
 
     def delete(self):
         with self.context.enter_runtime():
             console.print(f"Deleting [bold green]{self.path_str}")
-            self.impl.delete(self)
+            self.impl.delete()
 
     def redo(self):
         self.delete()
         self.run()
 
     def navigate(self, name: str) -> Settled:
-        return self.impl.navigate(self, name)
+        return self.impl.navigate(name)
 
     def mask(self, start_from: str) -> Settled:
-        return self.impl.mask(self, start_from)
-
-
-class ImplTask(Generic[T]):
-    def visualize(self, task: Settled[T], g: VisualGraph) -> VisualNode:
-        return VisualNode(g, task.path)
-
-    def run(self, task: Settled[T]):
-        pass
-
-    def delete(self, task: Settled[T]):
-        pass
-
-    def skip(self, task: Settled[T]) -> bool:
-        return False
-
-    def navigate(self, task: Settled[T], name: str) -> Settled:
-        raise RuntimeError(f"Couldn't navigate from {task.path_str} to {name}")
-
-    def mask(self, task: Settled[T], start_from: str) -> Settled:
-        raise RuntimeError(f"Task {task.path_str} does not support masking")
+        return self.impl.mask(start_from)
 
 
 @Task.impl
-class ImplTaskNop(ImplTask[Task]):
-    def __init__(self, task: Settled[Task]) -> None:
+class ImplTask(Generic[T]):
+    def __init__(self, task: Settled[T]) -> None:
+        self.task = task
+
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return VisualNode(g, self.task.path)
+
+    def run(self):
         pass
+
+    def delete(self):
+        pass
+
+    def skip(self) -> bool:
+        return False
+
+    def navigate(self, name: str) -> Settled:
+        raise RuntimeError(f"Couldn't navigate from {self.task.path_str} to {name}")
+
+    def mask(self, start_from: str) -> Settled:
+        raise RuntimeError(f"Task {self.task.path_str} does not support masking")
 
 
 _service_marker = object()
@@ -116,29 +126,29 @@ def service() -> Any:
 def inject[R](func: Callable[..., R]) -> Callable[..., R]:
     signature = inspect.signature(func, eval_str=True)
 
+    service_params_started = False
     service_params: list[inspect.Parameter] = []
-    arg_count = 0
-    context_index: Optional[int] = None
-
     for param in signature.parameters.values():
         if param.default == _service_marker:
+            service_params_started = True
             service_params.append(param)
-        else:
-            if get_origin(param.annotation) is Settled:
-                context_index = arg_count
-            arg_count += 1
+        elif service_params_started:
+            raise RuntimeError("service() parameters must be at the end")
 
-    # If not explicitly placed elsewhere, context is the last argument
-    if context_index is None:
-        context_index = arg_count
+    if func.__name__ == "__init__":
+        params = list(signature.parameters.values())
+        if len(params) < 2 or get_origin(params[1].annotation) is not Settled:
+            raise RuntimeError(
+                "Arguments must start with (self, task: Settled[T], ...)"
+            )
 
     @wraps(func)
-    def wrapper(*args):
-        task: Settled = args[context_index]
+    def wrapper(self, *args, **kwargs):
+        task: Settled = args[0] if func.__name__ == "__init__" else self.task
 
-        return func(
-            *args[:arg_count],
-            *(task.context.get(param.annotation) for param in service_params),
-        )
+        for param in service_params:
+            kwargs[param.name] = task.context.get(param.annotation)
+
+        return func(self, *args, **kwargs)
 
     return wrapper

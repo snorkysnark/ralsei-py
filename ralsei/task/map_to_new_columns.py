@@ -37,26 +37,24 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
     def __init__(
         self, task: Settled[MapToNewColumns], env: SqlEnvironment = service()
     ) -> None:
-        popped_fields = get_popped_fields(task.decl.fn)
+        popped_fields = get_popped_fields(task.cfg.fn)
         self.__popped_fields: set[str] = set(popped_fields) if popped_fields else set()
 
-        params = {**task.decl.params, "table": task.decl.table}
-        if task.decl.is_done_column:
-            params["is_done"] = Identifier(task.decl.is_done_column)
+        params = {**task.cfg.params, "table": task.cfg.table}
+        if task.cfg.is_done_column:
+            params["is_done"] = Identifier(task.cfg.is_done_column)
 
-        columns = [column.render(env, **params) for column in task.decl.columns]
-        if task.decl.is_done_column:
+        columns = [column.render(env, **params) for column in task.cfg.columns]
+        if task.cfg.is_done_column:
             columns.append(
-                ValueColumnRendered(
-                    task.decl.is_done_column, "BOOL DEFAULT FALSE", True
-                )
+                ValueColumnRendered(task.cfg.is_done_column, "BOOL DEFAULT FALSE", True)
             )
 
-        self.__resumable = bool(task.decl.is_done_column)
-        self.__select = env.render_sql(task.decl.select, **params)
-        super().__init__(env, task.decl.table, columns, if_not_exists=self.__resumable)
+        self.__resumable = bool(task.cfg.is_done_column)
+        self.__select = env.render_sql(task.cfg.select, **params)
+        super().__init__(task, task.cfg.table, columns, if_not_exists=self.__resumable)
 
-        id_fields = task.decl.id_fields or (
+        id_fields = task.cfg.id_fields or (
             [IdColumn(name) for name in popped_fields] if popped_fields else None
         )
         if not id_fields:
@@ -70,15 +68,13 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
             {{columns | join(',\\n', attribute='set_statement')}}
             WHERE
             {{id_fields | join(' AND ')}};""",
-            table=task.decl.table,
+            table=task.cfg.table,
             columns=columns,
             id_fields=id_fields,
         )
 
     @inject
-    def run(
-        self, task: Settled[MapToNewColumns], conn: ConnectionEnvironment = service()
-    ):
+    def run(self, conn: ConnectionEnvironment = service()):
         self._add_columns(conn)
 
         for input_row in map(
@@ -89,20 +85,18 @@ class ImplMapToNewColumns(ImplAddColumns[MapToNewColumns]):
             ),
         ):
             with RowContext.from_input_row(input_row, self.__popped_fields):
-                conn.execute(self.__update, task.decl.fn(**input_row))
+                conn.execute(self.__update, self.task.cfg.fn(**input_row))
                 if self.__resumable:
                     conn.commit()
 
         conn.commit()
 
     @inject
-    def skip(
-        self, task: Settled[MapToNewColumns], conn: ConnectionEnvironment = service()
-    ) -> bool:
-        if not super().skip(task):
+    def skip(self, conn: ConnectionEnvironment = service()) -> bool:
+        if not super().skip():
             return False
         else:
             return not self.__resumable or conn.execute(self.__select).first() is None
 
-    def visualize(self, task: Settled[MapToNewColumns], g: VisualGraph) -> VisualNode:
-        return WindowNode(g, task.path, str(self._add_columns))
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, self.task.path, str(self._add_columns))

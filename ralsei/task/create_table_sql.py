@@ -26,13 +26,13 @@ class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
     def __init__(
         self, task: Settled[CreateTableSql], env: SqlEnvironment = service()
     ) -> None:
-        super().__init__(env, task.decl.table, task.decl.view)
+        super().__init__(task, task.cfg.table, task.cfg.view)
 
-        params = {**task.decl.params, "table": task.decl.table, "view": task.decl.view}
+        params = {**task.cfg.params, "table": task.cfg.table, "view": task.cfg.view}
         self.__sql = (
-            env.render_sql_split(task.decl.sql, **params)
-            if isinstance(task.decl.sql, str)
-            else [env.render_sql(sql, **params) for sql in task.decl.sql]
+            env.render_sql_split(task.cfg.sql, **params)
+            if isinstance(task.cfg.sql, str)
+            else [env.render_sql(sql, **params) for sql in task.cfg.sql]
         )
 
     @inject
@@ -40,7 +40,7 @@ class ImplCreateTableSql(ImplCreateTable[CreateTableSql]):
         executescript(conn, self.__sql)
         conn.commit()
 
-    def visualize(self, task: Settled[CreateTableSql], g: VisualGraph) -> VisualNode:
+    def visualize(self, g: VisualGraph) -> VisualNode:
         return WindowNode(
-            g, task.path, str(self.__sql[0]) if len(self.__sql) > 0 else ""
+            g, self.task.path, str(self.__sql[0]) if len(self.__sql) > 0 else ""
         )

@@ -6,21 +6,24 @@ from ralsei.connection import ConnectionEnvironment
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table, ColumnRendered
 
-from .base import Task, ImplTask, service, inject
+from .base import Settled, Task, ImplTask, service, inject
 
 
 class ImplAddColumns[T: Task](ImplTask[T]):
     def __init__(
         self,
-        env: SqlEnvironment,
+        task: Settled[T],
         table: Table,
         columns: Sequence[ColumnRendered],
         *,
         if_not_exists: bool = False,
     ) -> None:
+        super().__init__(task)
+
         self._table = table
         self._columns = columns
 
+        env = task.context.get(SqlEnvironment)
         self._add_columns = db_actions.AddColumns(
             env, table, columns, if_not_exists=if_not_exists
         )

@@ -3,13 +3,20 @@ from ralsei import db_actions
 from ralsei.jinja import SqlEnvironment
 from ralsei.types import Table
 
-from .base import ImplTask, Task, inject, service
+from .base import ImplTask, Settled, Task, inject, service
 
 
 class ImplCreateTable[T: Task](ImplTask[T]):
-    def __init__(self, env: SqlEnvironment, table: Table, view: bool = False) -> None:
+    def __init__(
+        self,
+        task: Settled[T],
+        table: Table,
+        view: bool = False,
+    ) -> None:
+        super().__init__(task)
+
         self._table = table
-        self._drop_sql = env.render_sql(
+        self._drop_sql = task.context.get(SqlEnvironment).render_sql(
             "DROP {{ ('VIEW' if view else 'TABLE') | sql }} IF EXISTS {{ table }};",
             table=table,
             view=view,

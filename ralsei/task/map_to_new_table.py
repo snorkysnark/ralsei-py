@@ -50,24 +50,24 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
     def __init__(
         self, task: Settled[MapToNewTable], env: SqlEnvironment = service()
     ) -> None:
-        super().__init__(env, task.decl.table)
+        super().__init__(task, task.cfg.table)
 
-        if popped_fields := get_popped_fields(task.decl.fn):
+        if popped_fields := get_popped_fields(task.cfg.fn):
             self.popped_fields = set(popped_fields)
         else:
             self.popped_fields = set()
 
         params = {
-            **task.decl.params,
-            "table": task.decl.table,
-            "source": task.decl.source_table,
+            **task.cfg.params,
+            "table": task.cfg.table,
+            "source": task.cfg.source_table,
         }
-        if task.decl.is_done_column:
-            params["is_done"] = Identifier(task.decl.is_done_column)
+        if task.cfg.is_done_column:
+            params["is_done"] = Identifier(task.cfg.is_done_column)
 
         definitions: list[ToSql] = []
         insert_columns: list[ValueColumnRendered] = []
-        for column in task.decl.columns:
+        for column in task.cfg.columns:
             if isinstance(column, str):
                 rendered = Sql(env.render(column, **params))
                 definitions.append(rendered)
@@ -77,16 +77,16 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
                 definitions.append(rendered.definition)
 
         self.select = (
-            env.render_sql(task.decl.select, **params) if task.decl.select else None
+            env.render_sql(task.cfg.select, **params) if task.cfg.select else None
         )
         self.create_table = env.render_sql(
             """\
             CREATE TABLE {% if if_not_exists %}IF NOT EXISTS {% endif %}{{ table }}(
                 {{ definitions | join(',\\n    ') }}
             );""",
-            table=task.decl.table,
+            table=task.cfg.table,
             definitions=definitions,
-            if_not_exists=task.decl.is_done_column is not None,
+            if_not_exists=task.cfg.is_done_column is not None,
         )
         self.insert = env.render_sql(
             """\
@@ -96,51 +96,49 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
             VALUES (
                 {{ columns | join(',\\n    ', attribute='value') }}
             );""",
-            table=task.decl.table,
+            table=task.cfg.table,
             columns=insert_columns,
         )
 
         self.marker_scripts: Optional[MarkerScripts] = None
-        if task.decl.is_done_column:
-            if not task.decl.source_table:
+        if task.cfg.is_done_column:
+            if not task.cfg.source_table:
                 raise ValueError(
                     "Cannot create is_done_column when source_table is None"
                 )
             if self.select is None:
                 raise ValueError("'select' cannot be empty if using is_done_column")
 
-            id_fields = task.decl.id_fields or (
+            id_fields = task.cfg.id_fields or (
                 [IdColumn(name) for name in popped_fields] if popped_fields else None
             )
             if not id_fields:
                 ValueError("Must provide id_fields if using is_done_column")
 
             is_done_column = ColumnRendered(
-                task.decl.is_done_column, "BOOL DEFAULT FALSE"
+                task.cfg.is_done_column, "BOOL DEFAULT FALSE"
             )
 
             self.marker_scripts = MarkerScripts(
                 add=db_actions.AddColumns(
-                    env, task.decl.source_table, [is_done_column], if_not_exists=True
+                    env, task.cfg.source_table, [is_done_column], if_not_exists=True
                 ),
                 set_marker=env.render_sql(
                     """\
                     UPDATE {{source}}
                     SET {{is_done}} = TRUE
                     WHERE {{id_fields | join(' AND ')}};""",
-                    source=task.decl.source_table,
+                    source=task.cfg.source_table,
                     is_done=is_done_column.identifier,
                     id_fields=id_fields,
                 ),
                 drop=db_actions.DropColumns(
-                    env, task.decl.source_table, [is_done_column], if_exists=True
+                    env, task.cfg.source_table, [is_done_column], if_exists=True
                 ),
             )
 
     @inject
-    def run(
-        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
-    ):
+    def run(self, conn: ConnectionEnvironment = service()):
         conn.execute(self.create_table)
         if marker := self.marker_scripts:
             marker.add(conn)
@@ -163,25 +161,21 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
             iter_input_rows(self.select) if self.select is not None else [{}]
         ):
             with RowContext.from_input_row(input_row, self.popped_fields):
-                for output_row in task.decl.fn(**input_row):
+                for output_row in self.task.cfg.fn(**input_row):
                     conn.sqlalchemy.execute(self.insert, output_row)
 
         conn.sqlalchemy.commit()
 
     @inject
-    def delete(
-        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
-    ):
+    def delete(self, conn: ConnectionEnvironment = service()):
         if marker := self.marker_scripts:
             marker.drop(conn)
 
-        super().delete(task)
+        super().delete()
 
     @inject
-    def skip(
-        self, task: Settled[MapToNewTable], conn: ConnectionEnvironment = service()
-    ) -> bool:
-        if not super().skip(task):
+    def skip(self, conn: ConnectionEnvironment = service()) -> bool:
+        if not super().skip():
             return False
         else:
             # Check that task has no more inputs
@@ -191,5 +185,5 @@ class ImplMapToNewTable(ImplCreateTable[MapToNewTable]):
                 or conn.execute(self.select).first() is None
             )
 
-    def visualize(self, task: Settled[MapToNewTable], g: VisualGraph) -> VisualNode:
-        return WindowNode(g, task.path, str(self.create_table))
+    def visualize(self, g: VisualGraph) -> VisualNode:
+        return WindowNode(g, self.task.path, str(self.create_table))
