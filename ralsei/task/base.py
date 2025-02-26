@@ -8,12 +8,10 @@ from ralsei.plugins import Plugin
 from ralsei.context import Context, ContextStack
 from ralsei.viz import VisualGraph, VisualNode
 from ralsei.console import console
-from ralsei.relation import Resource
 
 
 @define(eq=False)
 class Task:
-    resources: set[Resource] = field(factory=set, kw_only=True, repr=False)
     plugins: list[Plugin] = field(factory=list, kw_only=True)
 
     impl_class: ClassVar[Callable[[Settled[Self]], ImplTask[Self]]]

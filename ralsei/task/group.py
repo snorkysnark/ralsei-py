@@ -1,64 +1,67 @@
 from __future__ import annotations
-from attrs import define, field
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
+from attrs import define
 
-from ralsei.namespace import TypedNamespace
+from ralsei.namespace import TaskNamespace
 from ralsei.viz import VisualGraph, VisualNode, Subgraph
 from ralsei.console import track
-from ralsei.relation import Resource
 
 from .base import Settled, Task, ImplTask
 
 
 @define(eq=False)
 class TaskGroup(Task):
-    tasks: TypedNamespace[Task]
+    ns: TaskNamespace
 
 
 @define(eq=False)
-class ConnectedTask:
-    task: Settled[Task]
-    dependants: set[ConnectedTask] = field(factory=set)
+class InitializedGraph:
+    tasks: OrderedDict[str, Settled[Task]]
+    relations: defaultdict[str, set[str]]
+
+    def children(self, key: str):
+        for child_key in self.relations[key]:
+            yield self.tasks[child_key]
 
 
 class TaskSequence(ImplTask[TaskGroup]):
     def __init__(
         self,
-        subtasks: OrderedDict[str, ConnectedTask],
-        sequence: list[ConnectedTask],
+        graph: InitializedGraph,
+        sequence: list[Settled[Task]],
     ) -> None:
-        self.subtasks = subtasks
+        self.graph = graph
         self.sequence = sequence
 
     def run(self, task: Settled[TaskGroup]):
-        for node in track(self.sequence, description=f"Running {task.path_str}"):
-            node.task.run()
+        for subtask in track(self.sequence, description=f"Running {task.path_str}"):
+            subtask.run()
 
     def delete(self, task: Settled[TaskGroup]):
-        for node in track(
+        for subtask in track(
             reversed(self.sequence), description=f"Deleting {task.path_str}"
         ):
-            node.task.delete()
+            subtask.delete()
 
     def visualize(self, task: Settled[TaskGroup], g: VisualGraph) -> VisualNode:
         if g.settings.max_depth is None or len(task.path) <= g.settings.max_depth:
             subgraph = Subgraph(
                 g,
                 task.path,
-                [node.task.visualize(g) for node in self.subtasks.values()],
+                [subtask.visualize(g) for subtask in self.graph.tasks.values()],
             )
 
-            for node in self.subtasks.values():
-                for dependant in node.dependants:
-                    g.connect(node.task.path, dependant.task.path)
+            for key, subtask in self.graph.tasks.items():
+                for child in self.graph.children(key):
+                    g.connect(subtask.path, child.path)
 
             return subgraph
         else:
             return super().visualize(task, g)
 
     def navigate(self, task: Settled[TaskGroup], name: str) -> Settled:
-        if name in self.subtasks:
-            return self.subtasks[name].task
+        if name in self.graph.tasks:
+            return self.graph.tasks[name]
 
         return super().navigate(task, name)
 
@@ -67,41 +70,33 @@ class TaskSequence(ImplTask[TaskGroup]):
 class ImplTaskGroup(TaskSequence):
     def __init__(self, task: Settled[TaskGroup]) -> None:
         # Perform task initialization
-        subtasks = OrderedDict[str, ConnectedTask]()
-        for name, decl in task.decl.tasks.__dict__.items():
-            subtasks[name] = ConnectedTask(task.create_subtask(decl, name))
+        subtasks = OrderedDict[str, Settled[Task]]()
+        for name, decl in task.decl.ns.tasks.items():
+            subtasks[name] = task.create_subtask(decl, name)
 
-        last_resource_user: dict[Resource, ConnectedTask] = {}
-
-        # Find dependant tasks
-        for node in subtasks.values():
-            for resource in node.task.decl.resources:
-                if resource in last_resource_user:
-                    last_resource_user[resource].dependants.add(node)
-
-                last_resource_user[resource] = node
-
-        super().__init__(subtasks, list(subtasks.values()))
+        super().__init__(
+            InitializedGraph(subtasks, task.decl.ns.relations), list(subtasks.values())
+        )
 
     def mask(self, task: Settled[TaskGroup], start_from: str) -> Settled:
-        stack: list[ConnectedTask] = []
-        visited: set[ConnectedTask] = set()
+        stack: list[Settled] = []
+        visited: set[Settled] = set()
 
-        def visit(node: ConnectedTask):
+        def visit(node: Settled):
             if node not in visited:
                 visited.add(node)
 
-                for child in node.dependants:
+                for child in self.graph.children(node.path[-1]):
                     visit(child)
 
                 stack.append(node)
 
-        visit(self.subtasks[start_from])
+        visit(self.graph.tasks[start_from])
         stack.reverse()
 
         return Settled(
             task.decl,
-            TaskSequence(self.subtasks, stack),
+            TaskSequence(self.graph, stack),
             context=task.context,
             path=task.path,
         )

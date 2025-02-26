@@ -1,28 +1,27 @@
-import sys
-from types import SimpleNamespace
-from typing import Iterable, Mapping
+from typing import Callable
+from collections import OrderedDict, defaultdict
+from ralsei.relation import catch_resource_use, Resource
+
+from ralsei.task import Task
 
 
-class TypedNamespace[T](SimpleNamespace):
-    # As __orig_class__ is automatically added to generic classes, exclude it from __dict__
-    __slots__ = ["__orig_class__"]
+class TaskNamespace:
+    def __init__(self) -> None:
+        self.tasks = OrderedDict[str, Task]()
+        self.relations = defaultdict[str, set[str]](set)
 
-    __dict__: dict[str, T]
+        self._last_resource_user: dict[Resource, str] = {}
 
-    if sys.version_info >= (3, 13):
+    def __getitem__(self, key: str) -> Task:
+        return self.tasks[key]
 
-        def __init__(
-            self,
-            mapping_or_iterable: Mapping[str, T] | Iterable[tuple[str, T]] = (),
-            /,
-            **kwargs: T,
-        ) -> None:
-            super().__init__(mapping_or_iterable, **kwargs)
+    def __setitem__(self, key: str, value: Callable[[], Task]):
+        task, resources_uses = catch_resource_use(value)
+        self.tasks[key] = task
 
-    else:
+        for use in resources_uses:
+            if use.resource in self._last_resource_user:
+                self.relations[self._last_resource_user[use.resource]].add(key)
 
-        def __init__(self, **kwargs: T) -> None:
-            super().__init__(**kwargs)
-
-    def __setattr__(self, name: str, value: T, /) -> None:
-        super().__setattr__(name, value)
+            if use.write:
+                self._last_resource_user[use.resource] = key
