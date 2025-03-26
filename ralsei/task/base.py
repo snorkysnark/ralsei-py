@@ -44,7 +44,7 @@ class Settled(Generic[T]):
         path: tuple[str, ...] = (),
     ) -> None:
         self.cfg = cfg
-        self.context = context or ContextStack()
+        self.context = context or ContextStack(*Context.maybe(cfg.plugins))
         self.path = path
 
         self.impl = impl or cfg.impl_class(self)
