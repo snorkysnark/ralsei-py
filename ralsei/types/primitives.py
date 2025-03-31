@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
+import sqlalchemy
+from sqlalchemy.schema import SchemaItem
 
 from .to_sql import ToSql
 
@@ -50,6 +52,15 @@ class Table(ToSql):
 
     def with_schema(self, schema: str) -> "Table":
         return Table(self.name, schema)
+
+    def sqlalchemy(
+        self,
+        *args: SchemaItem,
+        metadata: Optional[sqlalchemy.MetaData] = None,
+    ) -> sqlalchemy.Table:
+        return sqlalchemy.Table(
+            self.name, metadata or sqlalchemy.MetaData(), *args, schema=self.schema
+        )
 
 
 @dataclass
