@@ -31,13 +31,16 @@ def join(
     )
 
 
-def create_index(env: "SqlEnvironment", table: Table, *column_names: str):
+def create_index(
+    env: "SqlEnvironment", table: Table, *column_names: str, if_not_exists: bool = False
+):
     index_name = Table(f"{table.name}_{'_'.join(column_names)}_index", table.schema)
     return Sql(
         env.render(
-            "CREATE INDEX {{index_name}} ON {{table}}({{columns | join(', ')}});",
+            "CREATE INDEX{%if if_not_exists%} IF NOT EXISTS{%endif%} {{index_name}} ON {{table}}({{columns | join(', ')}});",
             index_name=index_name,
             table=table,
+            if_not_exists=if_not_exists,
             columns=map(Identifier, column_names),
         )
     )
