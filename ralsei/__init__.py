@@ -19,7 +19,7 @@ from .task import (
     MapToNewTable,
     MapToNewColumns,
 )
-from .utils import folder
+from .utils import folder, url_with_suffix
 from .namespace import TaskNamespace
 
 __all__ = [
@@ -51,5 +51,6 @@ __all__ = [
     "MapToNewTable",
     "MapToNewColumns",
     "folder",
+    "url_with_suffix",
     "TaskNamespace",
 ]
