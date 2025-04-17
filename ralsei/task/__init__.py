@@ -6,6 +6,7 @@ from .map_to_new_table import MapToNewTable
 from .map_to_new_columns import MapToNewColumns
 from .create_table_impl import ImplCreateTable
 from .add_columns_impl import ImplAddColumns
+from .create_index import CreateIndex
 
 __all__ = [
     "Task",
@@ -18,6 +19,7 @@ __all__ = [
     "MapToNewColumns",
     "ImplCreateTable",
     "ImplAddColumns",
+    "CreateIndex",
     "inject",
     "service",
 ]

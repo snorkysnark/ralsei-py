@@ -83,6 +83,9 @@ class SqlPlugin(Plugin):
 
         yield
 
+        # Roll back changes that haven't been committed, otherwise won't be able to DETACH
+        conn.rollback()
+
         # sqlalchemy doesn't really 'close' the underlying connection,
         # so we have to DETACH everything before giving control back to sqlalchemy
         for schema in attached_schemas:

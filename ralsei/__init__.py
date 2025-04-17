@@ -18,6 +18,7 @@ from .task import (
     AddColumnsSql,
     MapToNewTable,
     MapToNewColumns,
+    CreateIndex,
 )
 from .utils import folder, url_with_suffix
 from .namespace import TaskNamespace
@@ -50,6 +51,7 @@ __all__ = [
     "AddColumnsSql",
     "MapToNewTable",
     "MapToNewColumns",
+    "CreateIndex",
     "folder",
     "url_with_suffix",
     "TaskNamespace",
