@@ -56,10 +56,10 @@ def create_index(
     if_not_exists: bool = False,
     unique: bool = False,
 ):
-    index_name, statement = _render_create_index(
+    _, statement = _render_create_index(
         env, table, *column_names, if_not_exists=if_not_exists, unique=unique
     )
-    return index_name, Sql(statement)
+    return Sql(statement)
 
 
 def autoincrement_primary_key(env: "SqlEnvironment", postfix: str = "pkey"):
