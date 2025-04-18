@@ -31,19 +31,35 @@ def join(
     )
 
 
-def create_index(
-    env: "SqlEnvironment", table: Table, *column_names: str, if_not_exists: bool = False
+def _render_create_index(
+    env: "SqlEnvironment",
+    table: Table,
+    *column_names: str,
+    if_not_exists: bool = False,
+    unique: bool = False,
 ):
     index_name = Table(f"{table.name}_{'_'.join(column_names)}_index", table.schema)
-    return Sql(
-        env.render(
-            "CREATE INDEX{%if if_not_exists%} IF NOT EXISTS{%endif%} {{index_name}} ON {{table}}({{columns | join(', ')}});",
-            index_name=index_name,
-            table=table,
-            if_not_exists=if_not_exists,
-            columns=map(Identifier, column_names),
-        )
+    return index_name, env.render(
+        "CREATE INDEX{%if unique%} UNIQUE{%endif%}{%if if_not_exists%} IF NOT EXISTS{%endif%} {{index_name}} ON {{table}}({{columns | join(', ')}});",
+        index_name=index_name,
+        table=table,
+        if_not_exists=if_not_exists,
+        unique=unique,
+        columns=map(Identifier, column_names),
     )
+
+
+def create_index(
+    env: "SqlEnvironment",
+    table: Table,
+    *column_names: str,
+    if_not_exists: bool = False,
+    unique: bool = False,
+):
+    index_name, statement = _render_create_index(
+        env, table, *column_names, if_not_exists=if_not_exists, unique=unique
+    )
+    return index_name, Sql(statement)
 
 
 def autoincrement_primary_key(env: "SqlEnvironment", postfix: str = "pkey"):

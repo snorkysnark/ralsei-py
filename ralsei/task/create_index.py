@@ -3,7 +3,8 @@ from attrs import define
 import sqlalchemy
 
 from ralsei.jinja import SqlEnvironment
-from ralsei.types import Table, Identifier
+from ralsei.jinja.globals import _render_create_index
+from ralsei.types import Table
 from ralsei.viz import VisualGraph, VisualNode, WindowNode
 
 from .base import ImplTask, Settled, Task, inject, service
@@ -14,6 +15,7 @@ class CreateIndex(Task):
     table: Table
     columns: list[str]
     name: Optional[str] = None
+    unique: bool = False
 
 
 @CreateIndex.impl
@@ -25,20 +27,13 @@ class ImplCreateIndex(ImplTask[CreateIndex]):
         super().__init__(task)
 
         table = task.cfg.table
-        column_names = task.cfg.columns
 
-        self.__index_name = (
-            task.cfg.name or f"{table.name}_{'_'.join(column_names)}_index"
+        identifier, create_index = _render_create_index(
+            env, table, *task.cfg.columns, unique=task.cfg.unique
         )
-        identifier = Table(self.__index_name, table.schema)
 
-        self.__create_index = env.render_sql(
-            """CREATE INDEX {{name}}
-            ON {{table}}({{columns | join(', ')}})""",
-            name=identifier,
-            table=table,
-            columns=map(Identifier, column_names),
-        )
+        self.__index = identifier
+        self.__create_index = sqlalchemy.text(create_index)
         self.__drop_index = env.render_sql(
             "DROP INDEX IF EXISTS {{name}}", name=identifier
         )
@@ -58,7 +53,7 @@ class ImplCreateIndex(ImplTask[CreateIndex]):
         table = self.task.cfg.table
 
         return sqlalchemy.inspect(conn).has_index(
-            table_name=table.name, index_name=self.__index_name, schema=table.schema
+            table_name=table.name, index_name=self.__index.name, schema=table.schema
         )
 
     def visualize(self, g: VisualGraph) -> VisualNode:
