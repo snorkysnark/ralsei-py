@@ -7,6 +7,7 @@ from .map_to_new_columns import MapToNewColumns
 from .create_table_impl import ImplCreateTable
 from .add_columns_impl import ImplAddColumns
 from .create_index import CreateIndex
+from .full_database import FullDatabaseScript
 
 __all__ = [
     "Task",
@@ -22,4 +23,5 @@ __all__ = [
     "CreateIndex",
     "inject",
     "service",
+    "FullDatabaseScript",
 ]
